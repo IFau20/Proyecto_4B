@@ -2,33 +2,97 @@
   {
     "id": "study-14",
     "name": "Notebook Study 14",
-    "priceClp": 499990,
     "ramGb": 8,
     "gpu": "Intel UHD Graphics",
-    "processor": "Intel Core i5-1235U"
+    "processor": "Intel Core i5-1235U",
+    "offers": [
+      {
+        "sourceId": "demo-a",
+        "sourceName": "Fuente de prueba A",
+        "priceClp": 529990
+      },
+      {
+        "sourceId": "demo-b",
+        "sourceName": "Fuente de prueba B",
+        "priceClp": 499990
+      },
+      {
+        "sourceId": "demo-c",
+        "sourceName": "Fuente de prueba C",
+        "priceClp": 514990
+      }
+    ]
   },
   {
     "id": "gaming-15",
     "name": "Notebook Gaming 15",
-    "priceClp": 899990,
     "ramGb": 16,
     "gpu": "NVIDIA GeForce RTX 4050",
-    "processor": "AMD Ryzen 5 7535HS"
+    "processor": "AMD Ryzen 5 7535HS",
+    "offers": [
+      {
+        "sourceId": "demo-a",
+        "sourceName": "Fuente de prueba A",
+        "priceClp": 949990
+      },
+      {
+        "sourceId": "demo-b",
+        "sourceName": "Fuente de prueba B",
+        "priceClp": 919990
+      },
+      {
+        "sourceId": "demo-c",
+        "sourceName": "Fuente de prueba C",
+        "priceClp": 899990
+      }
+    ]
   },
   {
     "id": "creator-desktop",
     "name": "Desktop Creator",
-    "priceClp": 1299990,
     "ramGb": 32,
     "gpu": "NVIDIA GeForce RTX 4060",
-    "processor": "Intel Core i7-14700F"
+    "processor": "Intel Core i7-14700F",
+    "offers": [
+      {
+        "sourceId": "demo-a",
+        "sourceName": "Fuente de prueba A",
+        "priceClp": 1299990
+      },
+      {
+        "sourceId": "demo-b",
+        "sourceName": "Fuente de prueba B",
+        "priceClp": 1379990
+      },
+      {
+        "sourceId": "demo-c",
+        "sourceName": "Fuente de prueba C",
+        "priceClp": 1349990
+      }
+    ]
   },
   {
     "id": "ultrabook-13",
     "name": "Ultrabook Light 13",
-    "priceClp": 729990,
     "ramGb": 16,
     "gpu": "Intel Iris Xe Graphics",
-    "processor": "Intel Core i7-1355U"
+    "processor": "Intel Core i7-1355U",
+    "offers": [
+      {
+        "sourceId": "demo-a",
+        "sourceName": "Fuente de prueba A",
+        "priceClp": 759990
+      },
+      {
+        "sourceId": "demo-b",
+        "sourceName": "Fuente de prueba B",
+        "priceClp": 729990
+      },
+      {
+        "sourceId": "demo-c",
+        "sourceName": "Fuente de prueba C",
+        "priceClp": 744990
+      }
+    ]
   }
 ]

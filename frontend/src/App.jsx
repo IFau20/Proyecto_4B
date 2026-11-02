@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import CatalogFilters from "./CatalogFilters.jsx";
 import { filterComputers, getFilterOptions } from "./catalogFilters.js";
+import { getPriceComparison } from "./priceComparison.js";
 
 const formatPrice = (priceClp) => `$${new Intl.NumberFormat("es-CL").format(priceClp)}`;
 
 function ComputerCard({ computer, index }) {
+  const [showOffers, setShowOffers] = useState(false);
+  const comparison = getPriceComparison(computer.offers);
+
   return (
     <article className="computer-card">
       <div className="computer-visual" aria-hidden="true">
@@ -17,12 +21,44 @@ function ComputerCard({ computer, index }) {
       <div className="computer-details">
         <p className="card-eyebrow">COMPUTADOR DE EJEMPLO</p>
         <h3>{computer.name}</h3>
-        <p className="price">{formatPrice(computer.priceClp)} <span>CLP</span></p>
+        <p className="price">
+          {comparison.lowestPrice === null ? "Sin precios" : formatPrice(comparison.lowestPrice)}
+          {comparison.lowestPrice !== null && <span>CLP · desde</span>}
+        </p>
         <dl className="specification-list">
           <div><dt>RAM</dt><dd>{computer.ramGb} GB</dd></div>
           <div><dt>GPU</dt><dd>{computer.gpu}</dd></div>
           <div><dt>Procesador</dt><dd>{computer.processor}</dd></div>
         </dl>
+        <div className="price-comparison">
+          <button
+            type="button"
+            className="compare-button"
+            aria-expanded={showOffers}
+            aria-controls={`offers-${computer.id}`}
+            disabled={comparison.offers.length === 0}
+            onClick={() => setShowOffers((current) => !current)}
+          >
+            {showOffers ? "Ocultar comparación" : `Comparar precios (${comparison.offers.length} fuentes)`}
+          </button>
+          {showOffers && (
+            <div id={`offers-${computer.id}`} className="comparison-content">
+              <p className="comparison-summary">Diferencia entre fuentes: <strong>{formatPrice(comparison.potentialSavings)}</strong></p>
+              <ul className="offer-list">
+                {comparison.offers.map((offer, offerIndex) => (
+                  <li key={offer.sourceId} className={offerIndex === 0 ? "offer-row best-offer" : "offer-row"}>
+                    <span className="offer-source">{offer.sourceName}</span>
+                    <strong className="offer-price">{formatPrice(offer.priceClp)}</strong>
+                    <span className="offer-extra">
+                      {offerIndex === 0 ? "Menor precio" : `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="demo-sources-note">Fuentes y precios ficticios. Todavía no hay conexión con tiendas.</p>
+            </div>
+          )}
+        </div>
       </div>
     </article>
   );
@@ -71,11 +107,11 @@ export default function App() {
     <div className="app-shell">
       <header className="site-header">
         <div className="container header-inner">
-          <a className="brand" href="#inicio" aria-label="CompuClaro, ir al inicio">
+          <a className="brand" href="#inicio" aria-label="PC Tracker, ir al inicio">
             <span className="brand-icon" aria-hidden="true"><span /><span /></span>
-            Compu<span>Claro</span><span className="brand-dot">.</span>
+            PC <span>Tracker</span><span className="brand-dot">.</span>
           </a>
-          <span className="header-tag">PROYECTO 4B · SEMANA 02</span>
+          <span className="header-tag">PROYECTO 4B · SEMANA 03</span>
         </div>
       </header>
 
@@ -84,7 +120,7 @@ export default function App() {
           <div className="hero-content">
             <div className="hero-label"><span className="live-dot" /> ELIGE CON MÁS INFORMACIÓN</div>
             <h1 id="hero-title">Tu próximo computador, <em>más claro.</em></h1>
-            <p className="hero-description">Explora equipos y revisa sus características principales en un solo lugar. Una forma más simple de empezar a comparar.</p>
+            <p className="hero-description">Explora equipos y compara los precios de un mismo computador entre tres fuentes de prueba. Una base para encontrar mejores ofertas.</p>
             <div className="hero-chips" aria-label="Criterios de comparación">
               <span>01 / RAM</span><span>02 / GPU</span><span>03 / PROCESADOR</span>
             </div>
@@ -103,7 +139,7 @@ export default function App() {
               <div>
                 <p className="section-kicker">EXPLORA / CATÁLOGO</p>
                 <h2 id="catalog-title">Computadores disponibles</h2>
-                <p className="section-subtitle">Compara las especificaciones que realmente te importan.</p>
+                <p className="section-subtitle">Filtra por especificaciones y revisa los precios de tres fuentes de ejemplo.</p>
               </div>
               {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} de {computers.length} equipos</span>}
             </div>
@@ -125,12 +161,12 @@ export default function App() {
                 {filteredComputers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} />)}
               </div>
             )}
-            <p className="catalog-notice">Nota: este es un prototipo académico. Los modelos y precios son ficticios y no representan ofertas reales.</p>
+            <p className="catalog-notice">Nota: prototipo académico. Las tres fuentes, los computadores y los precios son ficticios; todavía no se consultan tiendas reales.</p>
           </div>
         </section>
       </main>
 
-      <footer className="site-footer"><div className="container footer-inner"><span>CompuClaro © 2026</span><span>Diseño de Software · Proyecto 4B</span></div></footer>
+      <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>Diseño de Software · Proyecto 4B</span></div></footer>
     </div>
   );
 }

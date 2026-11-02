@@ -5,10 +5,14 @@ import App from "./App.jsx";
 const sample = {
   id: "study-14",
   name: "Notebook Study 14",
-  priceClp: 499990,
   ramGb: 8,
   gpu: "Intel UHD Graphics",
   processor: "Intel Core i5-1235U",
+  offers: [
+    { sourceId: "demo-a", sourceName: "Fuente de prueba A", priceClp: 529990 },
+    { sourceId: "demo-b", sourceName: "Fuente de prueba B", priceClp: 499990 },
+    { sourceId: "demo-c", sourceName: "Fuente de prueba C", priceClp: 514990 },
+  ],
 };
 
 beforeEach(() => {
@@ -23,7 +27,7 @@ it("shows a loading message while the API request is pending", () => {
   expect(fetch).toHaveBeenCalledWith("/api/computers", expect.any(Object));
 });
 
-it("shows the computer price, RAM, GPU and processor from the API", async () => {
+it("shows the lowest computer price, RAM, GPU and processor from the API", async () => {
   fetch.mockResolvedValue({ ok: true, json: async () => [sample] });
   render(<App />);
 
@@ -94,4 +98,39 @@ it("shows a no-match state when search has no matches", async () => {
 
   expect(screen.getByText("No encontramos computadores con esos filtros.")).toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: "Notebook Study 14" })).not.toBeInTheDocument();
+});
+
+it("shows PC Tracker as the application name", () => {
+  fetch.mockReturnValue(new Promise(() => {}));
+  render(<App />);
+
+  expect(screen.getByRole("link", { name: "PC Tracker, ir al inicio" })).toBeInTheDocument();
+});
+
+it("expands and collapses the price comparison for three sources", async () => {
+  fetch.mockResolvedValue({ ok: true, json: async () => [sample] });
+  render(<App />);
+  await screen.findByRole("heading", { name: "Notebook Study 14" });
+
+  const compareButton = screen.getByRole("button", { name: "Comparar precios (3 fuentes)" });
+  expect(compareButton).toHaveAttribute("aria-expanded", "false");
+  fireEvent.click(compareButton);
+
+  expect(screen.getByRole("button", { name: "Ocultar comparación" })).toHaveAttribute("aria-expanded", "true");
+  expect(screen.getByText("Fuente de prueba A")).toBeInTheDocument();
+  expect(screen.getByText("Fuente de prueba B")).toBeInTheDocument();
+  expect(screen.getByText("Fuente de prueba C")).toBeInTheDocument();
+  expect(screen.getByText("$30.000")).toBeInTheDocument();
+  expect(screen.getByText("Menor precio")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Ocultar comparación" }));
+  expect(screen.queryByText("Fuente de prueba A")).not.toBeInTheDocument();
+});
+
+it("handles a computer without valid offers without crashing", async () => {
+  fetch.mockResolvedValue({ ok: true, json: async () => [{ ...sample, offers: [] }] });
+  render(<App />);
+
+  expect(await screen.findByText("Sin precios")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Comparar precios (0 fuentes)" })).toBeDisabled();
 });

@@ -85,3 +85,21 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 .no-results p { margin: 0 0 14px; }
 @media (max-width: 1020px) { .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .catalog-filters { padding: 18px; } .filter-grid { grid-template-columns: 1fr; } .filter-heading { align-items: center; } }
+
+/* Week 3: price comparison for three demonstration sources */
+.price-comparison { border-top: 1px solid #e7ecf4; margin-top: 17px; padding-top: 15px; }
+.compare-button { width: 100%; border: 1px solid #a8c7ea; border-radius: 10px; background: #eaf3ff; color: #225eab; padding: 11px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+.compare-button:hover:not(:disabled) { background: #dbeaff; }
+.compare-button:focus-visible { outline: 3px solid #80b6ff; outline-offset: 2px; }
+.compare-button:disabled { opacity: .5; cursor: not-allowed; }
+.comparison-content { padding-top: 13px; }
+.comparison-summary { margin: 0 0 12px; font-size: 11px; line-height: 1.5; color: #566c88; }
+.comparison-summary strong { color: #205a9f; }
+.offer-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.offer-row { border: 1px solid #e1e9f4; border-radius: 9px; padding: 10px; display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 6px; row-gap: 4px; background: #fff; }
+.offer-row.best-offer { border-color: #94c9af; background: #f0faf5; }
+.offer-source { font-size: 11px; font-weight: 700; color: #34506d; overflow-wrap: anywhere; }
+.offer-price { font-size: 13px; color: #1c3963; white-space: nowrap; }
+.offer-extra { grid-column: 1 / -1; color: #647992; font-size: 10px; }
+.best-offer .offer-extra { color: #23774d; font-weight: 800; }
+.demo-sources-note { color: #71839a; font-size: 10px; line-height: 1.5; margin: 13px 0 0; }

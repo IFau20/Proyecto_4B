@@ -1,14 +1,14 @@
-# Proyecto 4B — Comparador de precios de computadores
+# PC Tracker — Proyecto 4B
 
-Prototipo desarrollado por avances semanales para el ramo **Diseño de Software**. Permite visualizar un catálogo de computadores de ejemplo con sus tres criterios de comparación seleccionados: **RAM, GPU y procesador**.
+Prototipo desarrollado por avances semanales para el ramo **Diseño de Software**. Permite buscar computadores y comparar los precios de un mismo modelo entre **tres fuentes ficticias**, utilizando los criterios seleccionados: **RAM, GPU y procesador**.
 
 ## Tecnologías utilizadas
 
 - **React + Vite:** interfaz web responsive (carpeta `frontend/`).
 - **Deno + Handler:** servidor y API REST (carpeta `backend/`).
-- **JSON:** datos de ejemplo (`backend/data/computers.json`).
+- **JSON:** datos de ejemplo (`backend/data/computers.json`), con tres ofertas por computador.
 
-La interfaz **no almacena los computadores de forma fija**: solicita los datos al backend mediante `GET /api/computers`.
+La interfaz **no almacena los computadores de forma fija**: solicita los datos al backend mediante `GET /api/computers`. Cada equipo contiene un listado de ofertas; React calcula el menor precio y la diferencia entre fuentes.
 
 ## Cómo ejecutar el proyecto
 
@@ -71,4 +71,21 @@ No se incorporaron tiendas reales ni cambios al backend esta semana: el propósi
 
 ### Próximas semanas (pendiente)
 
-Comparación lado a lado entre computadores; integración de al menos tres fuentes reales de precios; historial de precios; stock, horarios y geolocalización, según el enunciado.
+## Avance de la semana 3 — 2026-11-02
+
+- [x] Cambio de nombre de la aplicación a **PC Tracker**.
+- [x] Tres ofertas de prueba por computador en el JSON del servidor.
+- [x] Menor precio calculado a partir de las ofertas.
+- [x] Comparación desplegable de precios del mismo computador entre tres fuentes, ordenadas de menor a mayor.
+- [x] Diferencias de precio y pruebas del nuevo formato.
+- [x] Documento de avance en [docs/SEMANA_3.md](docs/SEMANA_3.md).
+
+**Importante:** las tres fuentes son simuladas. Esto demuestra la comparación, pero **todavía no satisface la integración real de tres tiendas ni los scrapers** exigidos por la pauta.
+
+### Próximas semanas (pendiente)
+
+Integración de al menos tres fuentes reales, historial de precios, scrapers de stock y horarios, geolocalización, SSO y multilenguaje.
+
+### Atribución
+
+Este prototipo se desarrolló con asistencia de **ChatGPT (OpenAI)** para planificación, programación y pruebas. El código debe revisarse, estudiarse y verificarse antes de cada demostración.
