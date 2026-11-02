@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import CatalogFilters from "./CatalogFilters.jsx";
+import { filterComputers, getFilterOptions } from "./catalogFilters.js";
 
 const formatPrice = (priceClp) => `$${new Intl.NumberFormat("es-CL").format(priceClp)}`;
 
@@ -29,6 +31,17 @@ function ComputerCard({ computer, index }) {
 export default function App() {
   const [computers, setComputers] = useState([]);
   const [status, setStatus] = useState("loading");
+  const [filters, setFilters] = useState({ search: "", minRam: "", gpu: "", processor: "" });
+  const filteredComputers = filterComputers(computers, filters);
+  const filterOptions = getFilterOptions(computers);
+
+  function updateFilter(key, value) {
+    setFilters((current) => ({ ...current, [key]: value }));
+  }
+
+  function clearFilters() {
+    setFilters({ search: "", minRam: "", gpu: "", processor: "" });
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,7 +75,7 @@ export default function App() {
             <span className="brand-icon" aria-hidden="true"><span /><span /></span>
             Compu<span>Claro</span><span className="brand-dot">.</span>
           </a>
-          <span className="header-tag">PROYECTO 4B · SEMANA 01</span>
+          <span className="header-tag">PROYECTO 4B · SEMANA 02</span>
         </div>
       </header>
 
@@ -92,15 +105,24 @@ export default function App() {
                 <h2 id="catalog-title">Computadores disponibles</h2>
                 <p className="section-subtitle">Compara las especificaciones que realmente te importan.</p>
               </div>
-              {status === "ready" && <span className="result-count">{computers.length} equipos de ejemplo</span>}
+              {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} de {computers.length} equipos</span>}
             </div>
 
+            {status === "ready" && computers.length > 0 && (
+              <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} />
+            )}
             {status === "loading" && <div className="state-panel" role="status">Cargando computadores…</div>}
             {status === "error" && <div className="state-panel error-panel" role="alert">No se pudo cargar el catálogo. Comprueba que el servidor Deno esté ejecutándose e inténtalo de nuevo.</div>}
             {status === "ready" && computers.length === 0 && <div className="state-panel">Todavía no hay computadores disponibles.</div>}
-            {status === "ready" && computers.length > 0 && (
+            {status === "ready" && computers.length > 0 && filteredComputers.length === 0 && (
+              <div className="state-panel no-results">
+                <p>No encontramos computadores con esos filtros.</p>
+                <button type="button" className="clear-filters" onClick={clearFilters}>Limpiar filtros</button>
+              </div>
+            )}
+            {status === "ready" && filteredComputers.length > 0 && (
               <div className="computer-grid">
-                {computers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} />)}
+                {filteredComputers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} />)}
               </div>
             )}
             <p className="catalog-notice">Nota: este es un prototipo académico. Los modelos y precios son ficticios y no representan ofertas reales.</p>

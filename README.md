@@ -1,6 +1,6 @@
 # Proyecto 4B — Comparador de precios de computadores
 
-Primer avance semanal del ramo **Diseño de Software**. Permite visualizar un catálogo de computadores de ejemplo con sus tres criterios de comparación seleccionados: **RAM, GPU y procesador**.
+Prototipo desarrollado por avances semanales para el ramo **Diseño de Software**. Permite visualizar un catálogo de computadores de ejemplo con sus tres criterios de comparación seleccionados: **RAM, GPU y procesador**.
 
 ## Tecnologías utilizadas
 
@@ -59,6 +59,16 @@ npm run build
 
 **Importante:** los nombres, configuraciones y precios utilizados son *ficticios*, creados exclusivamente para demostrar el funcionamiento del proyecto. No son cotizaciones ni precios actualizados de tiendas.
 
+## Avance de la semana 2 — 2026-11-02
+
+- [x] Búsqueda instantánea por nombre, GPU o procesador (sin distinguir mayúsculas).
+- [x] Filtros combinables: RAM mínima, GPU y procesador.
+- [x] Opciones de filtros generadas a partir de los datos recibidos de la API.
+- [x] Contador de resultados, aviso cuando no hay coincidencias y botón para limpiar filtros.
+- [x] Pruebas de filtros y de interacción en la interfaz.
+
+No se incorporaron tiendas reales ni cambios al backend esta semana: el propósito es mostrar un avance incremental pequeño, verificable y fácil de explicar. Véase [docs/SEMANA_2.md](docs/SEMANA_2.md).
+
 ### Próximas semanas (pendiente)
 
-Búsqueda y filtros; comparación entre computadores; integración de fuentes reales de precios, disponibilidad e historial, según la pauta del proyecto.
+Comparación lado a lado entre computadores; integración de al menos tres fuentes reales de precios; historial de precios; stock, horarios y geolocalización, según el enunciado.
