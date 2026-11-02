@@ -5,6 +5,20 @@ import { getPriceComparison } from "./priceComparison.js";
 
 const formatPrice = (priceClp) => `$${new Intl.NumberFormat("es-CL").format(priceClp)}`;
 
+const THEME_STORAGE_KEY = "pc-tracker-theme";
+
+function getInitialTheme() {
+  try {
+    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+  } catch {
+    // Browsers can disable local storage; the theme switch should still work.
+  }
+
+  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+
 function ComputerCard({ computer, index }) {
   const [showOffers, setShowOffers] = useState(false);
   const comparison = getPriceComparison(computer.offers);
@@ -65,11 +79,21 @@ function ComputerCard({ computer, index }) {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(getInitialTheme);
   const [computers, setComputers] = useState([]);
   const [status, setStatus] = useState("loading");
   const [filters, setFilters] = useState({ search: "", minRam: "", gpu: "", processor: "" });
   const filteredComputers = filterComputers(computers, filters);
   const filterOptions = getFilterOptions(computers);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Theme remains usable even when persistence is unavailable.
+    }
+  }, [theme]);
 
   function updateFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -111,7 +135,19 @@ export default function App() {
             <span className="brand-icon" aria-hidden="true"><span /><span /></span>
             PC <span>Tracker</span><span className="brand-dot">.</span>
           </a>
-          <span className="header-tag">PROYECTO 4B · SEMANA 03</span>
+          <div className="header-actions">
+            <span className="header-tag">PROYECTO 4B · SEMANA 03</span>
+            <button
+              className="theme-toggle"
+              type="button"
+              aria-label={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
+              aria-pressed={theme === "dark"}
+              onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+            >
+              <span className="theme-toggle-icon" aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
+              <span className="theme-toggle-label">{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
+            </button>
+          </div>
         </div>
       </header>
 

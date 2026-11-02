@@ -103,3 +103,74 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 .offer-extra { grid-column: 1 / -1; color: #647992; font-size: 10px; }
 .best-offer .offer-extra { color: #23774d; font-weight: 800; }
 .demo-sources-note { color: #71839a; font-size: 10px; line-height: 1.5; margin: 13px 0 0; }
+
+/* User-selectable light/dark appearance */
+.header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.theme-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 40px; padding: 9px 14px; border: 1px solid #526c8d; border-radius: 11px; background: #203653; color: #f0f6ff; font: 700 12px 'DM Sans', Arial, sans-serif; cursor: pointer; white-space: nowrap; }
+.theme-toggle-icon { font-size: 18px; line-height: 1; }
+.theme-toggle:hover { background: #2a486d; border-color: #8bb5ed; }
+.theme-toggle:focus-visible { outline: 3px solid #8dbdff; outline-offset: 3px; }
+@media (max-width: 700px) { .header-actions { gap: 8px; } .header-tag { display: none; } }
+@media (max-width: 440px) { .theme-toggle { width: 42px; height: 42px; padding: 0; } .theme-toggle-label { display: none; } }
+
+/* Dark-mode palette. Scoped to the document root to cover all components,
+   including catalog filters, cards, price comparisons and error states. */
+:root[data-theme="dark"] { color-scheme: dark; color: #e6eefb; background: #0b1524; }
+:root[data-theme="dark"] .app-shell { background: #0b1524; }
+:root[data-theme="dark"] .site-header { background: #0b182c; border-bottom-color: #263950; }
+:root[data-theme="dark"] .brand-icon span:last-child { background: #0b182c; }
+:root[data-theme="dark"] .header-tag { color: #c7d8ef; border-color: #3e5876; }
+:root[data-theme="dark"] .theme-toggle { background: #263b55; color: #eaf4ff; border-color: #5a7da6; }
+:root[data-theme="dark"] .theme-toggle:hover { background: #345372; }
+:root[data-theme="dark"] .hero-label { color: #93c1ff; }
+:root[data-theme="dark"] .live-dot { box-shadow: 0 0 0 4px #1c365a; }
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] h2,
+:root[data-theme="dark"] h3 { color: #eef5ff; }
+:root[data-theme="dark"] h1 em { color: #80b6ff; }
+:root[data-theme="dark"] .hero-description { color: #b6c6dc; }
+:root[data-theme="dark"] .hero-chips span { background: #1a2b42; border-color: #354e6c; color: #d6e6fa; }
+:root[data-theme="dark"] .hero-art { box-shadow: 0 24px 55px #00000044; }
+:root[data-theme="dark"] .art-sticker { background: #213754ed; color: #acc3df; border-color: #4e6990; box-shadow: 0 8px 35px #00000055; }
+:root[data-theme="dark"] .art-sticker strong { color: #f0f6ff; }
+:root[data-theme="dark"] .catalog-section { background: #101d2f; border-top-color: #293a50; }
+:root[data-theme="dark"] .section-kicker { color: #81b9ff; }
+:root[data-theme="dark"] .section-subtitle { color: #b2c2d8; }
+:root[data-theme="dark"] .result-count { background: #233b58; color: #bddbff; }
+:root[data-theme="dark"] .catalog-filters { background: #17283e; border-color: #38516d; }
+:root[data-theme="dark"] .filter-heading p,
+:root[data-theme="dark"] .filter-footer { color: #b3c3da; }
+:root[data-theme="dark"] .filter-tag { background: #253f5d; color: #b4d7ff; }
+:root[data-theme="dark"] .filter-field label { color: #d5e3f4; }
+:root[data-theme="dark"] .filter-field input,
+:root[data-theme="dark"] .filter-field select { background: #102035; color: #ebf4ff; border-color: #4c6684; }
+:root[data-theme="dark"] .filter-field input::placeholder { color: #a8bbd3; }
+:root[data-theme="dark"] .clear-filters { background: #203650; border-color: #6484ac; color: #d1e7ff; }
+:root[data-theme="dark"] .clear-filters:hover { background: #2d4b6a; }
+:root[data-theme="dark"] .computer-card { background: #1a2a3e; border-color: #344860; box-shadow: 0 10px 26px #00000024; }
+:root[data-theme="dark"] .computer-visual { background: #213752; }
+:root[data-theme="dark"] .computer-card:nth-child(2n) .computer-visual { background: #26334e; }
+:root[data-theme="dark"] .computer-card:nth-child(3n) .computer-visual { background: #1b3c40; }
+:root[data-theme="dark"] .model-index { color: #c0d2e9; }
+:root[data-theme="dark"] .card-eyebrow { color: #9ac6f2; }
+:root[data-theme="dark"] .price { color: #93c5ff; }
+:root[data-theme="dark"] .price span { color: #b1c4dd; }
+:root[data-theme="dark"] .specification-list,
+:root[data-theme="dark"] .price-comparison { border-color: #3b4e64; }
+:root[data-theme="dark"] .specification-list dt { color: #b6c6dc; }
+:root[data-theme="dark"] .specification-list dd { color: #edf5ff; }
+:root[data-theme="dark"] .compare-button { background: #203e60; border-color: #567ea6; color: #d2e9ff; }
+:root[data-theme="dark"] .compare-button:hover:not(:disabled) { background: #315378; }
+:root[data-theme="dark"] .comparison-summary,
+:root[data-theme="dark"] .demo-sources-note { color: #bbcce1; }
+:root[data-theme="dark"] .comparison-summary strong { color: #9ac8ff; }
+:root[data-theme="dark"] .offer-row { background: #1d314a; border-color: #3d536e; }
+:root[data-theme="dark"] .offer-row.best-offer { background: #173c38; border-color: #3a8675; }
+:root[data-theme="dark"] .offer-source,
+:root[data-theme="dark"] .offer-price { color: #e6f1ff; }
+:root[data-theme="dark"] .offer-extra { color: #b4c6dd; }
+:root[data-theme="dark"] .best-offer .offer-extra { color: #8ee5b4; }
+:root[data-theme="dark"] .catalog-notice { color: #abbdd4; }
+:root[data-theme="dark"] .state-panel { background: #172940; border-color: #4a6381; color: #cfdef0; }
+:root[data-theme="dark"] .error-panel { background: #42242e; border-color: #9a5264; color: #ffd6df; }
+:root[data-theme="dark"] .site-footer { background: #0a1628; border-top: 1px solid #2a3d56; color: #a9bfdc; }

@@ -17,6 +17,8 @@ const sample = {
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
+  window.localStorage.clear();
+  document.documentElement.removeAttribute("data-theme");
 });
 
 it("shows a loading message while the API request is pending", () => {
@@ -133,4 +135,30 @@ it("handles a computer without valid offers without crashing", async () => {
 
   expect(await screen.findByText("Sin precios")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Comparar precios (0 fuentes)" })).toBeDisabled();
+});
+
+it("toggles dark mode and persists the choice", () => {
+  fetch.mockReturnValue(new Promise(() => {}));
+  render(<App />);
+
+  const enableDark = screen.getByRole("button", { name: "Activar modo oscuro" });
+  expect(enableDark).toHaveAttribute("aria-pressed", "false");
+
+  fireEvent.click(enableDark);
+  expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+  expect(window.localStorage.getItem("pc-tracker-theme")).toBe("dark");
+  expect(screen.getByRole("button", { name: "Activar modo claro" })).toHaveAttribute("aria-pressed", "true");
+
+  fireEvent.click(screen.getByRole("button", { name: "Activar modo claro" }));
+  expect(document.documentElement).toHaveAttribute("data-theme", "light");
+  expect(window.localStorage.getItem("pc-tracker-theme")).toBe("light");
+});
+
+it("restores the stored dark preference on the next visit", () => {
+  window.localStorage.setItem("pc-tracker-theme", "dark");
+  fetch.mockReturnValue(new Promise(() => {}));
+  render(<App />);
+
+  expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+  expect(screen.getByRole("button", { name: "Activar modo claro" })).toBeInTheDocument();
 });

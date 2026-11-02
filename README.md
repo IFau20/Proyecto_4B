@@ -89,3 +89,16 @@ Integración de al menos tres fuentes reales, historial de precios, scrapers de 
 ### Atribución
 
 Este prototipo se desarrolló con asistencia de **ChatGPT (OpenAI)** para planificación, programación y pruebas. El código debe revisarse, estudiarse y verificarse antes de cada demostración.
+
+## Apariencia: modo claro y oscuro (mejora solicitada)
+
+El encabezado incluye un interruptor accesible para activar el modo oscuro o regresar al modo claro. La preferencia se guarda localmente en el navegador mediante `localStorage` (clave `pc-tracker-theme`). Si todavía no existe una preferencia guardada, se toma la configuración de color del sistema operativo. El modo oscuro cubre filtros, tarjetas, comparaciones de precios y mensajes de estado; no modifica el backend ni los datos.
+
+Este cambio es una mejora independiente del avance semanal 3, no una semana adicional retroactiva.
+
+### Verificación del tema
+1. Ejecuta Deno y React siguiendo las instrucciones anteriores.
+2. En la cabecera pulsa **Modo oscuro** y revisa los filtros y las ofertas.
+3. Recarga la página: se conserva el tema elegido.
+4. Pulsa **Modo claro** para volver a la apariencia original.
+5. Ejecuta `npm test` y `npm run build` desde `frontend/`.
