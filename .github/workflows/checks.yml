@@ -36,3 +36,15 @@ jobs:
       - name: Production build
         working-directory: frontend
         run: npm run build
+
+  live_probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Probe the three retailer product pages (informational)
+        working-directory: backend
+        run: deno task check:live
+        continue-on-error: true
