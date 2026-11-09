@@ -1,3 +1,5 @@
+import { getLiveProduct } from "./liveSources.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -7,7 +9,7 @@ const corsHeaders = {
 export async function handleRequest(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/computers") {
+  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -21,6 +23,8 @@ export async function handleRequest(request: Request): Promise<Response> {
       headers: { ...corsHeaders, Allow: "GET, OPTIONS" },
     });
   }
+
+  if (pathname === "/api/live-comparisons") return Response.json(await getLiveProduct(), { headers: corsHeaders });
 
   try {
     const contents = await Deno.readTextFile(new URL("./data/computers.json", import.meta.url));

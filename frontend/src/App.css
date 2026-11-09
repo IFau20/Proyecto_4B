@@ -174,3 +174,10 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 :root[data-theme="dark"] .state-panel { background: #172940; border-color: #4a6381; color: #cfdef0; }
 :root[data-theme="dark"] .error-panel { background: #42242e; border-color: #9a5264; color: #ffd6df; }
 :root[data-theme="dark"] .site-footer { background: #0a1628; border-top: 1px solid #2a3d56; color: #a9bfdc; }
+
+/* Actual retailer entries */
+.live-catalog-status { margin: 0 0 22px; padding: 12px 14px; border: 1px solid #bfd5f0; border-radius: 11px; color: #295a8b; background: #f1f7ff; font-size: 12px; line-height: 1.5; }
+.retailer-link { color: #246fb8; text-decoration: underline; text-underline-offset: 2px; }
+.retailer-link:focus-visible { outline: 3px solid #83b5ff; outline-offset: 2px; }
+:root[data-theme="dark"] .live-catalog-status { color: #c8e4ff; background: #213b56; border-color: #4a7099; }
+:root[data-theme="dark"] .retailer-link { color: #99caff; }

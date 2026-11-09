@@ -102,3 +102,9 @@ Este cambio es una mejora independiente del avance semanal 3, no una semana adic
 3. Recarga la página: se conserva el tema elegido.
 4. Pulsa **Modo claro** para volver a la apariencia original.
 5. Ejecuta `npm test` y `npm run build` desde `frontend/`.
+
+## Avance 4 — Tres tiendas reales (implementado el 9 de noviembre de 2026)
+
+Se agregó un modelo Lenovo LOQ 83JC0080CL presente en Centrale, SP Digital y Winpy, con precios consultados por `GET /api/live-comparisons` a partir de `schema.org/Product` cuando están disponibles. Los enlaces apuntan a productos reales, pero no se muestra ningún precio si no pudo verificarse. Los cuatro equipos originales siguen siendo ficticios.
+
+Consulta [docs/AVANCE_4.md](docs/AVANCE_4.md) para fuentes, limitaciones y pruebas.

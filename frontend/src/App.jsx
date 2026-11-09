@@ -33,7 +33,7 @@ function ComputerCard({ computer, index }) {
         </div>
       </div>
       <div className="computer-details">
-        <p className="card-eyebrow">COMPUTADOR DE EJEMPLO</p>
+        <p className="card-eyebrow">{computer.isLive ? "MODELO REAL · TRES TIENDAS" : "COMPUTADOR DE EJEMPLO"}</p>
         <h3>{computer.name}</h3>
         <p className="price">
           {comparison.lowestPrice === null ? "Sin precios" : formatPrice(comparison.lowestPrice)}
@@ -57,19 +57,21 @@ function ComputerCard({ computer, index }) {
           </button>
           {showOffers && (
             <div id={`offers-${computer.id}`} className="comparison-content">
-              <p className="comparison-summary">Diferencia entre fuentes: <strong>{formatPrice(comparison.potentialSavings)}</strong></p>
+              <p className="comparison-summary">Diferencia entre precios disponibles: <strong>{comparison.lowestPrice === null ? "No verificada" : formatPrice(comparison.potentialSavings)}</strong></p>
               <ul className="offer-list">
                 {comparison.offers.map((offer, offerIndex) => (
                   <li key={offer.sourceId} className={offerIndex === 0 ? "offer-row best-offer" : "offer-row"}>
-                    <span className="offer-source">{offer.sourceName}</span>
-                    <strong className="offer-price">{formatPrice(offer.priceClp)}</strong>
-                    <span className="offer-extra">
-                      {offerIndex === 0 ? "Menor precio" : `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}
-                    </span>
+                    <span className="offer-source">{offer.url
+                      ? <a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a>
+                      : offer.sourceName}</span>
+                    <strong className="offer-price">{offer.priceClp === null ? "No verificado" : formatPrice(offer.priceClp)}</strong>
+                    <span className="offer-extra">{offer.priceClp === null ? "No se pudo confirmar el precio" :
+                      offer.priceClp === comparison.lowestPrice ? "Menor precio" :
+                      `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}</span>
                   </li>
                 ))}
               </ul>
-              <p className="demo-sources-note">Fuentes y precios ficticios. Todavía no hay conexión con tiendas.</p>
+              <p className="demo-sources-note">{computer.isLive ? "Enlaces reales. Confirma los precios directamente con cada comercio." : "Fuentes y precios ficticios para la demostración."}</p>
             </div>
           )}
         </div>
@@ -80,7 +82,10 @@ function ComputerCard({ computer, index }) {
 
 export default function App() {
   const [theme, setTheme] = useState(getInitialTheme);
-  const [computers, setComputers] = useState([]);
+  const [demoComputers, setDemoComputers] = useState([]);
+  const [liveComputer, setLiveComputer] = useState(null);
+  const [liveStatus, setLiveStatus] = useState("loading");
+  const computers = liveComputer ? [liveComputer, ...demoComputers] : demoComputers;
   const [status, setStatus] = useState("loading");
   const [filters, setFilters] = useState({ search: "", minRam: "", gpu: "", processor: "" });
   const filteredComputers = filterComputers(computers, filters);
@@ -115,7 +120,7 @@ export default function App() {
         if (!Array.isArray(data)) throw new Error("Invalid catalog response");
 
         if (!controller.signal.aborted) {
-          setComputers(data);
+          setDemoComputers(data);
           setStatus("ready");
         }
       } catch {
@@ -124,6 +129,23 @@ export default function App() {
     }
 
     loadComputers();
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadLive() {
+      try {
+        const response = await fetch("/api/live-comparisons", { signal: controller.signal });
+        if (!response.ok) throw Error("Live API unavailable");
+        const computer = await response.json();
+        if (!computer?.isLive || !Array.isArray(computer.offers)) throw Error("Invalid response");
+        if (!controller.signal.aborted) { setLiveComputer(computer); setLiveStatus("ready"); }
+      } catch {
+        if (!controller.signal.aborted) setLiveStatus("error");
+      }
+    }
+    loadLive();
     return () => controller.abort();
   }, []);
 
@@ -180,6 +202,9 @@ export default function App() {
               {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} de {computers.length} equipos</span>}
             </div>
 
+            <p className="live-catalog-status" role="status">{liveStatus === "loading" ? "Consultando tres tiendas para el modelo real…" :
+              liveStatus === "error" ? "No se pudo consultar el modelo real; el catálogo de prueba sigue disponible." :
+              "Modelo real incorporado con enlaces a tres tiendas. Los precios se muestran solo si se verifican."}</p>
             {status === "ready" && computers.length > 0 && (
               <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} />
             )}
@@ -197,7 +222,7 @@ export default function App() {
                 {filteredComputers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} />)}
               </div>
             )}
-            <p className="catalog-notice">Nota: prototipo académico. Las tres fuentes, los computadores y los precios son ficticios; todavía no se consultan tiendas reales.</p>
+            <p className="catalog-notice">Nota: los cuatro equipos originales son ficticios. El Lenovo LOQ 83JC0080CL es un modelo real; sus precios solo aparecen cuando se pueden verificar.</p>
           </div>
         </section>
       </main>
