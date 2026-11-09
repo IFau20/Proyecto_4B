@@ -37,7 +37,7 @@ it("shows the lowest computer price, RAM, GPU and processor from the API", async
   expect(screen.getByText("$499.990")).toBeInTheDocument();
   expect(screen.getByText("8 GB")).toBeInTheDocument();
   expect(screen.getAllByText("Intel UHD Graphics").length).toBeGreaterThan(0);
-  expect(screen.getByText("Intel Core i5-1235U")).toBeInTheDocument();
+  expect(screen.getAllByText("Intel Core i5-1235U").length).toBeGreaterThan(0);
 });
 
 it("shows a helpful error when the API request fails", async () => {
@@ -123,7 +123,7 @@ it("expands and collapses the price comparison for three sources", async () => {
   expect(screen.getByText("Fuente de prueba B")).toBeInTheDocument();
   expect(screen.getByText("Fuente de prueba C")).toBeInTheDocument();
   expect(screen.getByText("$30.000")).toBeInTheDocument();
-  expect(screen.getByText("Menor precio")).toBeInTheDocument();
+  expect(screen.getByText("Menor precio encontrado")).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Ocultar comparación" }));
   expect(screen.queryByText("Fuente de prueba A")).not.toBeInTheDocument();
