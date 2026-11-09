@@ -108,3 +108,7 @@ Este cambio es una mejora independiente del avance semanal 3, no una semana adic
 Se agregó un modelo Lenovo LOQ 83JC0080CL presente en Centrale, SP Digital y Winpy, con precios consultados por `GET /api/live-comparisons` a partir de `schema.org/Product` cuando están disponibles. Los enlaces apuntan a productos reales, pero no se muestra ningún precio si no pudo verificarse. Los cuatro equipos originales siguen siendo ficticios.
 
 Consulta [docs/AVANCE_4.md](docs/AVANCE_4.md) para fuentes, limitaciones y pruebas.
+
+## Avance 5 — Stock por fuente
+
+Se incorporó extracción de disponibilidad estructurada del mismo SKU y estados de stock por tienda con fecha de consulta. No se inventan datos si las tiendas no responden. Ver [docs/AVANCE_5.md](docs/AVANCE_5.md).

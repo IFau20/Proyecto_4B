@@ -31,26 +31,35 @@ function findProducts(value, depth = 0) {
 }
 
 // Prefer schema.org Product / Offer to avoid selecting crossed-out or installment prices.
-export function parseRetailPrice(html, sku) {
-  if (typeof html !== "string" || !html.toUpperCase().includes(sku.toUpperCase())) return null;
+export function parseRetailOffer(html, sku) {
+  if (typeof html !== "string" || !html.toUpperCase().includes(sku.toUpperCase())) return { priceClp: null, availability: "unknown" };
   const scripts = html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi);
   for (const [, script] of scripts) {
     let parsed;
     try { parsed = JSON.parse(script); } catch { continue; }
     for (const product of findProducts(parsed)) {
       const productSku = String(product.sku ?? product.mpn ?? "").toUpperCase();
-      if (productSku && productSku !== sku.toUpperCase()) continue;
+      if (productSku !== sku.toUpperCase()) continue;
       const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
       for (const offer of offers) {
         if (!offer || typeof offer !== "object") continue;
         if (offer.priceCurrency && String(offer.priceCurrency).toUpperCase() !== "CLP") continue;
         const price = parseClp(offer.price ?? offer.lowPrice ?? offer.priceSpecification?.price);
-        if (price !== null) return price;
+        const availability = parseAvailability(offer.availability);
+        if (price !== null || availability !== "unknown") return { priceClp: price, availability };
       }
     }
   }
-  return null;
+  return { priceClp: null, availability: "unknown" };
 }
+export function parseAvailability(value) {
+  const status = typeof value === "string" ? value.split("/").pop()?.toLowerCase() : null;
+  if (status === "instock" || status === "limitedavailability") return "in_stock";
+  if (status === "outofstock" || status === "soldout" || status === "discontinued") return "out_of_stock";
+  if (status === "preorder" || status === "presale" || status === "backorder") return "preorder";
+  return "unknown";
+}
+export function parseRetailPrice(html, sku) { return parseRetailOffer(html, sku).priceClp; }
 
 const TIMEOUT_MS = 6000;
 const CACHE_MS = 10 * 60 * 1000;
@@ -62,17 +71,20 @@ export async function fetchLiveProduct(fetcher = fetch, now = new Date()) {
   const checkedAt = now.toISOString();
   const offers = await Promise.all(PRODUCT.sources.map(async (source) => {
     let priceClp = null;
+    let availability = "unknown";
     try {
       const response = await fetcher(source.url, {
         signal: AbortSignal.timeout(TIMEOUT_MS),
         headers: { Accept: "text/html" },
       });
       if (!response.ok) throw Error("Store unavailable");
-      priceClp = parseRetailPrice(await response.text(), PRODUCT.sku);
+      const details = parseRetailOffer(await response.text(), PRODUCT.sku);
+      priceClp = details.priceClp;
+      availability = details.availability;
     } catch {
       // Network errors, bot protection and parsing failures must never invent prices.
     }
-    return { ...source, priceClp, availability: "unknown", checkedAt };
+    return { ...source, priceClp, availability, checkedAt };
   }));
   const { sources: _sources, ...computer } = PRODUCT;
   return { ...computer, offers };

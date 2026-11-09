@@ -59,8 +59,8 @@ function ComputerCard({ computer, index }) {
             <div id={`offers-${computer.id}`} className="comparison-content">
               <p className="comparison-summary">Diferencia entre precios disponibles: <strong>{comparison.lowestPrice === null ? "No verificada" : formatPrice(comparison.potentialSavings)}</strong></p>
               <ul className="offer-list">
-                {comparison.offers.map((offer, offerIndex) => (
-                  <li key={offer.sourceId} className={offerIndex === 0 ? "offer-row best-offer" : "offer-row"}>
+                {comparison.offers.map((offer) => (
+                  <li key={offer.sourceId} className={comparison.lowestPrice !== null && offer.priceClp === comparison.lowestPrice ? "offer-row best-offer" : "offer-row"}>
                     <span className="offer-source">{offer.url
                       ? <a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a>
                       : offer.sourceName}</span>
@@ -71,6 +71,24 @@ function ComputerCard({ computer, index }) {
                   </li>
                 ))}
               </ul>
+              {computer.isLive && (
+                <ul className="stock-list" aria-label="Disponibilidad de las tiendas">
+                  {comparison.offers.map((offer) => (
+                    <li key={offer.sourceId}>
+                      <strong>{offer.sourceName}</strong>
+                      <span className={`stock-status stock-${offer.availability ?? "unknown"}`}>
+                        {offer.availability === "in_stock" ? "Stock publicado: disponible" :
+                          offer.availability === "out_of_stock" ? "Stock publicado: agotado" :
+                          offer.availability === "preorder" ? "Stock publicado: reserva" :
+                          "Stock sin verificar"}
+                      </span>
+                      {offer.checkedAt && <time className="checked-at" dateTime={offer.checkedAt}>
+                        Consulta: {new Date(offer.checkedAt).toLocaleString("es-CL")}
+                      </time>}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <p className="demo-sources-note">{computer.isLive ? "Enlaces reales. Confirma los precios directamente con cada comercio." : "Fuentes y precios ficticios para la demostración."}</p>
             </div>
           )}
@@ -158,7 +176,7 @@ export default function App() {
             PC <span>Tracker</span><span className="brand-dot">.</span>
           </a>
           <div className="header-actions">
-            <span className="header-tag">PROYECTO 4B · SEMANA 03</span>
+            <span className="header-tag">PROYECTO 4B · AVANCE 05</span>
             <button
               className="theme-toggle"
               type="button"
@@ -178,7 +196,7 @@ export default function App() {
           <div className="hero-content">
             <div className="hero-label"><span className="live-dot" /> ELIGE CON MÁS INFORMACIÓN</div>
             <h1 id="hero-title">Tu próximo computador, <em>más claro.</em></h1>
-            <p className="hero-description">Explora equipos y compara los precios de un mismo computador entre tres fuentes de prueba. Una base para encontrar mejores ofertas.</p>
+            <p className="hero-description">Filtra computadores por RAM, GPU y procesador y compara precios y stock cuando cada tienda publique esos datos.</p>
             <div className="hero-chips" aria-label="Criterios de comparación">
               <span>01 / RAM</span><span>02 / GPU</span><span>03 / PROCESADOR</span>
             </div>

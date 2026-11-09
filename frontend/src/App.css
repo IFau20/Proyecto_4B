@@ -181,3 +181,14 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 .retailer-link:focus-visible { outline: 3px solid #83b5ff; outline-offset: 2px; }
 :root[data-theme="dark"] .live-catalog-status { color: #c8e4ff; background: #213b56; border-color: #4a7099; }
 :root[data-theme="dark"] .retailer-link { color: #99caff; }
+
+.stock-list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 8px; }
+.stock-list li { display: grid; gap: 5px; border-top: 1px solid #d5e0ee; padding: 9px 0; font-size: 11px; }
+.stock-status,.checked-at { font-size: 10px; }
+.stock-in_stock { color: #23744b; } .stock-out_of_stock { color: #af3e3e; }
+.stock-preorder { color: #996415; } .stock-unknown,.checked-at { color: #687c93; }
+:root[data-theme="dark"] .stock-list li { border-color: #3f5773; }
+:root[data-theme="dark"] .stock-in_stock { color: #89dbac; }
+:root[data-theme="dark"] .stock-out_of_stock { color: #ffc0c0; }
+:root[data-theme="dark"] .stock-preorder { color: #f4d08a; }
+:root[data-theme="dark"] .stock-unknown,:root[data-theme="dark"] .checked-at { color: #c5d3e6; }
