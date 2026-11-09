@@ -192,3 +192,6 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 :root[data-theme="dark"] .stock-out_of_stock { color: #ffc0c0; }
 :root[data-theme="dark"] .stock-preorder { color: #f4d08a; }
 :root[data-theme="dark"] .stock-unknown,:root[data-theme="dark"] .checked-at { color: #c5d3e6; }
+
+.price-coverage { display: block; margin-top: 6px; font: 600 11px 'DM Sans', Arial, sans-serif; letter-spacing: 0; color: #6b819a; }
+:root[data-theme="dark"] .price-coverage { color: #c2d5ea; }

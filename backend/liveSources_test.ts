@@ -51,7 +51,8 @@ Deno.test("HTTP blocking keeps price and stock unknown", async () => {
   const fakeFetch = async (url: string) => url.includes("winpy")
     ? new Response("", { status: 403 })
     : new Response(url.includes("centrale") ? "MPN: 83JC0080CL Agotado" :
-      "Part number: 83JC0080CL Pago con transferencia $1.449.170");
+      "Part number: 83JC0080CL Pago con transferencia $1.449.170",
+      { headers: { "content-type": "text/html" } });
   const result = await fetchLiveProduct(fakeFetch as typeof fetch, new Date("2026-11-09T12:00:00Z"));
   same(result.offers.map((offer) => offer.priceClp), [null, 1449170, null]);
   same(result.offers.map((offer) => offer.availability), ["out_of_stock", "unknown", "unknown"]);

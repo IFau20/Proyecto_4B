@@ -60,7 +60,7 @@ function structuredOffer(html: string, sku: string) {
       const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
       for (const offer of offers) {
         if (!offer || typeof offer !== "object") continue;
-        if (offer.priceCurrency && String(offer.priceCurrency).toUpperCase() !== "CLP") continue;
+        if (String(offer.priceCurrency ?? "").toUpperCase() !== "CLP") continue;
         priceClp ??= parseClp(offer.price ?? offer.lowPrice ?? offer.priceSpecification?.price);
         if (availability === "unknown") availability = parseAvailability(offer.availability);
       }

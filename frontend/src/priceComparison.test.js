@@ -35,3 +35,15 @@ it("ignores invalid prices and handles empty offers", () => {
   expect(comparison.offers).toHaveLength(1);
   expect(getPriceComparison(null)).toEqual({ offers: [], lowestPrice: null, potentialSavings: 0 });
 });
+
+it("keeps missing retailer prices separate and sorts numeric offers first", () => {
+  const offers = [
+    { sourceId: "a", sourceName: "A", priceClp: null },
+    { sourceId: "b", sourceName: "B", priceClp: 1000000 },
+    { sourceId: "c", sourceName: "C", priceClp: 1200000 },
+  ];
+  const comparison = getPriceComparison(offers);
+  expect(comparison.offers.map((offer) => offer.sourceId)).toEqual(["b", "c", "a"]);
+  expect(comparison.lowestPrice).toBe(1000000);
+  expect(comparison.potentialSavings).toBe(200000);
+});

@@ -112,3 +112,11 @@ Consulta [docs/AVANCE_4.md](docs/AVANCE_4.md) para fuentes, limitaciones y prueb
 ## Avance 5 — Stock por fuente
 
 Se incorporó extracción de disponibilidad estructurada del mismo SKU y estados de stock por tienda con fecha de consulta. No se inventan datos si las tiendas no responden. Ver [docs/AVANCE_5.md](docs/AVANCE_5.md).
+
+## Auditoría de tres fuentes y stock (noviembre de 2026)
+
+El extractor ahora revisa datos estructurados de `schema.org/Product` asociados al SKU exacto; para las tres tiendas piloto tiene, además, reglas limitadas al precio de transferencia visible en SP Digital y avisos explícitos de agotado en Centrale y Winpy. El frontend informa cuántos precios fueron realmente obtenidos y distingue errores HTTP/bloqueos de valores verificados.
+
+**Cómo comprobarlo en vivo:** desde `backend/`, ejecuta `deno task check:live`. Consulta las páginas públicas e imprime `verifiedPrices`, `verifiedStocks`, `comparable` y `stockComplete`. El comando finaliza con error cuando no se verifican los tres precios y los tres estados de stock. No afirma que un producto agotado tenga precio de venta disponible.
+
+Se añadieron pruebas automáticas en GitHub Actions; el scraping en vivo debe revisarse por separado, porque las tiendas pueden cambiar, bloquear bots o dejar de vender el SKU.

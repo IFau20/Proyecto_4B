@@ -8,5 +8,5 @@ console.log(JSON.stringify({
 }, null, 2));
 if (!product.verification.comparable || !product.verification.stockComplete) {
   console.error("INCOMPLETE: Three prices and three stock states could not all be verified.");
-  Deno.exitCode = 1;
+  Deno.exit(1);
 }

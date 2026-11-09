@@ -36,7 +36,7 @@ it("shows the lowest computer price, RAM, GPU and processor from the API", async
   expect(await screen.findByRole("heading", { name: "Notebook Study 14" })).toBeInTheDocument();
   expect(screen.getByText("$499.990")).toBeInTheDocument();
   expect(screen.getByText("8 GB")).toBeInTheDocument();
-  expect(screen.getByText("Intel UHD Graphics")).toBeInTheDocument();
+  expect(screen.getAllByText("Intel UHD Graphics").length).toBeGreaterThan(0);
   expect(screen.getByText("Intel Core i5-1235U")).toBeInTheDocument();
 });
 
@@ -161,4 +161,27 @@ it("restores the stored dark preference on the next visit", () => {
 
   expect(document.documentElement).toHaveAttribute("data-theme", "dark");
   expect(screen.getByRole("button", { name: "Activar modo claro" })).toBeInTheDocument();
+});
+
+it("explains when only one retailer price is verified instead of showing a false $0 difference", async () => {
+  const live = {
+    id: "loq-real", name: "Lenovo LOQ Real", ramGb: 24,
+    gpu: "RTX 4050", processor: "Ryzen 7 7435HS", isLive: true,
+    verification: { totalSources: 3, verifiedPrices: 1, verifiedStocks: 1, comparable: false, stockComplete: false },
+    offers: [
+      { sourceId: "a", sourceName: "Centrale", priceClp: null, availability: "out_of_stock", checkedAt: "2026-11-09T12:00:00Z" },
+      { sourceId: "b", sourceName: "SP Digital", priceClp: 1449170, availability: "unknown", checkedAt: "2026-11-09T12:00:00Z" },
+      { sourceId: "c", sourceName: "Winpy", priceClp: null, availability: "unknown", queryStatus: "blocked", checkedAt: "2026-11-09T12:00:00Z" },
+    ],
+  };
+  fetch.mockImplementation(async (url) => ({ ok: true, json: async () => url === "/api/live-comparisons" ? live : [sample] }));
+  render(<App />);
+  await screen.findByRole("heading", { name: "Lenovo LOQ Real" });
+  expect(screen.getByText("1 de 3 precios verificados")).toBeInTheDocument();
+  expect(screen.getByText(/Consulta de tiendas: 1 de 3 precios verificados/)).toBeInTheDocument();
+  const buttons = screen.getAllByRole("button", { name: "Comparar precios (3 fuentes)" });
+  fireEvent.click(buttons[0]);
+  expect(screen.getByText("Se necesitan dos precios verificados")).toBeInTheDocument();
+  expect(screen.getByText("Tienda bloqueó la consulta")).toBeInTheDocument();
+  expect(screen.getByText("Stock publicado: agotado")).toBeInTheDocument();
 });

@@ -22,6 +22,9 @@ function getInitialTheme() {
 function ComputerCard({ computer, index }) {
   const [showOffers, setShowOffers] = useState(false);
   const comparison = getPriceComparison(computer.offers);
+  const verifiedPriceCount = computer.isLive
+    ? (computer.verification?.verifiedPrices ?? comparison.offers.filter((offer) => offer.priceClp !== null).length)
+    : comparison.offers.length;
 
   return (
     <article className="computer-card">
@@ -38,6 +41,9 @@ function ComputerCard({ computer, index }) {
         <p className="price">
           {comparison.lowestPrice === null ? "Sin precios" : formatPrice(comparison.lowestPrice)}
           {comparison.lowestPrice !== null && <span>CLP · desde</span>}
+          {computer.isLive && <small className="price-coverage">
+            {verifiedPriceCount} de {comparison.offers.length} precios verificados
+          </small>}
         </p>
         <dl className="specification-list">
           <div><dt>RAM</dt><dd>{computer.ramGb} GB</dd></div>
@@ -57,7 +63,9 @@ function ComputerCard({ computer, index }) {
           </button>
           {showOffers && (
             <div id={`offers-${computer.id}`} className="comparison-content">
-              <p className="comparison-summary">Diferencia entre precios disponibles: <strong>{comparison.lowestPrice === null ? "No verificada" : formatPrice(comparison.potentialSavings)}</strong></p>
+              <p className="comparison-summary">Diferencia entre precios: <strong>
+                {verifiedPriceCount < 2 ? "Se necesitan dos precios verificados" : formatPrice(comparison.potentialSavings)}
+              </strong></p>
               <ul className="offer-list">
                 {comparison.offers.map((offer) => (
                   <li key={offer.sourceId} className={comparison.lowestPrice !== null && offer.priceClp === comparison.lowestPrice ? "offer-row best-offer" : "offer-row"}>
@@ -65,9 +73,13 @@ function ComputerCard({ computer, index }) {
                       ? <a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a>
                       : offer.sourceName}</span>
                     <strong className="offer-price">{offer.priceClp === null ? "No verificado" : formatPrice(offer.priceClp)}</strong>
-                    <span className="offer-extra">{offer.priceClp === null ? "No se pudo confirmar el precio" :
-                      offer.priceClp === comparison.lowestPrice ? "Menor precio" :
-                      `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}</span>
+                    <span className="offer-extra">{offer.priceClp === null
+                      ? offer.queryStatus === "blocked" ? "Tienda bloqueó la consulta"
+                        : offer.queryStatus === "http_error" ? "Error de la página de la tienda"
+                        : offer.queryStatus === "network_error" ? "No se pudo conectar con la tienda"
+                        : "Precio no publicado o no verificable"
+                      : offer.priceClp === comparison.lowestPrice ? "Menor precio encontrado" :
+                        `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}</span>
                   </li>
                 ))}
               </ul>
@@ -215,14 +227,16 @@ export default function App() {
               <div>
                 <p className="section-kicker">EXPLORA / CATÁLOGO</p>
                 <h2 id="catalog-title">Computadores disponibles</h2>
-                <p className="section-subtitle">Filtra por especificaciones y revisa los precios de tres fuentes de ejemplo.</p>
+                <p className="section-subtitle">Filtra por especificaciones y consulta precios y stock cuando la fuente permita verificarlos.</p>
               </div>
               {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} de {computers.length} equipos</span>}
             </div>
 
-            <p className="live-catalog-status" role="status">{liveStatus === "loading" ? "Consultando tres tiendas para el modelo real…" :
+            <p className="live-catalog-status">{liveStatus === "loading" ? "Consultando tres tiendas para el modelo real…" :
               liveStatus === "error" ? "No se pudo consultar el modelo real; el catálogo de prueba sigue disponible." :
-              "Modelo real incorporado con enlaces a tres tiendas. Los precios se muestran solo si se verifican."}</p>
+              liveComputer?.verification?.comparable
+                ? "Comparación de tres precios verificados disponible."
+                : `Consulta de tiendas: ${liveComputer?.verification?.verifiedPrices ?? 0} de 3 precios verificados. Las fuentes restantes figuran sin verificar.`}</p>
             {status === "ready" && computers.length > 0 && (
               <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} />
             )}
