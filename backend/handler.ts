@@ -4,6 +4,7 @@ import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
+import { geocodeStoreLocations } from "./storeGeocoding.ts";
 import { proxyNotebookImage } from "./images.ts";
 import { NOTEBOOKS } from "./notebooks.ts";
 import { historyWithFallback } from "./solotodoHistory.ts";
@@ -57,7 +58,11 @@ export async function handleRequest(request: Request): Promise<Response> {
     return proxyNotebookImage(sku,await getNotebooks());
   }
 
-  if (pathname === "/api/stores") return Response.json(await getStores(), { headers: corsHeaders });
+  if (pathname === "/api/stores") {
+    const result=await getStores();
+    const geocode=new URL(request.url).searchParams.get("nearby")==="1";
+    return Response.json(geocode?await geocodeStoreLocations(result):result,{headers:corsHeaders});
+  }
 
   if (pathname === "/api/history") {
     const sku = new URL(request.url).searchParams.get("sku") ?? "";

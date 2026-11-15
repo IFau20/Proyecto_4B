@@ -37,11 +37,52 @@ export const STORES = [
     weekly: {1:["09:00","19:00"],2:["09:00","19:00"],3:["09:00","19:00"],4:["09:00","19:00"],5:["09:00","18:00"]},
     addressPhrase: "antonio varas 2223", hourPhrases:["09:00","19:00","18:00"],
   },
+,
+  {sourceId:"pcfactory-montt",name:"PC Factory — Manuel Montt",kind:"store",
+    address:"Avenida Manuel Montt 170, Providencia, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-costanera",name:"PC Factory — Costanera",kind:"store",
+    address:"Avenida Andrés Bello 2447, local 196, Providencia, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-huerfanos",name:"PC Factory — Huérfanos",kind:"store",
+    address:"Huérfanos 1081, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-lascondes",name:"PC Factory — Las Condes",kind:"store",
+    address:"Avenida Las Condes 8199, Las Condes, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-egana",name:"PC Factory — Plaza Egaña",kind:"store",
+    address:"Av. Larraín 5862, La Reina, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-kennedy",name:"PC Factory — Open Kennedy",kind:"store",
+    address:"Avenida Presidente Kennedy 5601, Las Condes, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-norte",name:"PC Factory — Plaza Norte",kind:"store",
+    address:"Avenida Américo Vespucio 1737, Huechuraba, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-florida",name:"PC Factory — Florida",kind:"store",
+    address:"Avenida Vicuña Mackenna Oriente 6100, La Florida, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-vina",name:"PC Factory — Viña del Mar",kind:"store",
+    address:"Avenida Valparaíso 459, Viña del Mar, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
+  {sourceId:"pcfactory-maipu",name:"PC Factory — Maipú",kind:"store",
+    address:"Avenida Américo Vespucio 399, Maipú, Santiago, Chile",lat:null,lon:null,
+    contactUrl:"https://www.pcfactory.cl/tiendas",
+    weekly:{},addressPhrase:"",hourPhrases:[]},
 ];
 const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 export function verifyHours(html: string, store: (typeof STORES)[number]) {
   const content=normalize(html.replace(/<[^>]*>/g," ").replace(/\s+/g," "));
-  return content.includes(store.addressPhrase) &&
+  return store.hourPhrases.length>0 && content.includes(store.addressPhrase) &&
     store.hourPhrases.every((time)=>content.includes(time)) &&
     /lunes|martes|miercoles|jueves|viernes/.test(content);
 }
