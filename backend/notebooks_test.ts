@@ -113,3 +113,18 @@ Deno.test("card-only Ripley prices are not treated as normal offers",()=>{
  const r=parseStorePage("<h1>"+sku+"</h1> Normal $1.399.990 T. Crédito $899.990",sku,"ripley");
  equal(r.priceClp,null);
 });
+
+Deno.test("PC Factory adapter recognizes unrestricted price and online stock only",()=>{
+ const sku="83JE0184CL";
+ const html="<h1>"+sku+"</h1> $1.309.490 -18% Transferencia / Débito "+
+   "$1.349.990 Otros medios de pago $1.599.990 Internet+100 "+
+   "Disponibilidad de retiro en tienda Manuel Montt 0 unidades Huérfanos 2 unidades";
+ const offer=parseStorePage(html,sku,"pcfactory");
+ equal(offer.priceClp,1309490);
+ equal(offer.availability,"in_stock");
+ equal(offer.discountPercent,null);
+});
+Deno.test("two exact notebook models have a sourced PC Factory product listing",()=>{
+ equal(NOTEBOOKS.find(x=>x.sku==="83JE0184CL")?.sources.some(x=>x.sourceId==="pcfactory"),true);
+ equal(NOTEBOOKS.find(x=>x.sku==="NP750XGJ-KS5CL")?.sources.some(x=>x.sourceId==="pcfactory"),true);
+});

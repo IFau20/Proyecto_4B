@@ -36,6 +36,7 @@ export const NOTEBOOKS = [
     retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-gamer-hp-victus-15-fb3036la-de-15-6-ryzen-7-7445h-rtx-4050-16gb-ram-1tb-ssd-win11/")
   ], profileUrl:"https://www.solotodo.cl/products/369514-hp-victus-15-fb3036la-ch8z6la" },
   { sku:"NP750XGJ-KS5CL", name:"Samsung Galaxy Book4", ramGb:16, gpu:"Intel Iris Xe Graphics", processor:"Intel Core i5-1335U", sources:[
+    retailer("pcfactory","PC Factory","https://www.pcfactory.cl/producto/53661"),
     retailer("paris","Paris","https://www.paris.cl/samsung-galaxy-book4-i5-156-512gb-16gb-ram-MKRISZTQKN.html"),
     retailer("paris2","Paris — otra publicación","https://www.paris.cl/notebook-galaxy-book4-intel-core-i5-13va-gen-16gb-ram-512gb-ssd-156-windows-silver-151337999.html")
   ], profileUrl:"https://www.solotodo.cl/products/255552-samsung-galaxy-book4-silver-np750xgj-ks5cl" },
@@ -64,7 +65,7 @@ export const NOTEBOOKS = [
   { sku:"83DV00FXUS",name:"Lenovo LOQ 15IRX9 i7 RTX 4060",ramGb:16,gpu:"NVIDIA GeForce RTX 4060",processor:"Intel Core i7-13650HX",sources:[],profileUrl:"https://www.solotodo.cl/products/245532-lenovo-loq-15irx9-83dv00fxus" },
   { sku:"83DV00FYUS",name:"Lenovo LOQ 15IRX9 i5 RTX 4050",ramGb:12,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-13450HX",sources:[],profileUrl:"https://www.solotodo.cl/products/266605-lenovo-loq-15irx9-83dv00fyus" },
   { sku:"83DV009MUS",name:"Lenovo LOQ 15IRX9 i5 RTX 4060",ramGb:16,gpu:"NVIDIA GeForce RTX 4060",processor:"Intel Core i5-13450HX",sources:[],profileUrl:"https://www.solotodo.cl/products/263303-lenovo-loq-15irx9-83dv009mus" },
-  { sku:"83JE0184CL",name:"Lenovo LOQ 15IRX10",ramGb:16,gpu:"NVIDIA GeForce RTX 5050",processor:"Intel Core i7-13645HX",sources:[],profileUrl:"https://www.solotodo.cl/products/386070-lenovo-loq-15irx10-83je0184cl" },
+  { sku:"83JE0184CL",name:"Lenovo LOQ 15IRX10",ramGb:16,gpu:"NVIDIA GeForce RTX 5050",processor:"Intel Core i7-13645HX",sources:[retailer("pcfactory","PC Factory","https://www.pcfactory.cl/producto/55428")],profileUrl:"https://www.solotodo.cl/products/386070-lenovo-loq-15irx10-83je0184cl" },
   { sku:"21SR00B8CL",name:"Lenovo ThinkPad E16 Gen 3",ramGb:16,gpu:"Intel Arc Graphics 140T",processor:"Intel Core Ultra 7 255H",sources:[],profileUrl:"https://www.solotodo.cl/products/392512-lenovo-thinkpad-e16-gen-3-intel-21sr00b8cl" },
   { sku:"82XQ005VCL",name:"Lenovo IdeaPad Slim 3 15AMN8",ramGb:8,gpu:"AMD Radeon 610M",processor:"AMD Ryzen 3 7320U",sources:[],profileUrl:"https://www.solotodo.cl/products/201341-lenovo-ideapad-slim-3-15amn8-82xq005vcl" },
   { sku:"BV5C6LA",name:"HP Victus 15-fb3026la",ramGb:16,gpu:"NVIDIA GeForce RTX 3050",processor:"AMD Ryzen 7 7445HS",sources:[],profileUrl:"https://www.solotodo.cl/products/375076-hp-victus-15-fb3026la-bv5c6la" },
@@ -178,6 +179,14 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     priceClp=parsedMoney(transfer?.[1]||"");
     const stock=/EN STOCK\s*:\s*(\d+)/i.exec(text);
     if(stock)availability=Number(stock[1])>0?"in_stock":"out_of_stock";
+  } else if(sourceId==="pcfactory"){
+    // Price for transfer/debit is the publicly displayed unrestricted amount;
+    // an associated credit-card price is never used in this branch.
+    const transfer=/\$\s*([\d.]+)\s*(?:-\d{1,2}%\s*)?Transferencia\s*\/\s*D[eé]bito/i.exec(text);
+    priceClp=parsedMoney(transfer?.[1]||"");
+    const internet=/\bInternet\s*\+?\s*(\d{1,5})\b/i.exec(text);
+    if(internet)availability=Number(internet[1])>0?"in_stock":"out_of_stock";
+    if(/Producto no disponible/i.test(text.slice(0,1000)))availability="out_of_stock";
   } else if(sourceId==="ripley"){
     const normal=/\bNormal\s*\$?\s*([\d.]+)/i.exec(text);
     // "Internet" is the unrestricted price. Credit-card offers are separate.
