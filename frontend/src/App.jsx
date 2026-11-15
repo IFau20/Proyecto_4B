@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CatalogFilters from "./CatalogFilters.jsx";
 import FeaturesPanel from "./FeaturesPanel.jsx";
 import DealsCarousel from "./DealsCarousel.jsx";
@@ -9,6 +9,14 @@ import { getPriceComparison } from "./priceComparison.js";
 
 const money = (value) => "$" + Number(value).toLocaleString("es-CL");
 const THEME_KEY = "pc-tracker-theme";
+export const PAGE_SIZE=12;
+export function paginateNotebooks(computers,page,pageSize=PAGE_SIZE) {
+ const totalPages=Math.max(1,Math.ceil(computers.length/pageSize));
+ const actualPage=Math.max(1,Math.min(totalPages,Math.floor(page)||1));
+ const first=(actualPage-1)*pageSize;
+ return {items:computers.slice(first,first+pageSize),page:actualPage,totalPages,
+   first:computers.length?first+1:0,last:Math.min(first+pageSize,computers.length)};
+}
 function initialTheme() {
   try {
     const stored=localStorage.getItem(THEME_KEY);
@@ -117,10 +125,14 @@ export default function App() {
   const [status,setStatus]=useState("loading");
   const [filters,setFilters]=useState({search:"",minRam:"",gpu:"",processor:""});
   const [selectedSku,setSelectedSku]=useState("");
-  const visible = filterComputers(notebooks,filters);
-  const options = getFilterOptions(notebooks);
+  const [page,setPage]=useState(1);
+  const visible = useMemo(()=>filterComputers(notebooks,filters),[notebooks,filters]);
+  const options = useMemo(()=>getFilterOptions(notebooks),[notebooks]);
+  const {items:currentPage,page:validPage,totalPages,first,last}=useMemo(
+    ()=>paginateNotebooks(visible,page),[visible,page]);
+  useEffect(()=>{if(page!==validPage)setPage(validPage);},[page,validPage]);
   const selected = notebooks.find((product) => product.sku===selectedSku) || notebooks[0] || null;
-  const deals=validDeals(notebooks,new Date());
+  const deals=useMemo(()=>validDeals(notebooks,new Date()),[notebooks]);
 
   useEffect(() => {
     document.documentElement.dataset.theme=theme;
@@ -152,6 +164,12 @@ export default function App() {
       if(response.ok)setAuth((old)=>old?{...old,user:null}:null);}
     catch{}
   }
+  const changeFilter=(key,value)=>{setPage(1);setFilters(old=>({...old,[key]:value}));};
+  const clearFilters=()=>{setPage(1);setFilters({search:"",minRam:"",gpu:"",processor:""});};
+  const changePage=(next)=>{
+    setPage(Math.max(1,Math.min(totalPages,next)));
+    document.getElementById("catalog-title")?.scrollIntoView({behavior:"smooth",block:"start"});
+  };
   const chooseHistory=(sku)=>{
     setSelectedSku(sku);
     requestAnimationFrame(()=>document.getElementById("price-history-section")?.scrollIntoView({behavior:"smooth"}));
@@ -196,20 +214,33 @@ export default function App() {
             <p className="section-subtitle">{t("Compara especificaciones y ofertas publicadas. Los precios y el stock se verifican por tienda.")}</p>
           </div>{status==="ready" && <span className="result-count" aria-live="polite">{visible.length} / {notebooks.length}</span>}</div>
           {status==="ready" && notebooks.length>0 && <CatalogFilters filters={filters} options={options}
-            t={t} onChange={(key,value)=>setFilters((old)=>({...old,[key]:value}))}
-            onClear={()=>setFilters({search:"",minRam:"",gpu:"",processor:""})}/>}
+            t={t} onChange={changeFilter}
+            onClear={clearFilters}/>}
           {status==="loading" && <div className="state-panel" role="status">{t("Cargando notebooks reales…")}</div>}
           {status==="error" && <div className="state-panel error-panel" role="alert">{t("No se pudo conectar con el catálogo de notebooks.")}</div>}
           {status==="ready" && notebooks.length===0 && <div className="state-panel">{t("No hay notebooks verificados disponibles.")}</div>}
           {status==="ready" && notebooks.length>0 && visible.length===0 &&
             <div className="state-panel no-results"><p>{t("No encontramos computadores con esos filtros.")}</p>
               <button type="button" className="clear-filters"
-                onClick={()=>setFilters({search:"",minRam:"",gpu:"",processor:""})}>{t("Limpiar filtros")}</button>
+                onClick={clearFilters}>{t("Limpiar filtros")}</button>
             </div>}
           {status==="ready" && visible.length>0 && <div className="computer-grid">
-            {visible.map((product)=><ProductCard key={product.sku} product={product}
+            {currentPage.map((product)=><ProductCard key={product.sku} product={product}
               t={t} locale={locale} onHistory={chooseHistory}/>)}
           </div>}
+          {status==="ready" && visible.length>PAGE_SIZE && <nav className="catalog-pagination"
+            aria-label={t("Páginas del catálogo")}>
+            <p className="pagination-info" aria-live="polite">{first}–{last} {t("de")} {visible.length} · {t("Página")} {validPage} {t("de")} {totalPages}</p>
+            <div className="pagination-controls">
+              <button type="button" onClick={()=>changePage(validPage-1)} disabled={validPage===1}
+                aria-label={t("Página anterior")}>‹</button>
+              {Array.from({length:totalPages},(_,i)=>i+1).map(n=><button type="button"
+                key={n} aria-current={n===validPage?"page":undefined}
+                onClick={()=>changePage(n)}>{n}</button>)}
+              <button type="button" onClick={()=>changePage(validPage+1)} disabled={validPage===totalPages}
+                aria-label={t("Página siguiente")}>›</button>
+            </div>
+          </nav>}
         </div>
       </section>
       {selected && <div id="price-history-section">

@@ -281,3 +281,15 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
  .deals-carousel {min-height:400px;}
  .deal-content .deal-product-image {height:200px;}
 }
+
+/* Page controls for groups of twelve catalog entries */
+.catalog-pagination {display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;margin-top:28px;padding:16px 0;}
+.pagination-info {font-size:13px;color:#7594b8;font-weight:700;margin:0;}
+.pagination-controls {display:flex;align-items:center;flex-wrap:wrap;gap:7px;}
+.pagination-controls button {border:1px solid #6b99c5;background:transparent;color:inherit;
+  min-width:38px;height:38px;border-radius:6px;font:700 13px 'DM Sans',Arial,sans-serif;cursor:pointer;}
+.pagination-controls button[aria-current="page"] {background:#2c7ecc;color:#fff;border-color:#2c7ecc;}
+.pagination-controls button:disabled {opacity:.4;cursor:not-allowed;}
+.pagination-controls button:not(:disabled):hover {border-color:#4e9deb;}
+@media(max-width:640px){.catalog-pagination {justify-content:center;}.pagination-info{width:100%;text-align:center;}}

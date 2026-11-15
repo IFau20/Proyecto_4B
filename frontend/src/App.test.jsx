@@ -101,3 +101,27 @@ it("labels a historical last price with its date, without presenting it as a cur
  expect(screen.getByText("$699.990")).toBeInTheDocument();
  expect(screen.queryByText("Precio referencial")).not.toBeInTheDocument();
 });
+
+import {paginateNotebooks,PAGE_SIZE} from "./App.jsx";
+it("limits catalog pages to 12 and clamps out-of-range pages",()=>{
+ const products=Array.from({length:31},(_,i)=>({sku:String(i)}));
+ expect(PAGE_SIZE).toBe(12);
+ expect(paginateNotebooks(products,1).items).toHaveLength(12);
+ expect(paginateNotebooks(products,2).items[0].sku).toBe("12");
+ expect(paginateNotebooks(products,3).items).toHaveLength(7);
+ expect(paginateNotebooks(products,99).page).toBe(3);
+ expect(paginateNotebooks([],1).items).toHaveLength(0);
+});
+it("moves between groups of 12 without losing filters",async()=>{
+ const products=Array.from({length:26},(_,i)=>({
+   ...sample[0],id:String(i),sku:"SKU"+i,name:"Notebook "+i,
+ }));
+ fetch.mockImplementation(async(url)=>({ok:true,json:async()=>url==="/api/notebooks"?products:[]}));
+ render(<App/>);
+ expect(await screen.findByRole("heading",{name:"Notebook 0"})).toBeInTheDocument();
+ expect(screen.queryByRole("heading",{name:"Notebook 12"})).not.toBeInTheDocument();
+ fireEvent.click(screen.getByRole("button",{name:"Página siguiente"}));
+ expect(screen.getByRole("heading",{name:"Notebook 12"})).toBeInTheDocument();
+ expect(screen.queryByRole("heading",{name:"Notebook 0"})).not.toBeInTheDocument();
+ expect(screen.getByText(/Página 2 de 3/)).toBeInTheDocument();
+});

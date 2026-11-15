@@ -1,4 +1,10 @@
 export const english = {
+  "Páginas del catálogo": "Catalog pages",
+  "Página anterior": "Previous page",
+  "Página siguiente": "Next page",
+  "Página": "Page",
+  "de": "of",
+
   "Último precio registrado": "Last recorded price",
 
   "Buscando las tiendas más cercanas…": "Finding the closest stores…",
