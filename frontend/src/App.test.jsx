@@ -13,6 +13,7 @@ beforeEach(()=>{
  vi.stubGlobal("fetch",vi.fn(async (url)=>({ok:true,json:async()=>url==="/api/notebooks"?sample:
    url==="/api/auth/me"?{enabled:false,user:null}:[]})));
  window.localStorage.clear();
+ window.sessionStorage.clear();
  document.documentElement.removeAttribute("data-theme");
 });
 describe("real notebook storefront",()=>{

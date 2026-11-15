@@ -178,7 +178,7 @@ export default function App() {
       .then(r=>r.ok?r.json():null)
       .then(data=>{
         if(controller.signal.aborted||!isValidCatalog(data))return;
-        setNotebooks(current=>current.length?current:data);
+        setNotebooks(current=>current.length===data.length?current:data);
         setStatus("ready");
       }).catch(()=>{});
     // Fresh: refresh prices and discounts independently, without blocking
