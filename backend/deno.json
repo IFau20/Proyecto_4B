@@ -5,6 +5,7 @@
     "test": "deno test --allow-read",
     "check:live": "deno run --allow-net scripts/checkLive.ts",
     "check:hp": "deno run --allow-net scripts/checkHpLive.ts",
-    "audit:catalog": "deno run --allow-net scripts/auditCatalog.ts"
+    "audit:catalog": "deno run --allow-net scripts/auditCatalog.ts",
+    "audit:public-history": "deno run --allow-net --allow-read scripts/checkPublicHistory.ts"
   }
 }

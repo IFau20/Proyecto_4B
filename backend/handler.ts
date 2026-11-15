@@ -4,6 +4,8 @@ import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
+import { NOTEBOOKS } from "./notebooks.ts";
+import { historyWithFallback } from "./solotodoHistory.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,7 +58,8 @@ export async function handleRequest(request: Request): Promise<Response> {
       return Response.json({ error: "Invalid SKU" }, { status: 400, headers: corsHeaders });
     }
     try {
-      return Response.json(summarizePriceHistory(await readHistory(), sku), { headers: corsHeaders });
+      const notebook=NOTEBOOKS.find(n=>n.sku===sku);
+      return Response.json(await historyWithFallback(sku,notebook && "profileUrl" in notebook ? notebook.profileUrl : null),{headers:corsHeaders});
     } catch (error) {
       console.error("Unable to read history", error);
       return Response.json({ error: "History storage unavailable" }, { status: 503, headers: corsHeaders });
