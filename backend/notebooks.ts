@@ -221,9 +221,9 @@ async function fetchSource(model:typeof NOTEBOOKS[number],source:{sourceId:strin
 let catalogCache:Awaited<ReturnType<typeof buildNotebooks>>|null=null;
 let cacheAt=0, pending:Promise<Awaited<ReturnType<typeof buildNotebooks>>>|null=null;
 export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) {
-  const [lenovo,hp]=fetcher===fetch
-    ? await Promise.allSettled([getLiveProduct(),getHpProduct()])
-    : await Promise.allSettled([Promise.resolve(null),Promise.resolve(null)]);
+  const legacyPromise=fetcher===fetch
+    ? Promise.allSettled([getLiveProduct(),getHpProduct()])
+    : Promise.allSettled([Promise.resolve(null),Promise.resolve(null)]);
   const base=NOTEBOOKS.map((model,index)=>({
     id:"notebook-"+index,sku:model.sku,name:model.name,ramGb:model.ramGb,
     gpu:model.gpu,processor:model.processor,isLive:true,
@@ -235,17 +235,24 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   const jobs:Array<{index:number;model:typeof NOTEBOOKS[number];source:{sourceId:string;sourceName:string;url:string}}>=[];
   for(let i=0;i<NOTEBOOKS.length;i++){
     const model=NOTEBOOKS[i];
-    if("kind" in model && model.kind==="legacy" && lenovo.status==="fulfilled" && lenovo.value){
+    for(const source of model.sources)jobs.push({index:i,model,source});
+  }
+  // Price feed and retailer scrapers can run independently. We use separate
+  // arrays so price references never overwrite directly checked retailer offers.
+  const publishedBase=base.map(product=>({...product,offers:[] as any[]}));
+  const publicPromise=enrichPublishedNotebookOffers(publishedBase,fetcher);
+  const scrapePromise=mapWithConcurrency(jobs,6,async job=>
+    fetchSource(job.model,job.source,fetcher,time));
+  const [settledLegacy,checked]=await Promise.all([legacyPromise,scrapePromise]);
+  const [lenovo,hp]=settledLegacy;
+  for(let i=0;i<NOTEBOOKS.length;i++){
+    const model=NOTEBOOKS[i];
+    if("kind" in model&&model.kind==="legacy"&&lenovo.status==="fulfilled"&&lenovo.value){
       base[i].offers=lenovo.value.offers.map(({referencePriceClp:_r,...offer}:any)=>offer);
-    }else if("kind" in model && model.kind==="hp" && hp.status==="fulfilled" && hp.value){
+    }else if("kind" in model&&model.kind==="hp"&&hp.status==="fulfilled"&&hp.value){
       base[i].offers=hp.value.offers.map(({referencePriceClp:_r,referenceType:_rt,...offer}:any)=>offer);
-    }else{
-      for(const source of model.sources)jobs.push({index:i,model,source});
     }
   }
-  // Source requests are bounded to avoid bursts that trigger 429 blocks.
-  const checked=await mapWithConcurrency(jobs,6,async job=>
-    fetchSource(job.model,job.source,fetcher,time));
   checked.forEach((offer,i)=>base[jobs[i].index].offers.push(offer));
   // Unverified published references are attached separately; they never populate priceClp.
   for(const notebook of base){
@@ -264,7 +271,18 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   }
   // Fill genuine models lacking store links from public current listings.
   // Prices are references only and do not enter the local verified-price history.
-  await enrichPublishedNotebookOffers(base,fetcher);
+  await publicPromise;
+  for(let i=0;i<base.length;i++){
+    if(!base[i].imageUrl)base[i].imageUrl=publishedBase[i].imageUrl;
+    for(const offer of publishedBase[i].offers){
+      // Preserve the historical behavior: a direct retailer source wins over
+      // a duplicate aggregator store record for the same SKU.
+      const duplicate=base[i].offers.some(existing=>
+        String(existing.sourceName||"").toLowerCase()
+          .includes(String(offer.sourceName||"").toLowerCase()));
+      if(!duplicate)base[i].offers.push(offer);
+    }
+  }
   // Image metadata never constitutes evidence of a price or product discount.
   await mapWithConcurrency(base,8,async (p)=>{
     p.imageUrl=p.imageUrl??p.offers.find(o=>o.imageUrl)?.imageUrl??null;

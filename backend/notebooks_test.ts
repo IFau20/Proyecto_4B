@@ -1,5 +1,5 @@
 import { strictEqual as equal } from "node:assert/strict";
-import { NOTEBOOKS,calcDiscount,parseStorePage,getNotebookPreview } from "./notebooks.ts";
+import { NOTEBOOKS,calcDiscount,parseStorePage,buildNotebooks,getNotebookPreview } from "./notebooks.ts";
 Deno.test("all catalog entries are real notebooks with unique manufacturer SKUs",()=>{
   equal(NOTEBOOKS.length>=30,true);
   equal(new Set(NOTEBOOKS.map(x=>x.sku)).size,NOTEBOOKS.length);
@@ -83,4 +83,16 @@ Deno.test("instant preview has all real models without claiming any live price",
  equal(preview.every(p=>p.offers.every(o=>o.priceClp===null&&o.availability==="unknown")),true);
  const published=preview.find(p=>p.sku==="NP750XGJ-KS5CL");
  equal(published?.offers.some(o=>o.referencePriceClp===629990),true);
+});
+
+Deno.test("parallel price-source pipeline keeps the catalog real and marks unavailable data",async()=>{
+ const fake=async(url:string)=>{
+  if(url.includes("/stores/"))return Response.json([]);
+  if(url.includes("/products/available_entities/"))return Response.json({results:[]});
+  return new Response("No product", {status:404});
+ };
+ const products=await buildNotebooks(fake as typeof fetch);
+ equal(products.length,NOTEBOOKS.length);
+ equal(products.every(p=>p.isLive&&p.verification.verifiedPrices===0),true);
+ equal(products.every(p=>!p.offers.some(o=>Number.isSafeInteger(o.priceClp))),true);
 });
