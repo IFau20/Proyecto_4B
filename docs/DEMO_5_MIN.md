@@ -1,6 +1,6 @@
 # PC Tracker: demo de cinco minutos
 
-La preparación actualizada está en [PREPARACION_PRESENTACION.md](PREPARACION_PRESENTACION.md): guion cronometrado, acciones, 47 preguntas con respuestas modelo, arquitectura, archivos y contingencias. El ingreso Google real fue confirmado por el usuario.
+El ingreso Google real fue confirmado por el usuario.
 
 | Tiempo | Demostración |
 |---|---|
