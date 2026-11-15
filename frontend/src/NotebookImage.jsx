@@ -3,7 +3,7 @@ import {useEffect,useState} from "react";
 export default function NotebookImage({product,className="",loading="lazy"}) {
  const [stage,setStage]=useState(0);
  useEffect(()=>setStage(0),[product.sku,product.imageUrl]);
- if(!product.imageUrl||stage>1) return <div className="photo-unavailable" role="img" aria-label={product.name}>
+ if(stage>0 && (!product.imageUrl || stage>1)) return <div className="photo-unavailable" role="img" aria-label={product.name}>
    <span aria-hidden="true">▣</span>
  </div>;
  const src=stage===0?"/api/notebook-image?sku="+encodeURIComponent(product.sku):product.imageUrl;
