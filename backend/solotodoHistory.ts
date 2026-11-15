@@ -69,7 +69,7 @@ async function getJson(url: string, fetcher: typeof fetch) {
   return await response.json();
 }
 
-async function publicHistory(profileUrl:string, sku:string, fetcher:typeof fetch) {
+export async function publicHistory(profileUrl:string, sku:string, fetcher:typeof fetch) {
   const id=getPublicProductId(profileUrl);
   if (id === null) return null;
   const product=await getJson(API+"/products/"+id+"/",fetcher);

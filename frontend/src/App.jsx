@@ -46,7 +46,7 @@ function ProductCard({ product, t, onHistory, locale }) {
   const verified = comparison.offers.filter((offer) => offer.priceClp !== null).length;
   const referencePrices = comparison.offers.filter((offer) => Number.isSafeInteger(offer.referencePriceClp));
   const referenceMin = referencePrices.length ? Math.min(...referencePrices.map((offer) => offer.referencePriceClp)) : null;
-  const shownPrice = comparison.lowestPrice ?? referenceMin;
+  const shownPrice = comparison.lowestPrice ?? referenceMin ?? product.historicalPriceClp ?? null;
   return (
     <article className="computer-card">
       <div className="computer-visual product-photo">
@@ -57,6 +57,12 @@ function ProductCard({ product, t, onHistory, locale }) {
         <p className="price">{shownPrice===null ? t("Precio no verificado") : money(shownPrice)}
           {comparison.lowestPrice===null && referenceMin!==null &&
             <small className="reference-label">{t("Precio referencial")}</small>}
+          {comparison.lowestPrice===null && referenceMin===null &&
+            Number.isSafeInteger(product.historicalPriceClp) &&
+            <small className="reference-label">{t("Último precio registrado")}
+              {product.historicalObservedAt ? " · "+
+                new Date(product.historicalObservedAt).toLocaleDateString(locale==="en"?"en-US":"es-CL") : ""}
+            </small>}
         </p>
         <dl className="specification-list">
           <div><dt>RAM</dt><dd>{product.ramGb} GB</dd></div>

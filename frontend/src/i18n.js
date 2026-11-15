@@ -1,4 +1,6 @@
 export const english = {
+  "Último precio registrado": "Last recorded price",
+
   "Buscando las tiendas más cercanas…": "Finding the closest stores…",
   "No se pudo consultar la ubicación de las tiendas.": "Could not load store locations.",
   "No se pudo obtener tu ubicación. Revisa el permiso del navegador.": "Could not get your location. Check your browser permissions.",

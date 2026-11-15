@@ -1,3 +1,4 @@
+import { publicHistory } from "./solotodoHistory.ts";
 import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { getHpProduct } from "./hpSources.ts";
@@ -179,7 +180,8 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
     id:"notebook-"+index,sku:model.sku,name:model.name,ramGb:model.ramGb,
     gpu:model.gpu,processor:model.processor,isLive:true,
     profileUrl:"profileUrl" in model?model.profileUrl:null,
-    imageUrl:null as string|null,offers:[] as any[],verification:null as any
+    imageUrl:null as string|null,historicalPriceClp:null as number|null,
+    historicalObservedAt:null as string|null,offers:[] as any[],verification:null as any
   }));
   const time=now.toISOString();
   const tasks:Promise<void>[]=[];
@@ -228,6 +230,24 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
     }catch{}
   });
   await Promise.all(photos);
+  // For unavailable models, the historical figure is only a last recorded
+  // observation, never a live offer, discount or proof of current stock.
+  // Tests with injected network adapters do not make requests to the live API.
+  if(fetcher===fetch){
+    await Promise.all(base.filter(p=>p.profileUrl?.includes("/products/") &&
+      !p.offers.some(o=>Number.isSafeInteger(o.priceClp)||Number.isSafeInteger(o.referencePriceClp)))
+      .map(async product=>{
+        try{
+          const historic=await publicHistory(product.profileUrl!,product.sku,fetcher);
+          const latest=historic?.points?.filter(pt=>Number.isSafeInteger(pt.priceClp))
+            .sort((a,b)=>Date.parse(b.checkedAt)-Date.parse(a.checkedAt))[0];
+          if(latest && Date.parse(latest.checkedAt)>Date.now()-365*86400000){
+            product.historicalPriceClp=latest.priceClp;
+            product.historicalObservedAt=latest.checkedAt;
+          }
+        }catch{/* No historical data is safer than a guessed current price. */}
+      }));
+  }
   for(const p of base){
     p.verification={
       totalSources:p.offers.length,
