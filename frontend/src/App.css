@@ -221,3 +221,36 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 :root[data-theme="dark"] .reference-comparison h4,:root[data-theme="dark"] .reference-comparison p {color:#f4ddad;}
 :root[data-theme="dark"] .reference-prices a {color:#9ac8ff;}
 :root[data-theme="dark"] .reference-prices strong {color:#fff1cf;}
+
+/* Real notebook catalog and product images. */
+.product-photo {display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.product-photo img {display:block;position:relative;z-index:1;width:100%;height:100%;object-fit:contain;padding:18px;max-height:230px;}
+.photo-unavailable {display:grid;place-items:center;color:#8399b5;text-align:center;font-size:11px;gap:7px;}
+.photo-unavailable span {font-size:38px;line-height:1;}
+.photo-unavailable p {margin:0;}
+.history-button {border:1px solid #8bb6e7;background:transparent;border-radius:9px;color:#2772b6;padding:10px 12px;font:700 12px 'DM Sans',Arial,sans-serif;cursor:pointer;margin-top:12px;width:100%;}
+.history-button:hover {background:#e8f2ff;}
+.retailer-discount {font-weight:800;color:#2e8a5c;font-size:11px;}
+.deals-carousel {background:linear-gradient(137deg,#122a48,#215593);border:1px solid #507fb6;border-radius:20px;padding:22px;min-height:360px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;}
+.deal-content {display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;}
+.deal-top {display:flex;align-items:center;gap:9px;align-self:flex-start;font-size:11px;color:#d5e9ff;}
+.deal-badge {background:#c73b53;color:#fff;font-size:18px;font-weight:900;padding:7px 10px;border-radius:8px;}
+.deal-product-image {width:min(100%,300px);height:155px;object-fit:contain;background:#fff;border-radius:12px;padding:8px;}
+.deals-carousel h2 {font-size:clamp(17px,2vw,22px);color:#fff;line-height:1.2;margin:0;min-height:0;}
+.deal-source {color:#c6e1ff;font-size:12px;margin:0;}
+.deal-prices {display:flex;align-items:baseline;gap:10px;}
+.deal-prices strong {font-size:24px;white-space:nowrap;}
+.deal-prices s {color:#c9d8ec;font-size:13px;}
+.deal-link {display:inline-flex;align-items:center;justify-content:center;background:#fff;color:#174a85;padding:10px 15px;border-radius:9px;font-size:12px;font-weight:800;text-decoration:none;}
+.deal-empty {display:grid;place-content:center;text-align:center;gap:18px;flex:1;}
+.deal-empty-icon {font-size:50px;color:#83b9ee;}
+.deal-empty p {color:#c7def6;font-size:12px;line-height:1.6;max-width:320px;margin:0 auto;}
+.deal-controls {display:flex;justify-content:center;align-items:center;gap:16px;margin-top:16px;font-size:12px;}
+.deal-controls button {background:#ffffff1f;color:#fff;border:1px solid #ffffff70;border-radius:50%;height:34px;width:34px;font-size:22px;cursor:pointer;}
+.hero-chips span {display:flex;align-items:center;gap:9px;}
+.hero-chips b {font-size:14px;font-weight:900;}
+.hero-chips small {font-size:11px;letter-spacing:.6px;font-weight:700;}
+:root[data-theme="dark"] .photo-unavailable {color:#b8cde5;}
+:root[data-theme="dark"] .history-button {color:#c2e2ff;border-color:#6f98bd;}
+:root[data-theme="dark"] .history-button:hover {background:#244466;}
+@media(max-width:700px) {.deals-carousel{min-height:310px}.deal-product-image{height:130px}.hero-chips{flex-wrap:wrap}.hero-chips span{padding:9px 11px}}
