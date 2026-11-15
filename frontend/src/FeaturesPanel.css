@@ -58,3 +58,15 @@
 
 .feature-panel,.trend-card,.store-card,.feature-button,.history-presets button,
 .history-date-inputs input,.store-links a {border-radius:7px;}
+
+.history-chart-frame {position:relative;margin:18px 0 10px;}
+.history-hover-details {display:flex;align-items:center;flex-wrap:wrap;gap:10px;
+ background:#eef6ff;color:#213c60;border:1px solid #9bbce5;border-radius:6px;
+ padding:9px 13px;font-size:13px;margin-top:4px;min-height:40px;}
+.history-hover-details strong {font-weight:800;}
+.history-hover-details span {font-weight:800;font-variant-numeric:tabular-nums;}
+.history-hover-details small {font-size:11px;color:#607d9f;}
+.full-history-chart path[tabindex] {cursor:crosshair;}
+.full-history-chart path[tabindex]:focus-visible {outline:none;stroke:#ffffff45;}
+:root[data-theme="dark"] .history-hover-details {background:#213e5e;color:#edf6ff;border-color:#5a83b2;}
+:root[data-theme="dark"] .history-hover-details small {color:#b9d2ed;}
