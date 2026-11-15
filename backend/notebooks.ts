@@ -1,3 +1,4 @@
+import {mapWithConcurrency} from "./concurrency.ts";
 import { publicHistory } from "./solotodoHistory.ts";
 import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -231,19 +232,21 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
     historicalObservedAt:null as string|null,offers:[] as any[],verification:null as any
   }));
   const time=now.toISOString();
-  const tasks:Promise<void>[]=[];
+  const jobs:Array<{index:number;model:typeof NOTEBOOKS[number];source:{sourceId:string;sourceName:string;url:string}}>=[];
   for(let i=0;i<NOTEBOOKS.length;i++){
     const model=NOTEBOOKS[i];
     if("kind" in model && model.kind==="legacy" && lenovo.status==="fulfilled" && lenovo.value){
-      base[i].offers=lenovo.value!.offers.map(({referencePriceClp:_r,...offer}:any)=>offer);
-    } else if("kind" in model && model.kind==="hp" && hp.status==="fulfilled" && hp.value){
-      base[i].offers=hp.value!.offers.map(({referencePriceClp:_r,referenceType:_rt,...offer}:any)=>offer);
-    } else if("sources" in model && model.sources.length){
-      tasks.push(Promise.all(model.sources.map(source=>fetchSource(model,source,fetcher,time)))
-        .then(offers=>{base[i].offers=offers;}).catch(()=>{}));
+      base[i].offers=lenovo.value.offers.map(({referencePriceClp:_r,...offer}:any)=>offer);
+    }else if("kind" in model && model.kind==="hp" && hp.status==="fulfilled" && hp.value){
+      base[i].offers=hp.value.offers.map(({referencePriceClp:_r,referenceType:_rt,...offer}:any)=>offer);
+    }else{
+      for(const source of model.sources)jobs.push({index:i,model,source});
     }
   }
-  await Promise.all(tasks);
+  // Source requests are bounded to avoid bursts that trigger 429 blocks.
+  const checked=await mapWithConcurrency(jobs,6,async job=>
+    fetchSource(job.model,job.source,fetcher,time));
+  checked.forEach((offer,i)=>base[jobs[i].index].offers.push(offer));
   // Unverified published references are attached separately; they never populate priceClp.
   for(const notebook of base){
     const references=PUBLIC_REFERENCES[notebook.sku]??{};
@@ -263,7 +266,7 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   // Prices are references only and do not enter the local verified-price history.
   await enrichPublishedNotebookOffers(base,fetcher);
   // Image metadata never constitutes evidence of a price or product discount.
-  const photos=base.map(async (p)=>{
+  await mapWithConcurrency(base,8,async (p)=>{
     p.imageUrl=p.imageUrl??p.offers.find(o=>o.imageUrl)?.imageUrl??null;
     if(p.imageUrl || !p.profileUrl || !p.profileUrl.includes("/products/"))return;
     try{
@@ -276,14 +279,14 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
       }
     }catch{}
   });
-  await Promise.all(photos);
+
   // For unavailable models, the historical figure is only a last recorded
   // observation, never a live offer, discount or proof of current stock.
   // Tests with injected network adapters do not make requests to the live API.
   if(fetcher===fetch){
-    await Promise.all(base.filter(p=>p.profileUrl?.includes("/products/") &&
+    await mapWithConcurrency(base.filter(p=>p.profileUrl?.includes("/products/") &&
       !p.offers.some(o=>Number.isSafeInteger(o.priceClp)||Number.isSafeInteger(o.referencePriceClp)))
-      .map(async product=>{
+      ,3,async product=>{
         try{
           const historic=await publicHistory(product.profileUrl!,product.sku,fetcher);
           const latest=historic?.points?.filter(pt=>Number.isSafeInteger(pt.priceClp))
@@ -293,7 +296,7 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
             product.historicalObservedAt=latest.checkedAt;
           }
         }catch{/* No historical data is safer than a guessed current price. */}
-      }));
+      });
   }
   for(const p of base){
     p.verification={
@@ -304,12 +307,22 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   }
   return base;
 }
-export async function getNotebooks() {
-  if(catalogCache&&Date.now()-cacheAt<15*60*1000)return catalogCache;
+const CACHE_TTL=15*60*1000;
+function refreshCatalog() {
   if(pending)return pending;
-  pending=buildNotebooks();
-  try {catalogCache=await pending;cacheAt=Date.now();return catalogCache;}
-  finally{pending=null;}
+  pending=buildNotebooks().then(value=>{
+    catalogCache=value;cacheAt=Date.now();return value;
+  }).finally(()=>{pending=null;});
+  // On stale refresh the caller receives cached data; errors must still be observed.
+  void pending.catch(e=>console.error("Catalog refresh failed; stale data preserved",e));
+  return pending;
+}
+export async function getNotebooks() {
+  if(catalogCache){
+    if(Date.now()-cacheAt>=CACHE_TTL)void refreshCatalog();
+    return catalogCache;
+  }
+  return refreshCatalog();
 }
 export async function collectNotebookHistory() {
   const products=await getNotebooks();

@@ -5,6 +5,24 @@ import { readHistory, summarizePriceHistory } from "./history.ts";
 const API = "https://publicapi.solotodo.com";
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const memory = new Map<string, { at: number; result: ReturnType<typeof summarizePriceHistory> }>();
+let storeNamesCache:Map<number,string>|null=null;
+let storeNamesAt=0;
+let storeNamesPending:Promise<Map<number,string>>|null=null;
+async function cachedStoreNames(fetcher:typeof fetch){
+  if(storeNamesCache && Date.now()-storeNamesAt<60*60*1000) return storeNamesCache;
+  if(storeNamesPending)return storeNamesPending;
+  storeNamesPending=(async()=>{
+    const raw=await getJson(API+"/stores/",fetcher);
+    const stores=Array.isArray(raw)?raw:Array.isArray(raw?.results)?raw.results:[];
+    const names=new Map<number,string>(stores.filter((s:any)=>
+      Number.isInteger(s?.id)&&typeof s?.name==="string")
+      .map((s:any)=>[s.id,s.name]));
+    storeNamesCache=names;storeNamesAt=Date.now();
+    return names;
+  })().finally(()=>{storeNamesPending=null;});
+  return storeNamesPending;
+}
+
 
 type Registry = {
   timestamp?: string;
@@ -78,12 +96,8 @@ export async function publicHistory(profileUrl:string, sku:string, fetcher:typeo
   const after=new Date(Date.now()-365*86400000).toISOString();
   const groups=await getJson(API+"/products/"+id+"/pricing_history/?timestamp_after="+encodeURIComponent(after),fetcher);
   let names=new Map<number,string>();
-  try {
-    const raw=await getJson(API+"/stores/",fetcher);
-    const stores=Array.isArray(raw)?raw:Array.isArray(raw?.results)?raw.results:[];
-    names=new Map(stores.filter((s:any)=>Number.isInteger(s?.id)&&typeof s?.name==="string")
-      .map((s:any)=>[s.id,s.name]));
-  } catch { /* History can still be plotted with source IDs. */ }
+  try {names=await cachedStoreNames(fetcher);}
+  catch { /* History can still be plotted with source IDs. */ }
   return parsePublicPriceHistory(sku,groups,names);
 }
 

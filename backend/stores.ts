@@ -140,10 +140,18 @@ export async function checkStores(fetcher:typeof fetch=fetch,now=Date.now()) {
     return {...publicInfo,scheduleVerified,checkedAt:new Date(now).toISOString()};
   }));
 }
+let pendingStores:Promise<Awaited<ReturnType<typeof checkStores>>>|null=null;
+function refreshStores(){
+  if(pendingStores)return pendingStores;
+  pendingStores=checkStores().then(value=>{cached=value;cachedAt=Date.now();return value;})
+    .finally(()=>{pendingStores=null;});
+  void pendingStores.catch(error=>console.error("Store schedules refresh failed",error));
+  return pendingStores;
+}
 export async function getStores() {
-  const now=Date.now();
-  if(cached && now-cachedAt<30*60*1000) return cached;
-  const result=await checkStores();
-  cached=result;cachedAt=now;
-  return result;
+  if(cached) {
+    if(Date.now()-cachedAt>=30*60*1000)void refreshStores();
+    return cached;
+  }
+  return refreshStores();
 }

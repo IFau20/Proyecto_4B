@@ -87,6 +87,10 @@ export async function proxyNotebookImage(
       if(announcedSize>4*1024*1024)continue;
       const bytes=new Uint8Array(await response.arrayBuffer());
       if(!bytes.length||bytes.length>4*1024*1024)continue;
+      if(cache.size>=40){
+        const oldest=cache.keys().next().value;
+        if(oldest)cache.delete(oldest);
+      }
       cache.set(url,{expires:Date.now()+3600000,mime,data:bytes});
       return new Response(bytes.slice(),{status:200,headers:{
         "Content-Type":mime,"Cache-Control":"public, max-age=3600",
