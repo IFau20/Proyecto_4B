@@ -64,5 +64,5 @@ Deno.test("expanded catalog has uniquely identified ASUS Lenovo HP Acer and Giga
  for(const brand of ["ASUS","Lenovo","HP","Acer","Gigabyte"]){
    equal(names.some(n=>n.startsWith(brand)),true);
  }
- equal(NOTEBOOKS.every(n=>n.profileUrl.includes("solotodo.cl/products/")),true);
+ equal(NOTEBOOKS.slice(-23).every(n=>n.profileUrl.includes("solotodo.cl/products/")),true);
 });

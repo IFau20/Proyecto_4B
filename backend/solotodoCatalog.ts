@@ -69,17 +69,22 @@ export function addPublishedOffers(products:CatalogLaptop[],publicRows:unknown,s
 export async function enrichPublishedNotebookOffers(products:CatalogLaptop[],fetcher:typeof fetch=fetch) {
   const ids=[...new Set(products.map(p=>getPublicProductId(p.profileUrl)).filter((id):id is number=>id!==null))];
   if(!ids.length)return 0;
-  const url=new URL(API+"/products/available_entities/");
-  for(const id of ids)url.searchParams.append("ids",String(id));
-  url.searchParams.set("page_size",String(Math.max(20,ids.length)));
-  try{
-    const [listed,stores]=await Promise.all([
-      getJson(url.href,fetcher),
-      getJson(API+"/stores/",fetcher).catch(()=>[]),
-    ]);
-    return addPublishedOffers(products,listed,stores);
-  }catch(e){
-    console.warn("Public notebook prices unavailable",e);
-    return 0;
+  // Keep requests bounded: the endpoint can page large product collections.
+  // Each response is for at most 12 exact product IDs, no bulk catalog scraping.
+  let results=0;
+  let storeDirectory:unknown=[];
+  try {storeDirectory=await getJson(API+"/stores/",fetcher);}catch{}
+  for(let offset=0;offset<ids.length;offset+=12){
+    const part=ids.slice(offset,offset+12);
+    const url=new URL(API+"/products/available_entities/");
+    for(const productId of part)url.searchParams.append("ids",String(productId));
+    url.searchParams.set("page_size",String(part.length));
+    try{
+      const rows=await getJson(url.href,fetcher);
+      results+=addPublishedOffers(products,rows,storeDirectory);
+    }catch(error){
+      console.warn("Public notebook prices unavailable for batch",offset,error);
+    }
   }
+  return results;
 }
