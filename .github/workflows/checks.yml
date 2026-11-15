@@ -80,3 +80,15 @@ jobs:
         working-directory: backend
         run: deno task audit:images
         continue-on-error: true
+
+  store_geocoding_probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check public branch geocoding (informational)
+        working-directory: backend
+        run: deno task audit:geocode
+        continue-on-error: true
