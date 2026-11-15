@@ -1,5 +1,5 @@
 import {strictEqual as equal} from "node:assert/strict";
-import {addPublishedOffers} from "./solotodoCatalog.ts";
+import {addPublishedOffers,enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import type {CatalogLaptop} from "./solotodoCatalog.ts";
 Deno.test("matches exact manufacturer identifiers before using a public price",()=>{
  const p:CatalogLaptop[]=[{sku:"NP750XGJ-KS5CL",profileUrl:"https://www.solotodo.cl/products/255552-galaxy-book4",imageUrl:null,offers:[]}];
