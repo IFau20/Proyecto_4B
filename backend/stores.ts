@@ -37,7 +37,6 @@ export const STORES = [
     weekly: {1:["09:00","19:00"],2:["09:00","19:00"],3:["09:00","19:00"],4:["09:00","19:00"],5:["09:00","18:00"]},
     addressPhrase: "antonio varas 2223", hourPhrases:["09:00","19:00","18:00"],
   },
-,
   {sourceId:"pcfactory-montt",name:"PC Factory — Manuel Montt",kind:"store",
     address:"Avenida Manuel Montt 170, Providencia, Santiago, Chile",lat:null,lon:null,
     contactUrl:"https://www.pcfactory.cl/tiendas",
@@ -97,6 +96,7 @@ export async function checkStores(fetcher:typeof fetch=fetch,now=Date.now()) {
   return await Promise.all(STORES.map(async (store)=>{
     let scheduleVerified=false;
     try {
+      if (store.hourPhrases.length===0) throw Error("Opening hours not provided by source");
       const response=await fetcher(store.contactUrl,{signal:AbortSignal.timeout(6000),headers:{Accept:"text/html"}});
       if(response.ok) scheduleVerified=verifyHours(await response.text(),store);
     } catch { /* unverified, not an assertion of current opening */ }
