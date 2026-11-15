@@ -33,13 +33,14 @@ try {
     }
     $encodedSecret = ConvertTo-Json -InputObject $plain -Compress
     $lines = @(
+        "AUTH_PROVIDER=microsoft",
         "MICROSOFT_TENANT_ID=$TenantId",
         "MICROSOFT_CLIENT_ID=$ClientId",
         "MICROSOFT_CLIENT_SECRET=$encodedSecret",
         "APP_PUBLIC_ORIGIN=http://localhost:5173",
         "AUTH_REDIRECT_URI=http://localhost:8000/api/auth/callback"
     )
-    $preserved = @($existing | Where-Object { $_ -notmatch '^\s*(MICROSOFT_TENANT_ID|MICROSOFT_CLIENT_ID|MICROSOFT_CLIENT_SECRET|APP_PUBLIC_ORIGIN|AUTH_REDIRECT_URI)\s*=' })
+    $preserved = @($existing | Where-Object { $_ -notmatch '^\s*(AUTH_PROVIDER|MICROSOFT_TENANT_ID|MICROSOFT_CLIENT_ID|MICROSOFT_CLIENT_SECRET|APP_PUBLIC_ORIGIN|AUTH_REDIRECT_URI)\s*=' })
     [IO.File]::WriteAllLines($destination, @($preserved) + @($lines), (New-Object Text.UTF8Encoding($false)))
 } finally {
     [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($secretPointer)

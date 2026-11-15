@@ -6,7 +6,7 @@ Proyecto académico de Diseño de Software. **Solo notebooks reales**, identific
 
 Ver [ampliación de precios y corrección del stock](docs/PRICE_COVERAGE_2026-11-15.md). Se añadieron enlaces comerciales para modelos sin fuentes y precios históricos fechados para cuatro modelos sin oferta vigente recuperable. La consulta de stock descubre tiendas antes de cachear resultados; los fallos se pueden reintentar.
 
-Para habilitar Microsoft, registrar una aplicación Entra y ejecutar `scripts/configure-sso.ps1`. Deno carga `backend/.env` automáticamente. Ver [configuración y comprobación del SSO](docs/SSO.md). Una prueba de código no sustituye un ingreso real con el registro institucional.
+Para habilitar Google, registrar un cliente OAuth Web y ejecutar `scripts/configure-google-sso.ps1`. Microsoft se mantiene como alternativa. Deno carga `backend/.env` automáticamente. Ver [configuración y comprobación del SSO](docs/SSO.md). Una prueba de código no sustituye un ingreso real con el cliente OAuth configurado.
 
 ## Funcionalidades
 
@@ -19,13 +19,13 @@ Para habilitar Microsoft, registrar una aplicación Entra y ejecutar `scripts/co
 - Scrapers de stock y horarios: estado desconocido cuando no hay datos, etiquetas de cada tienda y fechas de consulta. La ubicación de tiendas no demuestra stock físico por sucursal.
 - Localizador de tiendas con permisos de geolocalización del navegador. El cálculo de distancia es local.
 - Modo oscuro y traducciones propias español/inglés.
-- SSO Microsoft Entra OIDC condicionado a configuración real. **No se muestra mensaje ni botón de SSO si está deshabilitado**.
+- SSO Google/Microsoft OIDC condicionado a configuración real. **No se muestra mensaje ni botón de SSO si está deshabilitado**.
 
 ## Limitaciones que deben entenderse antes de la entrega
 
 Se completaron consultas directas al abrir la comparación, stock físico mediante el servicio público de PC Factory y scraping de horarios del widget oficial de sucursales. La comprobación de D0CJ4LA obtuvo cuatro precios directos; la de 83JE0184CL recuperó 18 estados de sucursales. Son mediciones puntuales y las tiendas pueden bloquear o cambiar sus respuestas. Las referencias siguen separadas de la verificación directa. Ver [evidencia y límites de la entrega](docs/RUBRIC_COMPLETION_2026-11-15.md).
 
-El historial empieza a construirse cuando el servicio observa precios en vivo; no puede representar años anteriores sin datos auténticos. Los archivos de historial residen en `backend/data/price-history.json` y requieren un volumen persistente si la app se despliega. El SSO debe registrarse en Microsoft Entra antes de poder comprobar un ingreso institucional.
+El historial empieza a construirse cuando el servicio observa precios en vivo; no puede representar años anteriores sin datos auténticos. Los archivos de historial residen en `backend/data/price-history.json` y requieren un volumen persistente si la app se despliega. El SSO debe registrarse en Microsoft Entra antes de poder comprobar un ingreso institucional; Google permite una alternativa con su propio cliente OAuth.
 
 ## Iniciar desde una apertura nueva de PowerShell
 
@@ -62,7 +62,7 @@ GitHub Actions ejecuta los tests y la compilación. Los diagnósticos que accede
 - [Arquitectura y catálogo real](docs/REAL_NOTEBOOK_CATALOG.md)
 - [Historial de precios](docs/HISTORY.md)
 - [Horarios y ubicaciones](docs/STORE_LOCATIONS.md)
-- [SSO institucional](docs/SSO.md)
+- [SSO Google y alternativa Microsoft](docs/SSO.md)
 - [DEMO de 5 minutos](docs/DEMO_5_MIN.md)
 
 Las carpetas `docs/AVANCE_*` conservan el registro histórico de entregas anteriores; algunos archivos antiguos describen el prototipo ficticio original y no representan el estado actual.

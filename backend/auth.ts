@@ -1,16 +1,32 @@
-// Configurable Microsoft Entra OpenID Connect authorization-code login with PKCE.
+// Configurable Google or Microsoft OpenID Connect authorization-code login with PKCE.
 const enc = new TextEncoder();
 const readEnv = (name: string) => { try { return Deno.env.get(name) ?? ""; } catch { return ""; } };
-export const settings = () => ({
+type AuthSettings = {provider?:string;tenant:string;client:string;secret:string;origin:string;redirect:string};
+export const settings = ():AuthSettings => {
+ const provider=readEnv("AUTH_PROVIDER") || (readEnv("GOOGLE_CLIENT_ID") ? "google" : "microsoft");
+ return {
+  provider,
   tenant: readEnv("MICROSOFT_TENANT_ID"),
-  client: readEnv("MICROSOFT_CLIENT_ID"),
-  secret: readEnv("MICROSOFT_CLIENT_SECRET"),
+  client: readEnv(provider==="google" ? "GOOGLE_CLIENT_ID" : "MICROSOFT_CLIENT_ID"),
+  secret: readEnv(provider==="google" ? "GOOGLE_CLIENT_SECRET" : "MICROSOFT_CLIENT_SECRET"),
   origin: readEnv("APP_PUBLIC_ORIGIN") || "http://localhost:5173",
   redirect: readEnv("AUTH_REDIRECT_URI") || "http://localhost:8000/api/auth/callback",
-});
+ };
+};
+const providerOf=(s:AuthSettings)=>s.provider ?? "microsoft";
+const endpoints=(s:AuthSettings)=>providerOf(s)==="google" ? {
+ authorization:"https://accounts.google.com/o/oauth2/v2/auth",
+ token:"https://oauth2.googleapis.com/token",keys:"https://www.googleapis.com/oauth2/v3/certs",
+} : {
+ authorization:"https://login.microsoftonline.com/"+s.tenant+"/oauth2/v2.0/authorize",
+ token:"https://login.microsoftonline.com/"+s.tenant+"/oauth2/v2.0/token",
+ keys:"https://login.microsoftonline.com/"+s.tenant+"/discovery/v2.0/keys",
+};
 const guid=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)&&
   value!=="00000000-0000-0000-0000-000000000000";
-const enabled = (s: ReturnType<typeof settings>) => guid(s.tenant)&&guid(s.client)&&!!s.secret.trim();
+const enabled = (s:AuthSettings) => !!s.secret.trim() && (
+ providerOf(s)==="google" ? /^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(s.client) :
+ providerOf(s)==="microsoft" && guid(s.tenant)&&guid(s.client));
 const base64 = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const random = () => base64(crypto.getRandomValues(new Uint8Array(32)));
@@ -33,12 +49,14 @@ export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>,
   if (parts.length !== 3) throw Error("Invalid JWT");
   const header = JSON.parse(new TextDecoder().decode(decode(parts[0])));
   const claims = JSON.parse(new TextDecoder().decode(decode(parts[1])));
-  const issuer = "https://login.microsoftonline.com/" + s.tenant + "/v2.0";
+  const validIssuer = providerOf(s)==="google"
+    ? ["https://accounts.google.com","accounts.google.com"].includes(claims.iss)
+    : claims.iss==="https://login.microsoftonline.com/" + s.tenant + "/v2.0";
   if (header.alg !== "RS256" || typeof header.kid !== "string" ||
-      claims.iss !== issuer || claims.aud !== s.client || claims.nonce !== nonce ||
+      !validIssuer || claims.aud !== s.client || (claims.azp !== undefined && claims.azp !== s.client) || claims.nonce !== nonce ||
       typeof claims.exp !== "number" || claims.exp <= seconds() ||
       typeof claims.sub !== "string" || !claims.sub) throw Error("Invalid claims");
-  const response = await fetcher("https://login.microsoftonline.com/" + s.tenant + "/discovery/v2.0/keys",{signal:AbortSignal.timeout(10000),redirect:"error"});
+  const response = await fetcher(endpoints(s).keys,{signal:AbortSignal.timeout(10000),redirect:"error"});
   if (!response.ok) throw Error("Unable to verify issuer");
   const keys = (await response.json()).keys;
   const jwk = keys?.find((item: { kid: string; kty: string }) => item.kid === header.kid && item.kty === "RSA");
@@ -60,15 +78,15 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
   const s = configuration();
   if (pathname === "/api/auth/me" && request.method === "GET") {
     const session = sessions.get(cookie(request, "pct_session"));
-    return json({ enabled: enabled(s), loginUrl: new URL("/api/auth/login", s.redirect).href, user: session && session.expires > seconds()
+    return json({ enabled: enabled(s), provider:providerOf(s), loginUrl: new URL("/api/auth/login", s.redirect).href, user: session && session.expires > seconds()
       ? { name: session.name, email: session.email } : null });
   }
   if (pathname === "/api/auth/login" && request.method === "GET") {
-    if (!enabled(s)) return json({ error: "Configure Microsoft Entra ID first" }, 503);
+    if (!enabled(s)) return json({ error: "Configure the selected SSO provider first" }, 503);
     const state = random(), nonce = random(), verifier = random();
     const hash = await crypto.subtle.digest("SHA-256", enc.encode(verifier));
     pending.set(state, { verifier, nonce, expires: seconds() + 600 });
-    const authUrl = new URL("https://login.microsoftonline.com/" + s.tenant + "/oauth2/v2.0/authorize");
+    const authUrl = new URL(endpoints(s).authorization);
     const values = {
       client_id: s.client, response_type: "code", redirect_uri: s.redirect,
       response_mode: "query", scope: "openid profile email", state, nonce,
@@ -92,7 +110,7 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
         client_id: s.client, client_secret: s.secret, grant_type: "authorization_code",
         code, redirect_uri: s.redirect, code_verifier: challenge.verifier,
       });
-      const response = await fetcher("https://login.microsoftonline.com/" + s.tenant + "/oauth2/v2.0/token", {
+      const response = await fetcher(endpoints(s).token, {
         signal:AbortSignal.timeout(10000),redirect:"error",
         method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body,
       });
@@ -102,14 +120,16 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
       const token = random();
       sessions.set(token, {
         name: String(claims.name || claims.preferred_username || "User"),
-        email: typeof claims.preferred_username === "string" ? claims.preferred_username : null,
+        email: providerOf(s)==="google"
+          ? (claims.email_verified===true && typeof claims.email==="string" ? claims.email : null)
+          : (typeof claims.preferred_username === "string" ? claims.preferred_username : null),
         expires: seconds() + 28800,
       });
       return new Response(null, { status: 302, headers: {
         Location: s.origin, "Set-Cookie": cookieHeader("pct_session", token, request, 28800),
         "Cache-Control": "no-store",
       } });
-    } catch { return json({ error: "Could not validate Microsoft login" }, 401); }
+    } catch { return json({ error: "Could not validate SSO login" }, 401); }
   }
   if (pathname === "/api/auth/logout" && request.method === "POST") {
     const origin = request.headers.get("Origin");

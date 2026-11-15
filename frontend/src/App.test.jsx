@@ -182,3 +182,12 @@ it("does not highlight discounts for products explicitly out of stock",()=>{
  const unavailable={...sample[0],offers:[{...sample[0].offers[0],availability:"out_of_stock"}]};
  expect(validDeals([unavailable])).toHaveLength(0);
 });
+
+it("offers Google login and translates the provider button",async()=>{
+ vi.stubGlobal("fetch",vi.fn(async url=>({ok:true,json:async()=>url==="/api/auth/me"?
+  {enabled:true,provider:"google",loginUrl:"http://localhost:8000/api/auth/login",user:null}:url==="/api/notebooks"?sample:[]})));
+ render(<App/>);
+ expect(await screen.findByRole("link",{name:"Continuar con Google"})).toHaveAttribute("href","http://localhost:8000/api/auth/login");
+ fireEvent.click(screen.getByRole("button",{name:"Switch to English"}));
+ expect(screen.getByRole("link",{name:"Continue with Google"})).toBeInTheDocument();
+});

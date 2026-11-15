@@ -18,7 +18,7 @@ foreach ($command in @("node", "npm.cmd", "deno")) {
 $configuration = Join-Path $root "backend\.env"
 if (-not (Test-Path $configuration)) {
     Copy-Item (Join-Path $root "backend\.env.example") $configuration
-    Write-Host "Microsoft login is not configured. Run .\scripts\configure-sso.ps1 after registering the Entra app."
+    Write-Host "Google login is not configured. Run .\scripts\configure-google-sso.ps1 after registering the Google OAuth app."
 }
 Write-Host "Installing PC Tracker frontend dependencies..."
 Push-Location (Join-Path $root "frontend")

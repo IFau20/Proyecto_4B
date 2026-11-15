@@ -260,7 +260,7 @@ export default function App() {
           onClick={()=>setLocale((v)=>v==="es"?"en":"es")}>{locale==="es"?"EN":"ES"}</button>
         {auth?.enabled && (auth.user
           ? <button className="auth-button" type="button" onClick={logout}>{t("Cerrar sesión")}</button>
-          : <a className="auth-button" href={auth.loginUrl||"/api/auth/login"}>{t("Iniciar sesión")}</a>)}
+          : <a className="auth-button" href={auth.loginUrl||"/api/auth/login"}>{t(auth.provider==="google"?"Continuar con Google":"Iniciar sesión")}</a>)}
         <button type="button" className="theme-toggle" aria-label={theme==="dark"?t("Activar modo claro"):t("Activar modo oscuro")}
           aria-pressed={theme==="dark"} onClick={()=>setTheme((v)=>v==="dark"?"light":"dark")}>
           <span className="theme-toggle-icon" aria-hidden="true">{theme==="dark"?"☀":"☾"}</span>

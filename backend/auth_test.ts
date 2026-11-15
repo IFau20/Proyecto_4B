@@ -67,3 +67,70 @@ Deno.test("malformed tenant or client identifiers do not enable Microsoft login"
  const response=(await auth(new Request("http://localhost:8000/api/auth/me")))!;
  equal((await response.json()).enabled,false);
 });
+
+Deno.test("Google SSO verifies signed tokens, PKCE, rejected claims, session and logout",async()=>{
+ const {createAuthHandler}=await import("./auth.ts");
+ const config={provider:"google",tenant:"",client:"123456-test.apps.googleusercontent.com",secret:"test-google-secret",origin:"http://localhost:5173",redirect:"http://localhost:8000/api/auth/callback"};
+ const keys=await crypto.subtle.generateKey({name:"RSASSA-PKCS1-v1_5",modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:"SHA-256"},true,["sign","verify"]);
+ const jwk=await crypto.subtle.exportKey("jwk",keys.publicKey);
+ const b64=(s:Uint8Array)=>btoa(String.fromCharCode(...s)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+ const encode=(obj:unknown)=>b64(new TextEncoder().encode(JSON.stringify(obj)));
+ let nonce="",challenge="",invalidClaim="",tokenCalls=0;
+ const auth=createAuthHandler(()=>config,(async(url,init)=>{
+  if(String(url)==="https://oauth2.googleapis.com/token"){
+   tokenCalls++;
+   const body=init?.body as URLSearchParams;
+   equal(body.get("client_id"),config.client);equal(body.get("client_secret"),config.secret);
+   equal(body.get("redirect_uri"),config.redirect);
+   equal(b64(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(body.get("code_verifier")!)))),challenge);
+   const claims:Record<string,unknown>={iss:"https://accounts.google.com",aud:config.client,nonce,exp:Math.floor(Date.now()/1000)+600,sub:"google-test-sub",name:"Google User",email:"google@example.invalid",email_verified:true};
+   if(invalidClaim==="issuer")claims.iss="https://evil.invalid";
+   if(invalidClaim==="audience")claims.aud="another-client";
+   if(invalidClaim==="nonce")claims.nonce="wrong-nonce";
+   if(invalidClaim==="expiry")claims.exp=0;
+   if(invalidClaim==="authorized-party")claims.azp="another-client";
+   const signed=encode({alg:"RS256",kid:"google-key"})+"."+encode(claims);
+   const signature=new Uint8Array(await crypto.subtle.sign("RSASSA-PKCS1-v1_5",keys.privateKey,new TextEncoder().encode(signed)));
+   if(invalidClaim==="signature")signature[0]^=1;
+   return Response.json({id_token:signed+"."+b64(signature)});
+  }
+  if(String(url)==="https://www.googleapis.com/oauth2/v3/certs")return Response.json({keys:[{...jwk,kid:"google-key"}]});
+  throw Error("Unexpected Google endpoint: "+url);
+ }) as typeof fetch);
+ const status=await (await auth(new Request("http://localhost:8000/api/auth/me")))!.json();
+ equal(status.enabled,true);equal(status.provider,"google");
+ const start=async()=>{
+  const response=(await auth(new Request("http://localhost:8000/api/auth/login")))!;
+  equal(response.status,302);
+  const location=new URL(response.headers.get("Location")!);
+  equal(location.origin,"https://accounts.google.com");equal(location.pathname,"/o/oauth2/v2/auth");
+  equal(location.searchParams.get("scope"),"openid profile email");
+  nonce=location.searchParams.get("nonce")!;challenge=location.searchParams.get("code_challenge")!;
+  return {callback:config.redirect+"?code=test-code&state="+location.searchParams.get("state"),cookie:response.headers.get("Set-Cookie")!.split(";")[0]};
+ };
+ const first=await start();
+ equal((await auth(new Request(first.callback)))!.status,400);equal(tokenCalls,0);
+ const attempt=await start();
+ const callback=(await auth(new Request(attempt.callback,{headers:{Cookie:attempt.cookie}})))!;
+ equal(callback.status,302);equal(callback.headers.get("Location"),config.origin);
+ const cookie=callback.headers.get("Set-Cookie")!.split(";")[0];
+ const user=await (await auth(new Request(config.redirect.replace("callback","me"),{headers:{Cookie:cookie}})))!.json();
+ equal(user.user.email,"google@example.invalid");equal(user.user.name,"Google User");
+ equal((await auth(new Request(attempt.callback,{headers:{Cookie:attempt.cookie}})))!.status,400);
+ await auth(new Request(config.redirect.replace("callback","logout"),{method:"POST",headers:{Cookie:cookie,Origin:config.origin}}));
+ equal((await (await auth(new Request(config.redirect.replace("callback","me"),{headers:{Cookie:cookie}})))!.json()).user,null);
+ for(const claim of ["issuer","audience","nonce","expiry","authorized-party","signature"]){
+  invalidClaim=claim;const next=await start();
+  equal((await auth(new Request(next.callback,{headers:{Cookie:next.cookie}})))!.status,401,claim);
+ }
+});
+
+Deno.test("missing Google credentials and unknown providers cannot enable sign-in",async()=>{
+ const {createAuthHandler}=await import("./auth.ts");
+ for(const change of [{client:""},{secret:""},{client:"not-a-web-client"},{provider:"unknown"}]){
+  const config={provider:"google",tenant:"",client:"123-test.apps.googleusercontent.com",secret:"test",origin:"http://localhost:5173",redirect:"http://localhost:8000/api/auth/callback",...change};
+  const handler=createAuthHandler(()=>config);
+  equal((await (await handler(new Request("http://localhost:8000/api/auth/me")))!.json()).enabled,false);
+  equal((await handler(new Request("http://localhost:8000/api/auth/login")))!.status,503);
+ }
+});
