@@ -4,6 +4,7 @@ import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
+import { proxyNotebookImage } from "./images.ts";
 import { NOTEBOOKS } from "./notebooks.ts";
 import { historyWithFallback } from "./solotodoHistory.ts";
 
@@ -18,7 +19,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores") {
+  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -48,6 +49,12 @@ export async function handleRequest(request: Request): Promise<Response> {
       console.error("Unable to persist observed prices", error);
     }
     return Response.json(computer, { headers: corsHeaders });
+  }
+
+  if (pathname === "/api/notebook-image") {
+    const sku=new URL(request.url).searchParams.get("sku")??"";
+    if(!/^[A-Za-z0-9_.#-]{1,100}$/.test(sku))return new Response("Invalid SKU",{status:400});
+    return proxyNotebookImage(sku,await getNotebooks());
   }
 
   if (pathname === "/api/stores") return Response.json(await getStores(), { headers: corsHeaders });
