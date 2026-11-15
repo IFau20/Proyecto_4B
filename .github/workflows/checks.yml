@@ -48,3 +48,7 @@ jobs:
         working-directory: backend
         run: deno task check:live
         continue-on-error: true
+      - name: Probe HP 250R across four sellers (informational)
+        working-directory: backend
+        run: deno task check:hp
+        continue-on-error: true
