@@ -1,0 +1,59 @@
+// Publicly listed locations and hours. Physical inventory is never inferred from the address.
+export const STORES = [
+  {
+    sourceId: "centrale", name: "Centrale", kind: "office",
+    address: "Av. Los Leones 1707, piso 11, Providencia, Santiago, Chile",
+    lat: -33.4349, lon: -70.6017,
+    contactUrl: "https://centrale.cl/contacto/",
+    weekly: {1:["09:00","17:45"],2:["09:00","17:45"],3:["09:00","17:45"],4:["09:00","17:45"],5:["09:00","17:45"]},
+    addressPhrase: "los leones 1707", hourPhrases:["09:00","17:45"],
+  },
+  {
+    sourceId: "spdigital", name: "SP Digital", kind: "pickup",
+    address: "Padre Mariano 356, Providencia, Santiago, Chile",
+    lat: -33.42419, lon: -70.61829,
+    contactUrl: "https://www.spdigital.cl/myaccount/directions/",
+    weekly: {1:["09:00","18:30"],2:["09:00","18:30"],3:["09:00","18:30"],4:["09:00","18:30"],5:["09:00","18:00"]},
+    addressPhrase: "padre mariano", hourPhrases:["09:00","18:30","18:00"],
+  },
+  {
+    sourceId: "winpy", name: "Winpy", kind: "pickup",
+    address: "Av. Antonio Varas 2223, Ñuñoa, Santiago, Chile",
+    lat: -33.4478, lon: -70.611,
+    contactUrl: "https://www.winpy.cl/retiros-y-despachos",
+    weekly: {1:["09:00","19:00"],2:["09:00","19:00"],3:["09:00","19:00"],4:["09:00","19:00"],5:["09:00","18:00"]},
+    addressPhrase: "antonio varas 2223", hourPhrases:["09:00","19:00","18:00"],
+  },
+];
+const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+export function verifyHours(html: string, store: (typeof STORES)[number]) {
+  const content=normalize(html.replace(/<[^>]*>/g," ").replace(/\s+/g," "));
+  return content.includes(store.addressPhrase) &&
+    store.hourPhrases.every((time)=>content.includes(time)) &&
+    /lunes|martes|miercoles|jueves|viernes/.test(content);
+}
+export function distanceKm(lat1:number,lon1:number,lat2:number,lon2:number) {
+  const r=Math.PI/180;
+  const x=Math.sin((lat2-lat1)*r/2)**2+Math.cos(lat1*r)*Math.cos(lat2*r)*Math.sin((lon2-lon1)*r/2)**2;
+  return 12742*Math.asin(Math.min(1,Math.sqrt(x)));
+}
+let cached: Awaited<ReturnType<typeof checkStores>> | null=null;
+let cachedAt=0;
+export async function checkStores(fetcher:typeof fetch=fetch,now=Date.now()) {
+  return await Promise.all(STORES.map(async (store)=>{
+    let scheduleVerified=false;
+    try {
+      const response=await fetcher(store.contactUrl,{signal:AbortSignal.timeout(6000),headers:{Accept:"text/html"}});
+      if(response.ok) scheduleVerified=verifyHours(await response.text(),store);
+    } catch { /* unverified, not an assertion of current opening */ }
+    const {addressPhrase:_a,hourPhrases:_h,...publicInfo}=store;
+    return {...publicInfo,scheduleVerified,checkedAt:new Date(now).toISOString()};
+  }));
+}
+export async function getStores() {
+  const now=Date.now();
+  if(cached && now-cachedAt<30*60*1000) return cached;
+  const result=await checkStores();
+  cached=result;cachedAt=now;
+  return result;
+}

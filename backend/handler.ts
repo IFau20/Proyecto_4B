@@ -1,5 +1,6 @@
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
+import { getStores } from "./stores.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,7 +11,7 @@ const corsHeaders = {
 export async function handleRequest(request: Request): Promise<Response> {
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/history") {
+  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/history" && pathname !== "/api/stores") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -34,6 +35,8 @@ export async function handleRequest(request: Request): Promise<Response> {
     }
     return Response.json(computer, { headers: corsHeaders });
   }
+
+  if (pathname === "/api/stores") return Response.json(await getStores(), { headers: corsHeaders });
 
   if (pathname === "/api/history") {
     const sku = new URL(request.url).searchParams.get("sku") ?? "";
