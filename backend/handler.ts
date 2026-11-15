@@ -1,3 +1,4 @@
+import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
@@ -9,6 +10,8 @@ const corsHeaders = {
 };
 
 export async function handleRequest(request: Request): Promise<Response> {
+  const authResponse = await handleAuth(request);
+  if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
   if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/history" && pathname !== "/api/stores") {
