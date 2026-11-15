@@ -96,3 +96,20 @@ Deno.test("parallel price-source pipeline keeps the catalog real and marks unava
  equal(products.every(p=>p.isLive&&p.verification.verifiedPrices===0),true);
  equal(products.every(p=>!p.offers.some(o=>Number.isSafeInteger(o.priceClp))),true);
 });
+
+Deno.test("generic catalog scraper reads exact-SKU CLP JSON-LD stock and prices",()=>{
+ const sku="90NR0MU3-M00910";
+ const payload=JSON.stringify({"@context":"https://schema.org","@type":"Product",sku,
+  offers:{priceCurrency:"CLP",price:899990,availability:"https://schema.org/InStock"}});
+ const html="<h1>"+sku+"</h1><script type=\"application/ld+json\">"+payload+"</script>";
+ const result=parseStorePage(html,sku,"some-real-store");
+ equal(result.priceClp,899990);
+ equal(result.availability,"in_stock");
+ const invalid=parseStorePage(html.replace("CLP","USD"),sku,"some-real-store");
+ equal(invalid.priceClp,null);
+});
+Deno.test("card-only Ripley prices are not treated as normal offers",()=>{
+ const sku="83JC0080CL";
+ const r=parseStorePage("<h1>"+sku+"</h1> Normal $1.399.990 T. Crédito $899.990",sku,"ripley");
+ equal(r.priceClp,null);
+});

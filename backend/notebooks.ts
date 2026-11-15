@@ -1,4 +1,5 @@
 import {mapWithConcurrency} from "./concurrency.ts";
+import {parseRetailOffer} from "./liveSources.ts";
 import { publicHistory } from "./solotodoHistory.ts";
 import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -197,6 +198,16 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
       if(ordinary){priceClp=parsedMoney(ordinary[2]);listPriceClp=parsedMoney(ordinary[3]);}
     }
     if(/Sin stock|Producto agotado|Justo se agot[oó]/i.test(text)) availability="out_of_stock";
+  }
+  // Many retailers publish standardized product JSON-LD even when their visible
+  // price layout differs. Only accept it after exact SKU and CLP validation.
+  const structured=parseRetailOffer(html,sku,sourceId);
+  priceClp??=structured.priceClp;
+  if(availability==="unknown")availability=structured.availability;
+  // A known card-only price never becomes the unrestricted advertised price.
+  if(sourceId==="ripley"&&/T\.\s*Cr[eé]dito/i.test(text) &&
+     !/Precio internet|Precio oferta|Precio normal pagado sin tarjeta/i.test(text)){
+    priceClp=structured.priceClp;
   }
   return {...empty,priceClp,listPriceClp,discountPercent:calcDiscount(priceClp,listPriceClp),availability};
 }
