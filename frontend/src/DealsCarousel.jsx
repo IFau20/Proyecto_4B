@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import NotebookImage from "./NotebookImage.jsx";
 const money=(n)=>"$"+Number(n).toLocaleString("es-CL");
 export default function DealsCarousel({deals,loading,t,locale}) {
   const [index,setIndex]=useState(0);
@@ -13,9 +14,9 @@ export default function DealsCarousel({deals,loading,t,locale}) {
     {deal ? <div className="deal-content" key={deal.product.sku+deal.offer.sourceId}>
       <div className="deal-top"><span className="deal-badge">-{deal.discount}%</span>
         <span>{deal.isReference?t("Oferta publicada · vigencia por confirmar"):t("Oferta publicada")}</span></div>
-      <img src={deal.product.imageUrl} alt={deal.product.name} className="deal-product-image"/>
+      <NotebookImage product={deal.product} className="deal-product-image" loading="eager"/>
       <h2>{deal.product.name}</h2>
-      <p className="deal-source">{deal.offer.sourceName}{deal.offer.paymentCondition?" · "+deal.offer.paymentCondition:""}</p>
+      <p className="deal-source">{deal.offer.sourceName}</p>
       <div className="deal-prices"><strong>{money(deal.priceClp)}</strong><s>{money(deal.listPriceClp)}</s></div>
       <a href={deal.offer.url} target="_blank" rel="noopener noreferrer" className="deal-link">
         {t("Ver oferta en tienda")}

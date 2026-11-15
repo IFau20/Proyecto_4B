@@ -55,3 +55,6 @@
 :root[data-theme="dark"] .history-axis-text {fill:#bdd1e7;}
 :root[data-theme="dark"] .full-history-chart {--chart-bg:#162940;}
 :root[data-theme="dark"] .history-explorer a {color:#9ac7ff;}
+
+.feature-panel,.trend-card,.store-card,.feature-button,.history-presets button,
+.history-date-inputs input,.store-links a {border-radius:7px;}

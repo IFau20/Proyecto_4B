@@ -21,7 +21,7 @@ const labelStatus = (status, t) => ({
   preorder: t("Reserva"), unknown: t("Sin verificar"),
 })[status || "unknown"];
 
-function PriceHistory({sku,profileUrl,t,locale}) {
+function PriceHistory({sku,t,locale}) {
   const [history,setHistory]=useState(null);
   const [error,setError]=useState(false);
   useEffect(()=>{
@@ -41,8 +41,10 @@ function PriceHistory({sku,profileUrl,t,locale}) {
     </div></div>
     {error&&<p role="alert" className="feature-note">{t("No se pudo consultar el historial.")}</p>}
     {!error&&!history&&<p className="feature-note">{t("Cargando historial…")}</p>}
-    {history&&<PriceHistoryChart key={sku} history={history} profileUrl={profileUrl} t={t} locale={locale}/>}
-    <p className="feature-footnote">{t("No se inventan precios anteriores: únicamente se registran precios obtenidos en consultas reales.")}</p>
+    {history&&<PriceHistoryChart key={sku} history={history} t={t} locale={locale}/>}
+    {history && <p className="feature-footnote">{history.source==="solotodo_public"
+      ? t("Historial público de SoloTodo: precios y fechas atribuidos a su fuente.")
+      : t("Historial propio de PC Tracker; se construye con precios reales registrados.")}</p>}
   </section>;
 }
 
@@ -122,7 +124,7 @@ export default function FeaturesPanel({ liveComputer, t, locale }) {
   if (!liveComputer) return null;
   return (
     <div className="extra-features container">
-      <PriceHistory sku={liveComputer.sku} profileUrl={liveComputer.profileUrl} t={t} locale={locale}/>
+      <PriceHistory sku={liveComputer.sku} t={t} locale={locale}/>
       <StoreLocator offers={liveComputer.offers} t={t} locale={locale}/>
     </div>
   );

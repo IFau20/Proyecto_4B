@@ -8,7 +8,7 @@ export function inDateRange(point,from,to) {
   const end=to?Date.parse(to+"T23:59:59"):Infinity;
   return Number.isFinite(date)&&date>=start&&date<=end;
 }
-export default function PriceHistoryChart({history,profileUrl,t,locale}) {
+export default function PriceHistoryChart({history,t,locale}) {
   const [days,setDays]=useState("all");
   const [from,setFrom]=useState("");
   const [to,setTo]=useState("");
@@ -63,7 +63,7 @@ export default function PriceHistoryChart({history,profileUrl,t,locale}) {
                 fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round"/>}
               {source.visible.map((point,i)=><circle key={i} cx={coords[i].x} cy={coords[i].y}
                 r="5" fill={color} stroke="var(--chart-bg,#fff)" strokeWidth="2">
-                  <title>{source.sourceId+" · "+money(point.priceClp)+" · "+formatDate(point.checkedAt,locale)}</title>
+                  <title>{(source.sourceName||source.sourceId)+" · "+money(point.priceClp)+" · "+formatDate(point.checkedAt,locale)}</title>
                 </circle>)}
             </g>;
           })}
@@ -75,12 +75,12 @@ export default function PriceHistoryChart({history,profileUrl,t,locale}) {
         <input type="checkbox" checked={!hidden.includes(source.sourceId)}
           onChange={(e)=>setHidden((current)=>e.target.checked?current.filter(x=>x!==source.sourceId):[...current,source.sourceId])}/>
         <span className="history-dot" style={{background:COLORS[i%COLORS.length]}}/>
-        {source.sourceId}
+        {source.sourceName||source.sourceId}
       </label>)}
     </div>}
     {sources.length>0 && <div className="history-summary">
       {sources.map((source)=><article className="trend-card" key={source.sourceId}>
-        <h3>{source.sourceId}</h3>
+        <h3>{source.sourceName||source.sourceId}</h3>
         {source.visible.length ? <>
           <p>{t("Último precio observado")}: <strong>{money(source.visible.at(-1).priceClp)}</strong></p>
           <p>{t("Mínimo registrado")}: {money(Math.min(...source.visible.map(p=>p.priceClp)))}</p>
@@ -94,9 +94,6 @@ export default function PriceHistoryChart({history,profileUrl,t,locale}) {
           </table></> : <p>{t("Sin datos en este período.")}</p>}
       </article>)}
     </div>}
-    {profileUrl && profileUrl.includes("/products/") && <p className="feature-footnote">
-      <a href={profileUrl} target="_blank" rel="noopener noreferrer">{t("Consultar historial anterior en SoloTodo")}</a>
-      {" · "}{t("Enlace externo, no se copia su base histórica.")}
-    </p>}
+
   </div>;
 }

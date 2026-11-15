@@ -64,3 +64,21 @@ it("includes only recent sourced retailer markdowns as reference offers",()=>{
  expect(validDeals([source],new Date("2026-12-01T12:00:00Z"))).toHaveLength(0);
  expect(validDeals([source],new Date("2026-11-14T12:00:00Z"))).toHaveLength(0);
 });
+
+it("ignores bank-card-only discounts and prices in featured deals",()=>{
+ const card={...sample[0],offers:[{...sample[0].offers[0],
+   paymentCondition:"Tarjeta Cencosud",listPriceClp:800000,priceClp:500000}]};
+ expect(validDeals([card])).toHaveLength(0);
+ const named={...sample[0],offers:[{...sample[0].offers[0],
+   sourceName:"Ripley · tarjeta de crédito"}]};
+ expect(validDeals([named])).toHaveLength(0);
+});
+it("shows a small referential label without verification counts",async()=>{
+ const reference={...sample[0],offers:[{sourceId:"shop",sourceName:"Shop",
+   url:"https://shop.test/item",priceClp:null,referencePriceClp:560000,availability:"unknown"}]};
+ fetch.mockImplementation(async url=>({ok:true,json:async()=>url==="/api/notebooks"?[reference]:[]}));
+ render(<App/>);
+ expect(await screen.findByText("Precio referencial")).toBeInTheDocument();
+ expect(screen.queryByText(/precios verificados/i)).not.toBeInTheDocument();
+ expect(screen.queryByText(/NOTEBOOK/)).not.toBeInTheDocument();
+});

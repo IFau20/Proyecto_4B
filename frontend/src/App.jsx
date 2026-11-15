@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import CatalogFilters from "./CatalogFilters.jsx";
 import FeaturesPanel from "./FeaturesPanel.jsx";
 import DealsCarousel from "./DealsCarousel.jsx";
+import NotebookImage from "./NotebookImage.jsx";
 import { translate } from "./i18n.js";
 import { filterComputers, getFilterOptions } from "./catalogFilters.js";
 import { getPriceComparison } from "./priceComparison.js";
@@ -15,9 +16,15 @@ function initialTheme() {
   } catch { /* Storage can be disabled. */ }
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
+export function hasSpecialCondition(offer) {
+  return Boolean(String(offer.paymentCondition || "").trim()) ||
+    /tarjeta|cencosud|convenio|membres[ií]a|suscripci[oó]n|cup[oó]n|club|precio exclusivo/i
+      .test(String(offer.sourceName || "")+" "+String(offer.condition || ""));
+}
 export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
   return products.flatMap((product) => (product.offers || [])
     .flatMap((offer) => {
+      if(hasSpecialCondition(offer))return [];
       const verifiedLive = Number.isSafeInteger(offer.priceClp) && Number.isSafeInteger(offer.listPriceClp);
       const price=verifiedLive?offer.priceClp:offer.referencePriceClp;
       const normal=verifiedLive?offer.listPriceClp:offer.referenceNormalPriceClp;
@@ -32,9 +39,10 @@ export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
     }))
     .sort((a,b)=>b.discount-a.discount);
 }
-function ProductCard({ product, index, t, onHistory, locale }) {
+function ProductCard({ product, t, onHistory, locale }) {
   const [expanded, setExpanded] = useState(false);
-  const comparison = getPriceComparison(product.offers || []);
+  const standardOffers=(product.offers||[]).filter(offer=>!hasSpecialCondition(offer));
+  const comparison = getPriceComparison(standardOffers);
   const verified = comparison.offers.filter((offer) => offer.priceClp !== null).length;
   const referencePrices = comparison.offers.filter((offer) => Number.isSafeInteger(offer.referencePriceClp));
   const referenceMin = referencePrices.length ? Math.min(...referencePrices.map((offer) => offer.referencePriceClp)) : null;
@@ -42,19 +50,13 @@ function ProductCard({ product, index, t, onHistory, locale }) {
   return (
     <article className="computer-card">
       <div className="computer-visual product-photo">
-        <span className="model-index">{String(index + 1).padStart(2, "0")} / NOTEBOOK</span>
-        {product.imageUrl
-          ? <img src={product.imageUrl} alt={product.name} loading="lazy" referrerPolicy="no-referrer"/>
-          : <div className="photo-unavailable"><span aria-hidden="true">▣</span><p>{t("Imagen aún no disponible")}</p></div>}
+        <NotebookImage product={product} className="notebook-photo"/>
       </div>
       <div className="computer-details">
-        <p className="card-eyebrow">{product.sku}</p>
         <h3>{product.name.replace(/\s*\([^)]*\)/g,"")}</h3>
         <p className="price">{shownPrice===null ? t("Precio no verificado") : money(shownPrice)}
-          {comparison.lowestPrice!==null && <span>{t("Precio observado · CLP")}</span>}
           {comparison.lowestPrice===null && referenceMin!==null &&
-            <span>{t("Precio publicado de referencia · confirmar vigencia")}</span>}
-          <small className="price-coverage">{verified} {locale==="es"?"de":"of"} {comparison.offers.length} {t("precios verificados")}</small>
+            <small className="reference-label">{t("Precio referencial")}</small>}
         </p>
         <dl className="specification-list">
           <div><dt>RAM</dt><dd>{product.ramGb} GB</dd></div>
@@ -80,7 +82,7 @@ function ProductCard({ product, index, t, onHistory, locale }) {
                 offer.availability==="preorder" ? t("Stock publicado: reserva") : t("Stock sin verificar")}</span>
               {offer.discountPercent>=20 && offer.listPriceClp>offer.priceClp &&
                 <span className="retailer-discount">-{offer.discountPercent}% · <s>{money(offer.listPriceClp)}</s></span>}
-              {offer.referenceDiscountPercent>=20 && offer.priceClp===null &&
+              {offer.referenceDiscountPercent>=20 && offer.priceClp===null && !hasSpecialCondition(offer) &&
                 <span className="retailer-discount">-{offer.referenceDiscountPercent}% · {t("descuento publicado de referencia")}</span>}
               {offer.paymentCondition && offer.priceClp===null &&
                 <span className="offer-extra">{offer.paymentCondition}</span>}
@@ -199,7 +201,7 @@ export default function App() {
                 onClick={()=>setFilters({search:"",minRam:"",gpu:"",processor:""})}>{t("Limpiar filtros")}</button>
             </div>}
           {status==="ready" && visible.length>0 && <div className="computer-grid">
-            {visible.map((product,index)=><ProductCard key={product.sku} product={product} index={index}
+            {visible.map((product)=><ProductCard key={product.sku} product={product}
               t={t} locale={locale} onHistory={chooseHistory}/>)}
           </div>}
         </div>

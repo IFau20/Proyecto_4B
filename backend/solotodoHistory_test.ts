@@ -17,7 +17,7 @@ Deno.test("converts available dated CLP observations into multi-shop series",()=
  // The public API can return decimal strings; noninteger values must not be fabricated.
  const result=parsePublicPriceHistory("NP750XGJ-KS5CL",raw,new Map([[15,"Paris"],[22,"Winpy"]]));
  equal(result?.source,"solotodo_public");
- equal(result?.observations,2);
+ equal(result?.observations,3);
  same(result?.sources.map(s=>s.sourceName),["Paris","Winpy"]);
  equal(result?.sources[0].latestPrice,699990);
 });

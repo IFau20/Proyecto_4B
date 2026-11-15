@@ -254,3 +254,30 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 :root[data-theme="dark"] .history-button {color:#c2e2ff;border-color:#6f98bd;}
 :root[data-theme="dark"] .history-button:hover {background:#244466;}
 @media(max-width:700px) {.deals-carousel{min-height:310px}.deal-product-image{height:130px}.hero-chips{flex-wrap:wrap}.hero-chips span{padding:9px 11px}}
+
+/* Compact, squared-off cards and full-bleed notebook photography. */
+.computer-card,.catalog-filters,.filter-field input,.filter-field select,.compare-button,
+.history-button,.offer-row,.feature-product-picker select,.deals-carousel,.deal-link,
+.deal-badge,.theme-toggle,.locale-toggle,.auth-button,.result-count,.clear-filters,
+.state-panel,.photo-unavailable {border-radius:7px;}
+.computer-visual.product-photo {height:218px;padding:6px;isolation:isolate;}
+.product-photo .notebook-photo {display:block;width:100%;height:100%;max-height:none;padding:0;
+  object-fit:contain;position:relative;z-index:1;}
+.product-photo .photo-unavailable {width:100%;height:100%;display:grid;place-items:center;position:relative;}
+.computer-details {padding:17px 18px 19px;}
+.computer-details h3 {min-height:0;margin:0 0 3px;line-height:1.3;font-size:15px;}
+.computer-details .price {margin:5px 0 13px;line-height:1.12;min-height:0;font-size:23px;}
+.reference-label {display:block;font:500 10px 'DM Sans',Arial,sans-serif;letter-spacing:0;
+ color:#8b9bb1;margin-top:5px;}
+:root[data-theme="dark"] .reference-label {color:#b3c9e0;}
+.deals-carousel {min-height:435px;padding:18px;}
+.deal-content {flex:1;gap:7px;}
+.deal-content .deal-product-image {width:100%;max-width:100%;height:235px;object-fit:contain;
+ padding:0;background:transparent;border-radius:5px;}
+.deal-content .photo-unavailable {height:220px;}
+.deal-controls button {border-radius:7px;}
+@media(max-width:700px) {
+ .computer-visual.product-photo {height:225px;}
+ .deals-carousel {min-height:400px;}
+ .deal-content .deal-product-image {height:200px;}
+}

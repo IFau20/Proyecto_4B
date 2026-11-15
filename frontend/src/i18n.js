@@ -1,4 +1,8 @@
 export const english = {
+  "Precio referencial": "Reference price",
+  "Historial público de SoloTodo: precios y fechas atribuidos a su fuente.": "Public SoloTodo history: prices and dates attributed to the source.",
+  "Historial propio de PC Tracker; se construye con precios reales registrados.": "PC Tracker history is built from actual recorded prices.",
+
   "Precio publicado de referencia · confirmar vigencia": "Published reference price · verify current offer",
   "referencia": "reference",
   "descuento publicado de referencia": "published reference markdown",
