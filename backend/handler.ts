@@ -1,3 +1,4 @@
+import { getNotebooks, collectNotebookHistory } from "./notebooks.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -15,7 +16,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores") {
+  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -51,7 +52,7 @@ export async function handleRequest(request: Request): Promise<Response> {
 
   if (pathname === "/api/history") {
     const sku = new URL(request.url).searchParams.get("sku") ?? "";
-    if (!/^[\w-]{1,100}$/.test(sku)) {
+    if (!/^[A-Za-z0-9_.#-]{1,100}$/.test(sku)) {
       return Response.json({ error: "Invalid SKU" }, { status: 400, headers: corsHeaders });
     }
     try {
@@ -62,13 +63,14 @@ export async function handleRequest(request: Request): Promise<Response> {
     }
   }
 
-  try {
-    const contents = await Deno.readTextFile(new URL("./data/computers.json", import.meta.url));
-    return new Response(contents, {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
-    });
-  } catch {
-    return new Response("Unable to load computers", { status: 500, headers: corsHeaders });
+  if (pathname === "/api/notebooks") {
+    try {
+      const notebooks = await getNotebooks();
+      return Response.json(notebooks, {headers:corsHeaders});
+    } catch (error) {
+      console.error("Notebook catalog unavailable", error);
+      return Response.json({error:"Catalog unavailable"},{status:503,headers:corsHeaders});
+    }
   }
+  return new Response("Not found", {status:404,headers:corsHeaders});
 }

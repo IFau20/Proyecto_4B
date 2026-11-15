@@ -23,3 +23,11 @@ Deno.test("history trend requires multiple dated observations", () => {
   equal(summary.sources[0].minPrice,900000);
   equal(summarizePriceHistory(history,"other").observations,0);
 });
+
+Deno.test("history accepts manufacturer SKUs containing hash and dots",()=>{
+ const h=mergePricePoints({version:1,points:[]},[
+  {sku:"DB9V5AT#ABM",sourceId:"winpy",priceClp:559968,checkedAt:"2026-11-15T12:00:00Z"},
+  {sku:"NH.DADAL.002.1",sourceId:"acer",priceClp:739990,checkedAt:"2026-11-15T12:00:00Z"}
+ ]);
+ equal(h.points.length,2);
+});

@@ -121,7 +121,9 @@ async function fetchSource(model:typeof NOTEBOOKS[number],source:{sourceId:strin
 let catalogCache:Awaited<ReturnType<typeof buildNotebooks>>|null=null;
 let cacheAt=0, pending:Promise<Awaited<ReturnType<typeof buildNotebooks>>>|null=null;
 export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) {
-  const [lenovo,hp]=await Promise.allSettled([getLiveProduct(),getHpProduct()]);
+  const [lenovo,hp]=fetcher===fetch
+    ? await Promise.allSettled([getLiveProduct(),getHpProduct()])
+    : await Promise.allSettled([Promise.resolve(null),Promise.resolve(null)]);
   const base=NOTEBOOKS.map((model,index)=>({
     id:"notebook-"+index,sku:model.sku,name:model.name,ramGb:model.ramGb,
     gpu:model.gpu,processor:model.processor,isLive:true,
@@ -132,10 +134,10 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   const tasks:Promise<void>[]=[];
   for(let i=0;i<NOTEBOOKS.length;i++){
     const model=NOTEBOOKS[i];
-    if(model.kind==="legacy"&&lenovo.status==="fulfilled"){
-      base[i].offers=lenovo.value.offers.map(({referencePriceClp:_r,...offer}:any)=>offer);
-    } else if(model.kind==="hp"&&hp.status==="fulfilled"){
-      base[i].offers=hp.value.offers.map(({referencePriceClp:_r,referenceType:_rt,...offer}:any)=>offer);
+    if("kind" in model && model.kind==="legacy" && lenovo.status==="fulfilled" && lenovo.value){
+      base[i].offers=lenovo.value!.offers.map(({referencePriceClp:_r,...offer}:any)=>offer);
+    } else if("kind" in model && model.kind==="hp" && hp.status==="fulfilled" && hp.value){
+      base[i].offers=hp.value!.offers.map(({referencePriceClp:_r,referenceType:_rt,...offer}:any)=>offer);
     } else if("sources" in model && model.sources.length){
       tasks.push(Promise.all(model.sources.map(source=>fetchSource(model,source,fetcher,time)))
         .then(offers=>{base[i].offers=offers;}).catch(()=>{}));

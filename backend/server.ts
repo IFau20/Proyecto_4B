@@ -2,11 +2,13 @@ import { handleRequest } from "./handler.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { saveObservations } from "./history.ts";
+import { collectNotebookHistory } from "./notebooks.ts";
 
 const port = Number(Deno.env.get("PORT") ?? 8000);
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
 async function collectVerifiedPrices() {
+  await collectNotebookHistory();
   for (const fetchProduct of [getLiveProduct, getHpProduct]) {
     try {
       const product = await fetchProduct();

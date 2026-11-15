@@ -8,7 +8,7 @@ let writeQueue: Promise<void> = Promise.resolve();
 export function mergePricePoints(existing: PriceHistory, entries: PricePoint[]): PriceHistory {
   const merged = [...existing.points];
   for (const point of entries) {
-    if (!point || !/^[\w-]{1,100}$/.test(point.sku) || !/^[\w-]{1,100}$/.test(point.sourceId) ||
+    if (!point || !/^[A-Za-z0-9_.#-]{1,100}$/.test(point.sku) || !/^[A-Za-z0-9_.#-]{1,100}$/.test(point.sourceId) ||
         !Number.isSafeInteger(point.priceClp) || point.priceClp <= 0 ||
         !Number.isFinite(Date.parse(point.checkedAt))) continue;
     const last = [...merged].reverse().find((previous) =>
