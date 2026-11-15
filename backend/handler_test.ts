@@ -32,3 +32,8 @@ Deno.test("preview endpoint responds with a real catalog without external price 
  assertEquals(payload.length,48);
  assertEquals(payload.every((p:{sku:string;isLive:boolean})=>p.sku&&p.isLive),true);
 });
+
+Deno.test("calendar endpoint rejects an impossible date",async()=>{
+ const result=await handleRequest(new Request("http://localhost:8000/api/holidays?date=2026-02-30"));
+ assertEquals(result.status,400);
+});

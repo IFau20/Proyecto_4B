@@ -4,6 +4,7 @@ import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
+import {holidayOn,validChileanDate} from "./holidays.ts";
 import { geocodeStoreLocations } from "./storeGeocoding.ts";
 import { proxyNotebookImage } from "./images.ts";
 import { NOTEBOOKS } from "./notebooks.ts";
@@ -20,7 +21,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image") {
+  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image" && pathname !== "/api/holidays") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -62,6 +63,14 @@ export async function handleRequest(request: Request): Promise<Response> {
     const result=await getStores();
     const geocode=new URL(request.url).searchParams.get("nearby")==="1";
     return Response.json(geocode?await geocodeStoreLocations(result):result,{headers:corsHeaders});
+  }
+
+  if (pathname === "/api/holidays") {
+    const date=new URL(request.url).searchParams.get("date")??"";
+    if(!validChileanDate(date))return Response.json({error:"Invalid date"},{status:400,headers:corsHeaders});
+    try{return Response.json({date,holiday:await holidayOn(date)},
+      {headers:{...corsHeaders,"Cache-Control":"public, max-age=3600"}});}
+    catch{return Response.json({date,holiday:null,status:"calendar_unavailable"},{headers:corsHeaders});}
   }
 
   if (pathname === "/api/history") {
