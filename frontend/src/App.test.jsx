@@ -82,3 +82,12 @@ it("shows a small referential label without verification counts",async()=>{
  expect(screen.queryByText(/precios verificados/i)).not.toBeInTheDocument();
  expect(screen.queryByText(/NOTEBOOK/)).not.toBeInTheDocument();
 });
+
+it("keeps a store's regular 20-percent discount even when a separate card-only rate exists",()=>{
+ const deal={...sample[0],offers:[{
+   ...sample[0].offers[0],priceClp:629990,listPriceClp:869990,
+   paymentCondition:"Tarjeta Cencosud",standardPriceClp:629990,cardPriceClp:624990
+ }]};
+ expect(validDeals([deal])).toHaveLength(1);
+ expect(validDeals([deal])[0].priceClp).toBe(629990);
+});

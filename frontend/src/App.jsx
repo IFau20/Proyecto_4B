@@ -17,7 +17,7 @@ function initialTheme() {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 export function hasSpecialCondition(offer) {
-  return Boolean(String(offer.paymentCondition || "").trim()) ||
+  return Boolean(String(offer.paymentCondition || "").trim()) && !Number.isSafeInteger(offer.standardPriceClp) ||
     /tarjeta|cencosud|convenio|membres[ií]a|suscripci[oó]n|cup[oó]n|club|precio exclusivo/i
       .test(String(offer.sourceName || "")+" "+String(offer.condition || ""));
 }

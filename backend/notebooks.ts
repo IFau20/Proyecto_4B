@@ -53,7 +53,7 @@ const PUBLIC_REFERENCES: Record<string, Record<string, {
   priceClp:number; normalPriceClp?:number; observedOn?:string; condition?:string;
 }>> = {
   "NP750XGJ-KS5CL":{
-    paris2:{priceClp:624990,normalPriceClp:869990,observedOn:"2026-11-15",condition:"Tarjeta Cencosud"}
+    paris2:{priceClp:629990,normalPriceClp:869990,observedOn:"2026-11-15"}
   },
   "D0CJ4LA":{
     ripley:{priceClp:439990,normalPriceClp:549990,condition:"Tarjeta de crédito Ripley"},
@@ -131,10 +131,15 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     if(/Despacho a domicilio\s+Disponible/i.test(text))availability="in_stock";
   } else if(sourceId==="paris"||sourceId==="paris2"){
     // Only accept page prices when model appears in the same published product document.
-    const after=/(\d{1,2})%\s*\$?\s*([\d.]+)\s*\$?\s*([\d.]+)/i.exec(text);
-    if(after) {
-      priceClp=parsedMoney(after[2]);
-      listPriceClp=parsedMoney(after[3]);
+    // Ignore the bank-card figure and capture the following unrestricted
+    // retailer price + normal price. Never present the card-only price as a deal.
+    const cardThenRegular=/Precio exclusivo pagando con Tarjeta[^$]*\$\s*[\d.]+\s*\d{1,2}%\s*\$\s*([\d.]+)\s*\$\s*([\d.]+)/i.exec(text);
+    if(cardThenRegular){
+      priceClp=parsedMoney(cardThenRegular[1]);
+      listPriceClp=parsedMoney(cardThenRegular[2]);
+    } else if(!/Precio exclusivo pagando con Tarjeta/i.test(text)){
+      const ordinary=/(\d{1,2})%\s*\$\s*([\d.]+)\s*\$\s*([\d.]+)/i.exec(text);
+      if(ordinary){priceClp=parsedMoney(ordinary[2]);listPriceClp=parsedMoney(ordinary[3]);}
     }
     if(/Sin stock|Producto agotado|Justo se agot[oó]/i.test(text)) availability="out_of_stock";
   }

@@ -37,3 +37,12 @@ Deno.test("Ripley 20 percent card discount is sourced from marked same-store nor
  equal(offer.discountPercent,20);
  equal(offer.availability,"in_stock");
 });
+
+Deno.test("Paris keeps unrestricted discount but excludes the additional card discount",()=>{
+ const html='<h1>Galaxy Book4 NP750XGJ-KS5CL</h1>28% $624.990 '+
+ 'Precio exclusivo pagando con Tarjeta Cencosud Scotiabank 27% $629.990 $869.990';
+ const result=parseStorePage(html,"NP750XGJ-KS5CL","paris2");
+ equal(result.priceClp,629990);
+ equal(result.listPriceClp,869990);
+ equal(result.discountPercent,28);
+});
