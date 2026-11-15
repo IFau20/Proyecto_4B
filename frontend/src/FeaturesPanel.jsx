@@ -135,6 +135,7 @@ function StoreLocator({offers,t,locale}) {
       </div>
     </div>}
   </section>;
+}
 
 export default function FeaturesPanel({ liveComputer, t, locale }) {
   if (!liveComputer) return null;
