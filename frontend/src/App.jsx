@@ -19,7 +19,7 @@ export function validDeals(products) {
   return products.flatMap((product) => (product.offers || [])
     .filter((offer) => Number.isSafeInteger(offer.priceClp) &&
       Number.isSafeInteger(offer.listPriceClp) && offer.listPriceClp > offer.priceClp &&
-      Math.round(100 * (offer.listPriceClp - offer.priceClp) / offer.listPriceClp) >= 20 &&
+      (offer.listPriceClp - offer.priceClp) / offer.listPriceClp >= 0.20 &&
       offer.availability !== "out_of_stock" && !!product.imageUrl)
     .map((offer) => ({
       product, offer, discount: Math.round(100 * (offer.listPriceClp - offer.priceClp) / offer.listPriceClp)

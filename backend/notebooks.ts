@@ -57,7 +57,7 @@ function productIdentifierPresent(html:string,sku:string) {
 export function calcDiscount(price:number|null,normal:number|null) {
   if (!price||!normal||!Number.isSafeInteger(price)||!Number.isSafeInteger(normal)||price>=normal) return null;
   const pct=Math.round((normal-price)*100/normal);
-  return pct>=20 && pct<=90?pct:null;
+  return (normal-price)/normal>=0.20 && (normal-price)/normal<=0.90 ? pct : null;
 }
 function metaImage(html:string,baseUrl:string) {
   const tags=html.match(/<meta\b[^>]+>/gi)||[];
