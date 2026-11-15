@@ -1,3 +1,4 @@
+import { getHpProduct } from "./hpSources.ts";
 import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
@@ -14,7 +15,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/history" && pathname !== "/api/stores") {
+  if (pathname !== "/api/computers" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -27,6 +28,13 @@ export async function handleRequest(request: Request): Promise<Response> {
       status: 405,
       headers: { ...corsHeaders, Allow: "GET, OPTIONS" },
     });
+  }
+
+  if (pathname === "/api/live-comparisons-hp") {
+    const computer=await getHpProduct();
+    try { await saveObservations(computer.sku,computer.offers); }
+    catch (error) { console.error("Unable to persist HP price history",error); }
+    return Response.json(computer,{headers:corsHeaders});
   }
 
   if (pathname === "/api/live-comparisons") {
