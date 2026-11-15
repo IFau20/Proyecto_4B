@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import PriceHistoryChart from "./PriceHistoryChart.jsx";
 
 const EARTH_RADIUS_KM = 6371;
 export function kilometersBetween(a, b) {
@@ -20,68 +21,29 @@ const labelStatus = (status, t) => ({
   preorder: t("Reserva"), unknown: t("Sin verificar"),
 })[status || "unknown"];
 
-function PriceHistory({ sku, t, locale }) {
-  const [history, setHistory] = useState(null);
-  const [error, setError] = useState(false);
-  useEffect(() => {
-    if (!sku) return;
-    const controller = new AbortController();
-    fetch("/api/history?sku=" + encodeURIComponent(sku), { signal: controller.signal })
-      .then((response) => { if (!response.ok) throw Error("History failed"); return response.json(); })
-      .then((data) => { if (!controller.signal.aborted) setHistory(data); })
-      .catch(() => { if (!controller.signal.aborted) setError(true); });
-    return () => controller.abort();
-  }, [sku]);
-
-  return (
-    <section className="feature-panel" aria-labelledby="history-heading">
-      <div className="feature-heading">
-        <div>
-          <p className="feature-eyebrow">{t("SEGUIMIENTO DE PRECIOS")}</p>
-          <h2 id="history-heading">{t("Historial de precios")}</h2>
-        </div>
-      </div>
-      {error && <p className="feature-note">{t("No se pudo consultar el historial.")}</p>}
-      {!error && !history && <p className="feature-note">{t("Cargando historial…")}</p>}
-      {!error && history && history.observations === 0 &&
-        <p className="feature-note">{t("Todavía no hay observaciones verificadas. El historial comenzará con la primera consulta de precio real.")}</p>}
-      {!error && history && history.observations > 0 &&
-        <div className="history-grid">
-          {history.sources.map((source) => {
-            const prices = source.points.map((point) => point.priceClp);
-            const low = Math.min(...prices), high = Math.max(...prices);
-            const width = 560, height = 150, padding = 22;
-            const span = Math.max(1, high - low);
-            const coordinates = source.points.map((point, index) => {
-              const x = padding + index * (width - 2 * padding) / Math.max(1, source.points.length - 1);
-              const y = height - padding - (point.priceClp - low) * (height - 2 * padding) / span;
-              return x.toFixed(2) + "," + y.toFixed(2);
-            }).join(" ");
-            return (
-              <article className="trend-card" key={source.sourceId}>
-                <h3>{source.sourceId}</h3>
-                <p>{t("Último precio observado")}: <strong>{money(source.latestPrice)}</strong></p>
-                <p>{t("Mínimo registrado")}: {money(source.minPrice)}</p>
-                <p>{t("Variación observada")}: {source.points.length > 1
-                  ? (source.changeClp > 0 ? "+" : "") + money(source.changeClp)
-                  : t("Se necesitan dos observaciones")}</p>
-                {source.points.length > 1 &&
-                  <svg className="trend-chart" role="img" aria-label={t("Evolución del precio")} viewBox={"0 0 " + width + " " + height}>
-                    <polyline fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" points={coordinates} />
-                  </svg>}
-                <table className="trend-table">
-                  <thead><tr><th>{t("Fecha")}</th><th>{t("Precio CLP")}</th></tr></thead>
-                  <tbody>{source.points.slice(-6).map((point, index) =>
-                    <tr key={index}><td>{dateTime(point.checkedAt, locale)}</td><td>{money(point.priceClp)}</td></tr>)}
-                  </tbody>
-                </table>
-              </article>
-            );
-          })}
-        </div>}
-      <p className="feature-footnote">{t("No se inventan precios anteriores: únicamente se registran precios obtenidos en consultas reales.")}</p>
-    </section>
-  );
+function PriceHistory({sku,profileUrl,t,locale}) {
+  const [history,setHistory]=useState(null);
+  const [error,setError]=useState(false);
+  useEffect(()=>{
+    if(!sku)return;
+    setHistory(null);setError(false);
+    const controller=new AbortController();
+    fetch("/api/history?sku="+encodeURIComponent(sku),{signal:controller.signal})
+      .then(r=>{if(!r.ok)throw Error("History unavailable");return r.json();})
+      .then(data=>{if(!controller.signal.aborted)setHistory(data);})
+      .catch(()=>{if(!controller.signal.aborted)setError(true);});
+    return()=>controller.abort();
+  },[sku]);
+  return <section className="feature-panel" aria-labelledby="history-heading">
+    <div className="feature-heading"><div>
+      <p className="feature-eyebrow">{t("SEGUIMIENTO DE PRECIOS")}</p>
+      <h2 id="history-heading">{t("Historial de precios")}</h2>
+    </div></div>
+    {error&&<p role="alert" className="feature-note">{t("No se pudo consultar el historial.")}</p>}
+    {!error&&!history&&<p className="feature-note">{t("Cargando historial…")}</p>}
+    {history&&<PriceHistoryChart key={sku} history={history} profileUrl={profileUrl} t={t} locale={locale}/>}
+    <p className="feature-footnote">{t("No se inventan precios anteriores: únicamente se registran precios obtenidos en consultas reales.")}</p>
+  </section>;
 }
 
 function StoreLocator({ offers, t, locale }) {
@@ -160,7 +122,7 @@ export default function FeaturesPanel({ liveComputer, t, locale }) {
   if (!liveComputer) return null;
   return (
     <div className="extra-features container">
-      <PriceHistory sku={liveComputer.sku} t={t} locale={locale}/>
+      <PriceHistory sku={liveComputer.sku} profileUrl={liveComputer.profileUrl} t={t} locale={locale}/>
       <StoreLocator offers={liveComputer.offers} t={t} locale={locale}/>
     </div>
   );

@@ -1,4 +1,13 @@
 export const english = {
+  "Período": "Period",
+  "Todo": "All",
+  "Desde": "From",
+  "Hasta": "To",
+  "No hay observaciones reales para este período.": "No real observations in this period.",
+  "Evolución de precios por tienda": "Price changes by retailer",
+  "Sin datos en este período.": "No data in this period.",
+  "Consultar historial anterior en SoloTodo": "See earlier history on SoloTodo",
+  "Enlace externo, no se copia su base histórica.": "External link; its historic records are not copied.",
   "Imagen aún no disponible": "Image temporarily unavailable",
   "Precio no verificado": "Price unverified",
   "Precio observado · CLP": "Observed price · CLP",

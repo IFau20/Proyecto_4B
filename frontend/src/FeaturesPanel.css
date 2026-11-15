@@ -30,3 +30,28 @@
 :root[data-theme="dark"] .feature-button {background:#243e5b;border-color:#6285af;color:#d6e9ff;}
 :root[data-theme="dark"] .store-links a {color:#a0cbff;}
 @media(max-width:700px) {.feature-panel{padding:18px}.feature-heading{align-items:flex-start;}}
+
+/* Source-based historical chart and time-range filters */
+.history-options {display:flex;flex-wrap:wrap;justify-content:space-between;gap:15px;align-items:center;}
+.history-presets {display:flex;flex-wrap:wrap;gap:6px;}
+.history-presets button {border:1px solid #bfd2e8;border-radius:8px;background:transparent;padding:8px 11px;color:inherit;font-size:12px;cursor:pointer;}
+.history-presets button.active {background:#266cb6;color:#fff;border-color:#266cb6;}
+.history-date-inputs {display:flex;flex-wrap:wrap;gap:9px;}
+.history-date-inputs label {font-weight:700;font-size:11px;color:#527193;}
+.history-date-inputs input {display:block;padding:7px;border:1px solid #a9bfda;border-radius:7px;margin-top:5px;max-width:150px;}
+.full-history-chart {width:100%;height:auto;min-height:200px;margin:16px 0;--chart-bg:#fff;}
+.history-grid-line {stroke:#cbd8ea;stroke-width:1;}
+.history-axis-text {fill:#647a95;font-size:11px;}
+.history-legend {display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+.history-legend label {display:flex;gap:5px;align-items:center;font-size:12px;cursor:pointer;}
+.history-dot {display:inline-block;width:10px;height:10px;border-radius:50%;}
+.history-summary {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:16px;}
+.history-explorer a {color:#3879c2;text-decoration:underline;}
+:root[data-theme="dark"] .history-presets button {border-color:#5b7695;color:#d2e4fb;}
+:root[data-theme="dark"] .history-presets button.active {background:#316fae;color:#fff;}
+:root[data-theme="dark"] .history-date-inputs label {color:#c5d5eb;}
+:root[data-theme="dark"] .history-date-inputs input {background:#152a43;color:#e7f4ff;border-color:#5b7392;}
+:root[data-theme="dark"] .history-grid-line {stroke:#354d68;}
+:root[data-theme="dark"] .history-axis-text {fill:#bdd1e7;}
+:root[data-theme="dark"] .full-history-chart {--chart-bg:#162940;}
+:root[data-theme="dark"] .history-explorer a {color:#9ac7ff;}
