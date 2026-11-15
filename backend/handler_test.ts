@@ -37,3 +37,8 @@ Deno.test("calendar endpoint rejects an impossible date",async()=>{
  const result=await handleRequest(new Request("http://localhost:8000/api/holidays?date=2026-02-30"));
  assertEquals(result.status,400);
 });
+
+Deno.test("branch stock refuses unknown notebook codes",async()=>{
+ const response=await handleRequest(new Request("http://localhost:8000/api/branch-stock?sku=NOT-REAL"));
+ assertEquals(response.status,404);
+});

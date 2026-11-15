@@ -4,6 +4,7 @@ import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { readHistory, saveObservations, summarizePriceHistory } from "./history.ts";
 import { getStores } from "./stores.ts";
+import {branchStockForSku} from "./branchStock.ts";
 import {holidayOn,validChileanDate} from "./holidays.ts";
 import { geocodeStoreLocations } from "./storeGeocoding.ts";
 import { proxyNotebookImage } from "./images.ts";
@@ -21,7 +22,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image" && pathname !== "/api/holidays") {
+  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image" && pathname !== "/api/holidays" && pathname !== "/api/branch-stock") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -63,6 +64,13 @@ export async function handleRequest(request: Request): Promise<Response> {
     const result=await getStores();
     const geocode=new URL(request.url).searchParams.get("nearby")==="1";
     return Response.json(geocode?await geocodeStoreLocations(result):result,{headers:corsHeaders});
+  }
+
+  if (pathname === "/api/branch-stock") {
+    const sku=new URL(request.url).searchParams.get("sku")??"";
+    if(!NOTEBOOKS.some(n=>n.sku===sku))return Response.json({error:"Unknown SKU"},{status:404,headers:corsHeaders});
+    return Response.json({sku,records:await branchStockForSku(sku)},{
+      headers:{...corsHeaders,"Cache-Control":"private, max-age=60"}});
   }
 
   if (pathname === "/api/holidays") {
