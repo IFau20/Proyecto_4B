@@ -78,7 +78,7 @@ Documentación oficial: https://learn.microsoft.com/en-us/graph/auth-register-ap
 
 ## Configurar en tu PC
 
-Después de actualizar `develop`, desde la carpeta del proyecto:
+Después de actualizar `main`, desde la carpeta del proyecto:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\configure-sso.ps1"
