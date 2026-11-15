@@ -15,21 +15,29 @@ function initialTheme() {
   } catch { /* Storage can be disabled. */ }
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
-export function validDeals(products) {
+export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
   return products.flatMap((product) => (product.offers || [])
-    .filter((offer) => Number.isSafeInteger(offer.priceClp) &&
-      Number.isSafeInteger(offer.listPriceClp) && offer.listPriceClp > offer.priceClp &&
-      (offer.listPriceClp - offer.priceClp) / offer.listPriceClp >= 0.20 &&
-      offer.availability !== "out_of_stock" && !!product.imageUrl)
-    .map((offer) => ({
-      product, offer, discount: Math.round(100 * (offer.listPriceClp - offer.priceClp) / offer.listPriceClp)
-    })))
-    .sort((a,b) => b.discount - a.discount);
+    .flatMap((offer) => {
+      const verifiedLive = Number.isSafeInteger(offer.priceClp) && Number.isSafeInteger(offer.listPriceClp);
+      const price=verifiedLive?offer.priceClp:offer.referencePriceClp;
+      const normal=verifiedLive?offer.listPriceClp:offer.referenceNormalPriceClp;
+      const recentlyPublished=!verifiedLive && offer.referenceObservedOn &&
+        Math.abs(now.getTime()-Date.parse(offer.referenceObservedOn+"T12:00:00Z"))<=7*86400000;
+      if(!Number.isSafeInteger(price)||!Number.isSafeInteger(normal)||normal<=price ||
+        (normal-price)/normal<0.20||offer.availability==="out_of_stock"||
+        !product.imageUrl||(!verifiedLive&&!recentlyPublished)) return [];
+      return [{product,offer,discount:Math.round(100*(normal-price)/normal),
+        priceClp:price,listPriceClp:normal,isReference:!verifiedLive}];
+    }))
+    .sort((a,b)=>b.discount-a.discount);
 }
 function ProductCard({ product, index, t, onHistory, locale }) {
   const [expanded, setExpanded] = useState(false);
   const comparison = getPriceComparison(product.offers || []);
   const verified = comparison.offers.filter((offer) => offer.priceClp !== null).length;
+  const referencePrices = comparison.offers.filter((offer) => Number.isSafeInteger(offer.referencePriceClp));
+  const referenceMin = referencePrices.length ? Math.min(...referencePrices.map((offer) => offer.referencePriceClp)) : null;
+  const shownPrice = comparison.lowestPrice ?? referenceMin;
   return (
     <article className="computer-card">
       <div className="computer-visual product-photo">
@@ -41,8 +49,10 @@ function ProductCard({ product, index, t, onHistory, locale }) {
       <div className="computer-details">
         <p className="card-eyebrow">{product.sku}</p>
         <h3>{product.name.replace(/\s*\([^)]*\)/g,"")}</h3>
-        <p className="price">{comparison.lowestPrice===null ? t("Precio no verificado") : money(comparison.lowestPrice)}
+        <p className="price">{shownPrice===null ? t("Precio no verificado") : money(shownPrice)}
           {comparison.lowestPrice!==null && <span>{t("Precio observado · CLP")}</span>}
+          {comparison.lowestPrice===null && referenceMin!==null &&
+            <span>{t("Precio publicado de referencia · confirmar vigencia")}</span>}
           <small className="price-coverage">{verified} {locale==="es"?"de":"of"} {comparison.offers.length} {t("precios verificados")}</small>
         </p>
         <dl className="specification-list">
@@ -62,17 +72,22 @@ function ProductCard({ product, index, t, onHistory, locale }) {
               <a href={product.profileUrl} target="_blank" rel="noopener noreferrer">{t("Consultar ficha del modelo")}</a>}</p>}
             <ul className="offer-list">{comparison.offers.map((offer) => <li key={offer.sourceId} className="offer-row">
               <span className="offer-source"><a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a></span>
-              <strong className="offer-price">{offer.priceClp===null?t("No verificado"):money(offer.priceClp)}</strong>
+              <strong className="offer-price">{offer.priceClp!==null?money(offer.priceClp):offer.referencePriceClp!=null
+                ? money(offer.referencePriceClp)+" ("+t("referencia")+")":t("No verificado")}</strong>
               <span className="offer-extra">{offer.availability==="in_stock" ? t("Stock publicado: disponible") :
                 offer.availability==="out_of_stock" ? t("Stock publicado: agotado") :
                 offer.availability==="preorder" ? t("Stock publicado: reserva") : t("Stock sin verificar")}</span>
               {offer.discountPercent>=20 && offer.listPriceClp>offer.priceClp &&
                 <span className="retailer-discount">-{offer.discountPercent}% · <s>{money(offer.listPriceClp)}</s></span>}
+              {offer.referenceDiscountPercent>=20 && offer.priceClp===null &&
+                <span className="retailer-discount">-{offer.referenceDiscountPercent}% · {t("descuento publicado de referencia")}</span>}
+              {offer.paymentCondition && offer.priceClp===null &&
+                <span className="offer-extra">{offer.paymentCondition}</span>}
               {offer.checkedAt && <time className="checked-at" dateTime={offer.checkedAt}>
                 {t("Consulta:")} {new Date(offer.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}
               </time>}
             </li>)}</ul>
-            <p className="demo-sources-note">{t("Los datos sin verificar no se completan con estimaciones.")}</p>
+            <p className="demo-sources-note">{t("Los valores de referencia provienen de publicaciones comerciales; pueden estar desactualizados y nunca se cuentan como precios verificados.")}</p>
           </div>}
         </div>
         <button type="button" className="history-button" onClick={() => onHistory(product.sku)}>
@@ -96,7 +111,7 @@ export default function App() {
   const visible = filterComputers(notebooks,filters);
   const options = getFilterOptions(notebooks);
   const selected = notebooks.find((product) => product.sku===selectedSku) || notebooks[0] || null;
-  const deals=validDeals(notebooks);
+  const deals=validDeals(notebooks,new Date());
 
   useEffect(() => {
     document.documentElement.dataset.theme=theme;

@@ -51,3 +51,15 @@ describe("real notebook storefront",()=>{
   expect(document.documentElement).toHaveAttribute("lang","en");
  });
 });
+
+it("includes only recent sourced retailer markdowns as reference offers",()=>{
+ const source={...sample[0],offers:[
+   {sourceId:"paris2",sourceName:"Paris",url:"https://paris.cl/test",
+     priceClp:null,referencePriceClp:624990,referenceNormalPriceClp:869990,
+     referenceObservedOn:"2026-11-15",availability:"unknown"}
+ ]};
+ const found=validDeals([source],new Date("2026-11-15T12:00:00Z"));
+ expect(found).toHaveLength(1);
+ expect(found[0].isReference).toBe(true);
+ expect(validDeals([source],new Date("2026-12-01T12:00:00Z"))).toHaveLength(0);
+});

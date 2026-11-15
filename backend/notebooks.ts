@@ -45,6 +45,35 @@ export const NOTEBOOKS = [
     profileUrl:"https://www.solotodo.cl/products/391295-hp-omen-hyperx-15-ga0001la-d62w3la" },
 ] as const;
 
+
+// References are actual prices published by the linked retailers, not live scraper results.
+// Only the dated, recent Paris offer is eligible for the carousel as a published promotion.
+// Other reference values are unverified and may have changed. Never save them as historical observations.
+const PUBLIC_REFERENCES: Record<string, Record<string, {
+  priceClp:number; normalPriceClp?:number; observedOn?:string; condition?:string;
+}>> = {
+  "NP750XGJ-KS5CL":{
+    paris2:{priceClp:624990,normalPriceClp:869990,observedOn:"2026-11-15",condition:"Tarjeta Cencosud"}
+  },
+  "D0CJ4LA":{
+    ripley:{priceClp:439990,normalPriceClp:549990,condition:"Tarjeta de crédito Ripley"},
+    spdigital:{priceClp:842800,normalPriceClp:1040890}
+  },
+  "82XM00M4CL":{spdigital:{priceClp:804450,normalPriceClp:993520}},
+  "BA1U9LA":{spdigital:{priceClp:1296230}},
+  "CH8Z6LA":{spdigital:{priceClp:1699990}},
+  "83LY003NCL":{
+    winpy:{priceClp:2681280},
+    spdigital:{priceClp:2849990},
+    falabella:{priceClp:2299990}
+  },
+  "DB9V5AT#ABM":{
+    winpy:{priceClp:559968},
+    pcexpress:{priceClp:539900},
+    spdigital:{priceClp:877530}
+  }
+};
+
 function parsedMoney(value: string) {
   const cleaned=value.trim().replace(/[\s$]/g,"");
   if (!/^\d{1,3}(?:\.\d{3})+(?:,\d{2})?$/.test(cleaned) &&
@@ -155,6 +184,21 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
     }
   }
   await Promise.all(tasks);
+  // Unverified published references are attached separately; they never populate priceClp.
+  for(const notebook of base){
+    const references=PUBLIC_REFERENCES[notebook.sku]??{};
+    notebook.offers=notebook.offers.map((offer:any)=>{
+      const published=references[offer.sourceId];
+      if(!published)return offer;
+      const percentage=published.normalPriceClp
+        ? calcDiscount(published.priceClp,published.normalPriceClp) : null;
+      return {...offer,referencePriceClp:published.priceClp,
+        referenceNormalPriceClp:published.normalPriceClp??null,
+        referenceDiscountPercent:percentage,
+        referenceObservedOn:published.observedOn??null,
+        paymentCondition:published.condition??null};
+    });
+  }
   // Image metadata never constitutes evidence of a price or product discount.
   const photos=base.map(async (p)=>{
     p.imageUrl=p.offers.find(o=>o.imageUrl)?.imageUrl??null;
