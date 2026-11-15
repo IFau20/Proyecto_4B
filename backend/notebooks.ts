@@ -18,12 +18,17 @@ export const NOTEBOOKS = [
   { sku:"82XM00M4CL", name:"Lenovo IdeaPad Slim 3 15ABR8", ramGb:16, gpu:"AMD Radeon Graphics", processor:"AMD Ryzen 7 5825U", sources:[
     retailer("spdigital","SP Digital","https://www.spdigital.cl/lv-ideapad-slim-3-gen-8-r7-5825u-16gb-512gb-156-fhd-tretroiluminado-abyss-blue/"),
     retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-lenovo-ideapad-slim-3-de-15-6-ryzen-7-5825u-16gb-ram-512gb-ssd-win11/")
-  ], profileUrl:"https://www.solotodo.cl/notebooks" },
+  ], profileUrl:"https://www.solotodo.cl/products/269594-lenovo-ideapad-slim-3-15abr8-82xm00m4cl" },
   { sku:"BA1U9LA", name:"HP Victus 15-fb3009la", ramGb:8, gpu:"NVIDIA GeForce RTX 3050", processor:"AMD Ryzen 5 8645HS", sources:[
-    retailer("spdigital","SP Digital","https://www.spdigital.cl/victus-laptop-156-fhd-nt-r58645hs-08gb-512gb-rtx305006gb-win-silver/")
+    retailer("spdigital","SP Digital","https://www.spdigital.cl/victus-laptop-156-fhd-nt-r58645hs-08gb-512gb-rtx305006gb-win-silver/"),
+    retailer("hardwareland","HardwareLand","https://hwland.cl/p/notebook-15-ryzen-5-8gb-512gb-hp-victus-15-fb3009la"),
+    retailer("tecnomas","Tecnomas","https://www.tecnomas.cl/producto/hp-victus-15-fb3009la-ba1u9la")
   ], profileUrl:"https://www.solotodo.cl/products/355283-hp-victus-15-fb3009la-ba1u9la" },
   { sku:"CH8Z6LA", name:"HP Victus 15-fb3036la", ramGb:16, gpu:"NVIDIA GeForce RTX 4050", processor:"AMD Ryzen 7 7445HS", sources:[
-    retailer("spdigital","SP Digital","https://www.spdigital.cl/15-fb3036la-r7-7445h-16gb-1t-156in-w11h/")
+    retailer("spdigital","SP Digital","https://www.spdigital.cl/15-fb3036la-r7-7445h-16gb-1t-156in-w11h/"),
+    retailer("sictienda","SIC Tienda","https://www.sictienda.cl/products/hp-victus-15-fb3036la"),
+    retailer("tecnomas","Tecnomas","https://www.tecnomas.cl/producto/hp-victus-15-fb3036la-ch8z6la"),
+    retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-gamer-hp-victus-15-fb3036la-de-15-6-ryzen-7-7445h-rtx-4050-16gb-ram-1tb-ssd-win11/")
   ], profileUrl:"https://www.solotodo.cl/products/369514-hp-victus-15-fb3036la-ch8z6la" },
   { sku:"NP750XGJ-KS5CL", name:"Samsung Galaxy Book4", ramGb:16, gpu:"Intel Iris Xe Graphics", processor:"Intel Core i5-1335U", sources:[
     retailer("paris","Paris","https://www.paris.cl/samsung-galaxy-book4-i5-156-512gb-16gb-ram-MKRISZTQKN.html"),
