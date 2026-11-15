@@ -80,8 +80,10 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (pathname === "/api/branch-stock") {
     const sku=new URL(request.url).searchParams.get("sku")??"";
     if(!NOTEBOOKS.some(n=>n.sku===sku))return Response.json({error:"Unknown SKU"},{status:404,headers:corsHeaders});
-    return Response.json({sku,records:await branchStockForSku(sku)},{
-      headers:{...corsHeaders,"Cache-Control":"private, max-age=60"}});
+    try{
+      return Response.json({sku,records:await branchStockForSku(sku)},{
+        headers:{...corsHeaders,"Cache-Control":"private, max-age=60"}});
+    }catch{return Response.json({sku,error:"Branch inventory unavailable"},{status:503,headers:corsHeaders});}
   }
 
   if (pathname === "/api/holidays") {

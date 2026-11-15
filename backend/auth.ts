@@ -1,15 +1,16 @@
 // Configurable Microsoft Entra OpenID Connect authorization-code login with PKCE.
 const enc = new TextEncoder();
 const readEnv = (name: string) => { try { return Deno.env.get(name) ?? ""; } catch { return ""; } };
-const settings = () => ({
+export const settings = () => ({
   tenant: readEnv("MICROSOFT_TENANT_ID"),
   client: readEnv("MICROSOFT_CLIENT_ID"),
   secret: readEnv("MICROSOFT_CLIENT_SECRET"),
   origin: readEnv("APP_PUBLIC_ORIGIN") || "http://localhost:5173",
   redirect: readEnv("AUTH_REDIRECT_URI") || "http://localhost:8000/api/auth/callback",
 });
-const enabled = (s: ReturnType<typeof settings>) =>
-  /^[\da-f-]{36}$/i.test(s.tenant) && /^[\da-f-]{36}$/i.test(s.client) && !!s.secret;
+const guid=(value:string)=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)&&
+  value!=="00000000-0000-0000-0000-000000000000";
+const enabled = (s: ReturnType<typeof settings>) => guid(s.tenant)&&guid(s.client)&&!!s.secret.trim();
 const base64 = (bytes: Uint8Array) =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const random = () => base64(crypto.getRandomValues(new Uint8Array(32)));
@@ -23,13 +24,11 @@ const cookie = (request: Request, name: string) =>
 const cookieHeader = (name: string, value: string, request: Request, age: number) =>
   name + "=" + value + "; HttpOnly; SameSite=Lax; Path=/; Max-Age=" + age +
   (new URL(request.url).protocol === "https:" ? "; Secure" : "");
-const pending = new Map<string, { verifier: string; nonce: string; expires: number }>();
-const sessions = new Map<string, { name: string; email: string | null; expires: number }>();
 const seconds = () => Math.floor(Date.now() / 1000);
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
 
-export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>, nonce: string) {
+export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>, nonce: string, fetcher:typeof fetch=fetch) {
   const parts = jwt.split(".");
   if (parts.length !== 3) throw Error("Invalid JWT");
   const header = JSON.parse(new TextDecoder().decode(decode(parts[0])));
@@ -39,7 +38,7 @@ export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>,
       claims.iss !== issuer || claims.aud !== s.client || claims.nonce !== nonce ||
       typeof claims.exp !== "number" || claims.exp <= seconds() ||
       typeof claims.sub !== "string" || !claims.sub) throw Error("Invalid claims");
-  const response = await fetch("https://login.microsoftonline.com/" + s.tenant + "/discovery/v2.0/keys");
+  const response = await fetcher("https://login.microsoftonline.com/" + s.tenant + "/discovery/v2.0/keys",{signal:AbortSignal.timeout(10000),redirect:"error"});
   if (!response.ok) throw Error("Unable to verify issuer");
   const keys = (await response.json()).keys;
   const jwk = keys?.find((item: { kid: string; kty: string }) => item.kid === header.kid && item.kty === "RSA");
@@ -52,10 +51,13 @@ export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>,
   return claims;
 }
 
-export async function handleAuth(request: Request): Promise<Response | null> {
+export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=settings,fetcher:typeof fetch=fetch){
+ const pending = new Map<string, { verifier: string; nonce: string; expires: number }>();
+ const sessions = new Map<string, { name: string; email: string | null; expires: number }>();
+ return async function handleAuth(request: Request): Promise<Response | null> {
   const pathname = new URL(request.url).pathname;
   if (!pathname.startsWith("/api/auth/")) return null;
-  const s = settings();
+  const s = configuration();
   if (pathname === "/api/auth/me" && request.method === "GET") {
     const session = sessions.get(cookie(request, "pct_session"));
     return json({ enabled: enabled(s), loginUrl: new URL("/api/auth/login", s.redirect).href, user: session && session.expires > seconds()
@@ -90,12 +92,13 @@ export async function handleAuth(request: Request): Promise<Response | null> {
         client_id: s.client, client_secret: s.secret, grant_type: "authorization_code",
         code, redirect_uri: s.redirect, code_verifier: challenge.verifier,
       });
-      const response = await fetch("https://login.microsoftonline.com/" + s.tenant + "/oauth2/v2.0/token", {
+      const response = await fetcher("https://login.microsoftonline.com/" + s.tenant + "/oauth2/v2.0/token", {
+        signal:AbortSignal.timeout(10000),redirect:"error",
         method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body,
       });
       if (!response.ok) throw Error("Authorization code failed");
       const tokens = await response.json();
-      const claims = await verifyIdToken(tokens.id_token, s, challenge.nonce);
+      const claims = await verifyIdToken(tokens.id_token, s, challenge.nonce,fetcher);
       const token = random();
       sessions.set(token, {
         name: String(claims.name || claims.preferred_username || "User"),
@@ -117,4 +120,6 @@ export async function handleAuth(request: Request): Promise<Response | null> {
     });
   }
   return json({ error: "Not found" }, 404);
+ };
 }
+export const handleAuth=createAuthHandler();

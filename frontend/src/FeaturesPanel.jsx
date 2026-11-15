@@ -42,6 +42,7 @@ function PriceHistory({sku,t,locale}) {
     {error&&<p role="alert" className="feature-note">{t("No se pudo consultar el historial.")}</p>}
     {!error&&!history&&<p className="feature-note">{t("Cargando historial…")}</p>}
     {history&&<PriceHistoryChart key={sku} history={history} t={t} locale={locale}/>}
+    {history?.archived&&<p className="feature-note">{t("Última observación histórica disponible; no es una cotización actual.")}</p>}
     {history && <p className="feature-footnote">{history.source==="solotodo_public"
       ? t("Historial público de SoloTodo: precios y fechas atribuidos a su fuente.")
       : t("Historial propio de PC Tracker; se construye con precios reales registrados.")}</p>}

@@ -25,3 +25,10 @@ Deno.test("returns no external history when input is empty or invalid",()=>{
  equal(parsePublicPriceHistory("SKU",{}),null);
  equal(parsePublicPriceHistory("SKU",[{entity:{store_id:1},pricing_history:[]}]),null);
 });
+Deno.test("archived price remains visible in history with its original date and external attribution",async()=>{
+ const {historyWithFallback}=await import("./solotodoHistory.ts");
+ const result=await historyWithFallback("NX.KHFAA.002","https://www.solotodo.cl/products/213040-acer",(async()=>new Response("unavailable",{status:503})) as typeof fetch,async()=>({version:1,points:[]}));
+ equal(result.source,"solotodo_public");equal(result.observations,1);
+ equal(result.points[0].checkedAt,"2023-08-21T05:40:56.118Z");
+ equal(result.points[0].priceClp,879990);
+});

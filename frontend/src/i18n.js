@@ -1,4 +1,5 @@
 export const english = {
+ "Última observación histórica disponible; no es una cotización actual.":"Last available historical observation; this is not a current quote.",
  "Precio por transferencia":"Bank transfer price",
  "Cerrada hasta nuevo aviso según la tienda.":"Closed until further notice according to the retailer.",
  "Aviso publicado por la tienda":"Notice published by the retailer",

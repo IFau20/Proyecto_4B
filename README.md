@@ -2,6 +2,12 @@
 
 Proyecto académico de Diseño de Software. **Solo notebooks reales**, identificados por modelo y SKU de fabricante; no se cargan productos ni precios ficticios en la interfaz.
 
+## Actualización de cobertura y acceso
+
+Ver [ampliación de precios y corrección del stock](docs/PRICE_COVERAGE_2026-11-15.md). Se añadieron enlaces comerciales para modelos sin fuentes y precios históricos fechados para cuatro modelos sin oferta vigente recuperable. La consulta de stock descubre tiendas antes de cachear resultados; los fallos se pueden reintentar.
+
+Para habilitar Microsoft, registrar una aplicación Entra y ejecutar `scripts/configure-sso.ps1`. Deno carga `backend/.env` automáticamente. Ver [configuración y comprobación del SSO](docs/SSO.md). Una prueba de código no sustituye un ingreso real con el registro institucional.
+
 ## Funcionalidades
 
 - React + Vite, Deno 2 REST y CSS responsive.

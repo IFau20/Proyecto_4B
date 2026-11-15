@@ -61,6 +61,8 @@ function structuredOffer(html: string, sku: string) {
       const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
       for (const offer of offers) {
         if (!offer || typeof offer !== "object") continue;
+        const condition=String(offer.itemCondition??product.itemCondition??"").split(/[/#]/).pop()?.toLowerCase();
+        if(condition&&condition!=="newcondition")continue;
         if (String(offer.priceCurrency ?? "").toUpperCase() !== "CLP") continue;
         priceClp ??= parseClp(offer.price ?? offer.lowPrice ?? offer.priceSpecification?.price);
         if (availability === "unknown") availability = parseAvailability(offer.availability);
@@ -68,6 +70,26 @@ function structuredOffer(html: string, sku: string) {
     }
   }
   return { priceClp, availability };
+}
+
+// An explicit non-new condition for the exact product also blocks visible-price fallbacks.
+export function nonNewRetailProduct(html:string,sku:string){
+ const expected=sku.split("#")[0].trim().toUpperCase();
+ for(const [,attrs,source] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)){
+  if(!/\btype\s*=\s*["']application\/ld\+json["']/i.test(attrs))continue;
+  let data;try{data=JSON.parse(source);}catch{continue;}
+  for(const product of walkProducts(data)){
+   const ids=[product.sku,product.mpn,product.productID].filter(x=>typeof x==="string")
+    .map(x=>x.split("#")[0].trim().toUpperCase());
+   if(!ids.includes(expected))continue;
+   const offers=Array.isArray(product.offers)?product.offers:[product.offers];
+   for(const condition of [product.itemCondition,...offers.map((o:any)=>o?.itemCondition)]){
+    const value=typeof condition==="string"?condition.split(/[/#]/).pop()?.toLowerCase():"";
+    if(value&&value!=="newcondition")return true;
+   }
+  }
+ }
+ return false;
 }
 
 function visibleText(html: string): string {
@@ -107,6 +129,7 @@ function visibleOffer(html: string, sku: string, sourceId: string) {
 }
 
 export function parseRetailOffer(html: string, sku: string, sourceId = "") {
+  if(nonNewRetailProduct(html,sku))return {priceClp:null,availability:"unknown"};
   if (!html.toUpperCase().includes(sku.split("#")[0].toUpperCase())) {
     return { priceClp: null, availability: "unknown" };
   }

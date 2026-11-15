@@ -1,6 +1,8 @@
+import {ARCHIVED_PRICES} from "./archivedPrices.ts";
+import {ADDITIONAL_RETAILER_LINKS} from "./retailerLinks.ts";
 import {fetchPcFactoryProduct} from "./pcFactory.ts";
 import {mapWithConcurrency} from "./concurrency.ts";
-import {parseRetailOffer} from "./liveSources.ts";
+import {parseRetailOffer,nonNewRetailProduct} from "./liveSources.ts";
 import { publicHistory } from "./solotodoHistory.ts";
 import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -12,6 +14,10 @@ import { savePricePoints } from "./history.ts";
 // listings or SoloTodo product pages. Public aggregator prices are references;
 // only retailer responses can establish directly verified prices and inventory.
 const retailer = (sourceId: string, sourceName: string, url: string) => ({ sourceId, sourceName, url });
+function sourcesForNotebook(model:{sku:string;sources:ReadonlyArray<{sourceId:string;sourceName:string;url:string}>}){
+ return [...new Map([...model.sources,...(ADDITIONAL_RETAILER_LINKS[model.sku]||[])]
+  .map(source=>[source.url,source])).values()];
+}
 export const NOTEBOOKS = [
   { sku:"83JC0080CL", name:"Lenovo LOQ 15ARP9", ramGb:24, gpu:"NVIDIA GeForce RTX 4050", processor:"AMD Ryzen 7 7435HS", kind:"legacy", sources:[], profileUrl:"https://www.solotodo.cl/products/255350-lenovo-loq-15arp9-83jc0080cl" },
   { sku:"DB9V5AT#ABM", name:"HP 250R G10", ramGb:16, gpu:"Intel Graphics", processor:"Intel Core 5 120U", kind:"hp", sources:[], profileUrl:"https://www.solotodo.cl/products/401638-hp-250r-g10-db9v5at" },
@@ -155,6 +161,7 @@ function metaImage(html:string,baseUrl:string) {
 export function parseStorePage(html:string,sku:string,sourceId:string) {
   const empty={ priceClp:null as number|null, listPriceClp:null as number|null,
     discountPercent:null as number|null, availability:"unknown", imageUrl:null as string|null };
+  if(nonNewRetailProduct(html,sku))return empty;
   const structured=parseRetailOffer(html,sku,sourceId);
   if(!productIdentifierPresent(html,sku)) return {...empty,...structured};
   const text=plain(html);
@@ -276,14 +283,14 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
     id:"notebook-"+index,sku:model.sku,name:model.name,ramGb:model.ramGb,
     gpu:model.gpu,processor:model.processor,isLive:true,
     profileUrl:"profileUrl" in model?model.profileUrl:null,
-    imageUrl:null as string|null,historicalPriceClp:null as number|null,
-    historicalObservedAt:null as string|null,offers:[] as any[],verification:null as any
+    imageUrl:null as string|null,historicalPriceClp:ARCHIVED_PRICES[model.sku]?.priceClp??null,
+    historicalObservedAt:ARCHIVED_PRICES[model.sku]?.checkedAt??null,offers:[] as any[],verification:null as any
   }));
   const time=now.toISOString();
   const jobs:Array<{index:number;model:typeof NOTEBOOKS[number];source:{sourceId:string;sourceName:string;url:string}}>=[];
   for(let i=0;i<NOTEBOOKS.length;i++){
     const model=NOTEBOOKS[i];
-    for(const source of model.sources)jobs.push({index:i,model,source});
+    for(const source of sourcesForNotebook(model))jobs.push({index:i,model,source});
   }
   // Price feed and retailer scrapers can run independently. We use separate
   // arrays so price references never overwrite directly checked retailer offers.
@@ -377,7 +384,7 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
 // only the retailer's previously published reference values. No calls to
 // stores, historical APIs or image hosts occur on the critical path.
 const PREVIEW=NOTEBOOKS.map((model,index)=>{
-  const offers=model.sources.map(source=>{
+  const offers=sourcesForNotebook(model).map(source=>{
     const published=PUBLIC_REFERENCES[model.sku]?.[source.sourceId];
     return {
       ...source,
@@ -400,8 +407,8 @@ const PREVIEW=NOTEBOOKS.map((model,index)=>{
     id:"notebook-"+index,sku:model.sku,name:model.name,
     ramGb:model.ramGb,gpu:model.gpu,processor:model.processor,
     isLive:true,profileUrl:model.profileUrl,
-    imageUrl:null as string|null,historicalPriceClp:null as number|null,
-    historicalObservedAt:null as string|null,
+    imageUrl:null as string|null,historicalPriceClp:ARCHIVED_PRICES[model.sku]?.priceClp??null,
+    historicalObservedAt:ARCHIVED_PRICES[model.sku]?.checkedAt??null,
     offers,verification:{totalSources:offers.length,verifiedPrices:0,verifiedStocks:0}
   };
 });
@@ -451,7 +458,8 @@ const RETAILER_HOSTS:Record<string,string>={
  "pcfactory.cl":"pcfactory","simple.ripley.cl":"ripley","paris.cl":"paris",
  "tienda.pc-express.cl":"pcexpress","greenchip.cl":"greenchip","tishop.cl":"tishop",
  "eylstore.cl":"eylstore","kdtec.cl":"kdtec","notebookstore.cl":"notebookstore","falabella.com":"falabella",
- "hp.com":"hp","asus.com":"asus"
+ "hp.com":"hp","asus.com":"asus","tecnomas.cl":"tecnomas","smartdeal.cl":"smartdeal",
+ "ctman.cl":"ctman","bip.cl":"bip","ultrapc.cl":"ultrapc","gamingx.cl":"gamingx","rumbochile.cl":"rumbochile"
 };
 const verifiedNotebookCache=new Map<string,{at:number;result:any}>();
 const pendingVerifications=new Map<string,Promise<any>>();

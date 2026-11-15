@@ -1,10 +1,30 @@
 import {fetchPcFactoryProduct} from "./pcFactory.ts";
 import {STORES} from "./stores.ts";
 import {getNotebookPreview} from "./notebooks.ts";
+import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 export type BranchStock={sourceId:string;sku:string;status:"in_stock"|"out_of_stock";
  quantity:number|null;approximate?:boolean;closedAtCheck?:boolean;checkedAt:string;sourceUrl:string;};
-const cache=new Map<string,{at:number;records:BranchStock[]}>();
-const pending=new Map<string,Promise<BranchStock[]>>();
+const states=new WeakMap<typeof fetch,{
+ cache:Map<string,{at:number;records:BranchStock[]}>;
+ pending:Map<string,Promise<BranchStock[]>>;
+}>();
+type StockNotebook={sku:string;offers:Array<{sourceName?:string;url?:string}>};
+type StockLookup=(sku:string,fetcher:typeof fetch)=>Promise<StockNotebook|null>;
+const pcFactoryUrl=(value:unknown)=>{
+ if(typeof value!=="string")return false;
+ try{const u=new URL(value);return u.protocol==="https:"&&!u.port&&!u.username&&!u.password&&
+  ["pcfactory.cl","www.pcfactory.cl"].includes(u.hostname)&&/^\/producto\/\d+(?:-|\/|$)/.test(u.pathname);
+ }catch{return false;}
+};
+async function resolveStockNotebook(sku:string,fetcher:typeof fetch):Promise<StockNotebook|null>{
+ const known=getNotebookPreview().find(p=>p.sku===sku);
+ if(!known)return null;
+ if(known.offers.some(o=>pcFactoryUrl(o.url)))return known;
+ // Discover just this product; a fast catalog preview is not proof of no stock.
+ const notebook={...known,offers:[...known.offers]};
+ await enrichPublishedNotebookOffers([notebook],fetcher);
+ return notebook;
+}
 const clean=(s:string)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").toLowerCase().trim();
 const visible=(s:string)=>s.replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi," ")
   .replace(/<[^>]*>/g," ").replace(/&nbsp;|&#160;/gi," ").replace(/\s+/g," ").trim();
@@ -44,31 +64,32 @@ export function parseBranchInventory(html:string,sku:string,sourceUrl:string,che
 
  return found;
 }
-export async function branchStockForSku(sku:string,fetcher:typeof fetch=fetch):Promise<BranchStock[]>{
+export async function branchStockForSku(sku:string,fetcher:typeof fetch=fetch,lookup:StockLookup=resolveStockNotebook):Promise<BranchStock[]>{
  if(!/^[A-Za-z0-9_.#-]{1,100}$/.test(sku))return [];
+ let state=states.get(fetcher);
+ if(!state){state={cache:new Map(),pending:new Map()};states.set(fetcher,state);}
+ const {cache,pending}=state;
  const previous=cache.get(sku);
  if(previous&&Date.now()-previous.at<10*60*1000)return previous.records;
  const inProgress=pending.get(sku);
  if(inProgress)return inProgress;
  const work=(async()=>{
-   const notebook=getNotebookPreview().find(p=>p.sku===sku);
+   const notebook=await lookup(sku,fetcher);
    if(!notebook)return [];
-   const urls=[...new Set(notebook.offers.filter(o=>/pc\s*factory/i.test(String(o.sourceName||""))&&
-     typeof o.url==="string").map(o=>o.url as string))].filter(url=>{
-     try{const u=new URL(url);return u.protocol==="https:"&&
-       ["pcfactory.cl","www.pcfactory.cl"].includes(u.hostname);}catch{return false;}
-   }).slice(0,2);
+   const urls=[...new Set(notebook.offers.map(o=>o.url).filter((url):url is string=>pcFactoryUrl(url)))].slice(0,2);
+   if(!urls.length)return [];
    const checkedAt=new Date().toISOString();
    const results=await Promise.all(urls.map(async url=>{
      try{
        const api=await fetchPcFactoryProduct(url,sku,fetcher);
        if(api?.branches.length)return api.branches;
-       const response=await fetcher(url,{signal:AbortSignal.timeout(6000),headers:{Accept:"text/html"}});
+       const response=await fetcher(url,{signal:AbortSignal.timeout(6000),redirect:"error",headers:{Accept:"text/html"}});
        return response.ok?parseBranchInventory(await response.text(),sku,url,checkedAt):[];
      }catch{return [];}
    }));
    const records=[...new Map(results.flat().map(x=>[x.sourceId,x])).values()];
-   cache.set(sku,{at:Date.now(),records});
+   if(!records.length)throw Error("Branch inventory unavailable for this product");
+   if(records.length)cache.set(sku,{at:Date.now(),records});
    return records;
  })().finally(()=>pending.delete(sku));
  pending.set(sku,work);return work;

@@ -160,3 +160,29 @@ Deno.test("retailer redirects cannot leave the approved retailer origin",async()
   new Response(null,{status:301,headers:{Location:"/venta/canonical"}}):new Response(html)) as typeof fetch);
  equal(canonical.verification.verifiedPrices,1);
 });
+Deno.test("newly discovered exact product links are queried even when the aggregator has no offers",async()=>{
+ const fetched:string[]=[];
+ const products=await buildNotebooks((async url=>{
+  fetched.push(String(url));
+  if(String(url).includes("tecnomas.cl/producto/asus-tuf-f16"))return new Response('<h1>90NR0MZ6-M001N0</h1><script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"90NR0MZ6-M001N0",offers:{priceCurrency:"CLP",price:727990,availability:"https://schema.org/OutOfStock"}})+'</script>');
+  if(String(url).includes("/stores/"))return Response.json([]);
+  if(String(url).includes("available_entities"))return Response.json({results:[]});
+  return new Response("unavailable",{status:404});
+ }) as typeof fetch);
+ equal(products.find(p=>p.sku==="90NR0MZ6-M001N0")?.offers.some(o=>o.priceClp===727990&&o.availability==="out_of_stock"),true);
+});
+Deno.test("unavailable old models retain an attributed dated historical amount without creating a live offer",async()=>{
+ const products=await buildNotebooks((async()=>new Response("unavailable",{status:503})) as typeof fetch);
+ const archived=products.find(p=>p.sku==="NX.KHFAA.002")!;
+ equal(archived.historicalPriceClp,879990);
+ equal(archived.historicalObservedAt,"2023-08-21T05:40:56.118Z");
+ equal(archived.offers.some(o=>o.priceClp!==null),false);
+ const preview=getNotebookPreview().find(p=>p.sku==="NX.KHFAA.002")!;
+ equal(preview.historicalPriceClp,879990);
+ equal(preview.verification.verifiedPrices,0);
+});
+Deno.test("visible retailer price cannot override an explicit refurbished product condition",()=>{
+ const sku="83DV016GCL";
+ const html='<h1>Reacondicionado '+sku+'</h1><p>Part number: '+sku+'</p><p>Pago con transferencia $699.990</p><script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku,offers:{itemCondition:"https://schema.org/RefurbishedCondition",priceCurrency:"CLP",price:699990}})+'</script>';
+ equal(parseStorePage(html,sku,"spdigital").priceClp,null);
+});

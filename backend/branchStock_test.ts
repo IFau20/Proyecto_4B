@@ -1,4 +1,4 @@
-import {strictEqual as equal} from "node:assert/strict";
+import {strictEqual as equal,rejects} from "node:assert/strict";
 import {parseBranchInventory,branchStockForSku} from "./branchStock.ts";
 Deno.test("only explicitly labelled branch quantities count as in-store stock",()=>{
  const sku="83JC0080CL";
@@ -40,4 +40,26 @@ Deno.test("branch endpoint falls back to public product API when HTML has no inv
   return new Response("<html>JavaScript product shell</html>");
  }) as typeof fetch);
  equal(records.find(r=>r.sourceId==="pcfactory-montt")?.quantity,12);
+});
+
+Deno.test("a missing discovery result is not cached as ten minutes of no branch stock",async()=>{
+ const sku="D0CJ4LA";
+ let calls=0;
+ const lookup=async()=>{calls++;return calls===1?null:{sku,offers:[{sourceName:"PC Factory",url:"https://www.pcfactory.cl/producto/54123"}]};};
+ const fetcher=(async(url)=>Response.json(String(url).endsWith("/stock")?
+  {id:54123,disponibilidad:[{sucursales:[{id:2,aproximado:"3",retiro:true}]}]}:
+  String(url).endsWith("/precio")?{id:54123,precio:{efectivo:469990}}:{id:54123,partNumber:sku})) as typeof fetch;
+ equal((await branchStockForSku(sku,fetcher,lookup)).length,0);
+ equal((await branchStockForSku(sku,fetcher,lookup))[0]?.quantity,3);
+});
+Deno.test("failed stock requests are retried rather than cached as no inventory",async()=>{
+ const sku="83JE0184CL";let failed=true;
+ const lookup=async()=>({sku,offers:[{url:"https://www.pcfactory.cl/producto/55428"}]});
+ const fetcher=(async(url)=>{
+  if(failed)return new Response("offline",{status:503});
+  return Response.json(String(url).endsWith("/stock")?{id:55428,disponibilidad:[{sucursales:[{id:2,aproximado:"4",retiro:true}]}]}:
+   String(url).endsWith("/precio")?{id:55428,precio:{efectivo:1419990}}:{id:55428,partNumber:sku});
+ }) as typeof fetch;
+ await rejects(()=>branchStockForSku(sku,fetcher,lookup),/inventory|stock/i);failed=false;
+ equal((await branchStockForSku(sku,fetcher,lookup))[0]?.quantity,4);
 });

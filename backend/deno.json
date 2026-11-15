@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-read --allow-write=./data --allow-env=PORT,MICROSOFT_TENANT_ID,MICROSOFT_CLIENT_ID,MICROSOFT_CLIENT_SECRET,APP_PUBLIC_ORIGIN,AUTH_REDIRECT_URI server.ts",
-    "start": "deno run --allow-net --allow-read --allow-write=./data --allow-env=PORT,MICROSOFT_TENANT_ID,MICROSOFT_CLIENT_ID,MICROSOFT_CLIENT_SECRET,APP_PUBLIC_ORIGIN,AUTH_REDIRECT_URI server.ts",
+    "dev": "deno run --env-file=.env --watch --allow-net --allow-read --allow-write=./data --allow-env=PORT,MICROSOFT_TENANT_ID,MICROSOFT_CLIENT_ID,MICROSOFT_CLIENT_SECRET,APP_PUBLIC_ORIGIN,AUTH_REDIRECT_URI server.ts",
+    "start": "deno run --env-file=.env --allow-net --allow-read --allow-write=./data --allow-env=PORT,MICROSOFT_TENANT_ID,MICROSOFT_CLIENT_ID,MICROSOFT_CLIENT_SECRET,APP_PUBLIC_ORIGIN,AUTH_REDIRECT_URI server.ts",
     "test": "deno test --allow-read",
     "check:live": "deno run --allow-net scripts/checkLive.ts",
     "check:hp": "deno run --allow-net scripts/checkHpLive.ts",
@@ -10,6 +10,7 @@
     "audit:images": "deno run --allow-net scripts/checkImages.ts",
     "audit:geocode": "deno run --allow-net scripts/checkStoreGeocoding.ts",
     "audit:rubric": "deno run --allow-net --allow-read scripts/auditRubric.ts",
-    "audit:comparison": "deno run --allow-net --allow-read scripts/checkComparison.ts"
+    "audit:comparison": "deno run --allow-net --allow-read scripts/checkComparison.ts",
+    "auth:status": "deno run --env-file=.env --allow-read --allow-env=MICROSOFT_TENANT_ID,MICROSOFT_CLIENT_ID,MICROSOFT_CLIENT_SECRET,APP_PUBLIC_ORIGIN,AUTH_REDIRECT_URI scripts/checkAuth.ts"
   }
 }

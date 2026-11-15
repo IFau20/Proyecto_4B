@@ -1,3 +1,5 @@
+Actualización posterior: [precios, stock y activación SSO](PRICE_COVERAGE_2026-11-15.md).
+
 # Estado actualizado de la pauta
 
 Ver [implementación, comprobaciones y límites de la entrega](RUBRIC_COMPLETION_2026-11-15.md). La nueva implementación consulta el servicio público de PC Factory para stock físico y precios, extrae horarios del widget oficial y verifica enlaces comerciales al abrir una comparación. SSO real sigue pendiente de configuración institucional.

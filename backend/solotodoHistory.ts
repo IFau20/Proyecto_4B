@@ -1,10 +1,11 @@
+import {ARCHIVED_PRICES} from "./archivedPrices.ts";
 import { readHistory, summarizePriceHistory } from "./history.ts";
 
 // Public SoloTodo price-history API. Requests are on-demand with a six-hour cache;
 // no private sessions, CAPTCHA bypass or bulk imports.
 const API = "https://publicapi.solotodo.com";
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
-const memory = new Map<string, { at: number; result: ReturnType<typeof summarizePriceHistory> }>();
+const memory = new Map<string, { at: number; result: NonNullable<ReturnType<typeof parsePublicPriceHistory>> }>();
 let storeNamesCache:Map<number,string>|null=null;
 let storeNamesAt=0;
 let storeNamesPending:Promise<Map<number,string>>|null=null;
@@ -102,7 +103,7 @@ export async function publicHistory(profileUrl:string, sku:string, fetcher:typeo
 }
 
 export async function historyWithFallback(
-  sku:string, profileUrl:string|null|undefined, fetcher:typeof fetch=fetch,
+  sku:string, profileUrl:string|null|undefined, fetcher:typeof fetch=fetch, readLocal:typeof readHistory=readHistory,
 ) {
   if (getPublicProductId(profileUrl) !== null) {
     const previous=memory.get(sku);
@@ -117,6 +118,12 @@ export async function historyWithFallback(
       console.warn("Public historical source unavailable; using local observations:", error);
     }
   }
-  const local=summarizePriceHistory(await readHistory(),sku);
+  const local=summarizePriceHistory(await readLocal(),sku);
+  const archived=ARCHIVED_PRICES[sku];
+  if(!local.observations&&archived){
+    const result=summarizePriceHistory({version:1,points:[{sku,sourceId:archived.sourceId,
+      priceClp:archived.priceClp,checkedAt:archived.checkedAt}]},sku);
+    return {...result,source:"solotodo_public",archived:true,sources:result.sources.map(s=>({...s,sourceName:s.sourceId}))};
+  }
   return {...local,source:"pc_tracker_local",sources:local.sources.map(s=>({...s,sourceName:s.sourceId}))};
 }

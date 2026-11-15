@@ -36,3 +36,19 @@ Deno.test("promotional savings use reference price rather than current other-pay
  equal(parsePcFactoryProduct(product,price,stock,"83JE0184CL",55428,"now")?.listPriceClp,null);
  equal(parsePcFactoryProduct(product,{...price,precio:{...price.precio,referencia:1599990}},stock,"83JE0184CL",55428,"now")?.listPriceClp,1599990);
 });
+Deno.test("production cache retries stock after a partial product API failure",async()=>{
+ const original=globalThis.fetch;let stockCalls=0;
+ try{
+  globalThis.fetch=(async url=>{
+   const path=String(url);
+   if(path.endsWith("/stock")){
+    stockCalls++;
+    return stockCalls===1?new Response("unavailable",{status:503}):Response.json({id:98765,disponibilidad:[{sucursales:[{id:2,aproximado:"2",retiro:true}]}]});
+   }
+   return Response.json(path.endsWith("/precio")?{id:98765,precio:{efectivo:699990}}:{id:98765,partNumber:"83DV016GCL"});
+  }) as typeof fetch;
+  await fetchPcFactoryProduct("https://www.pcfactory.cl/producto/98765","83DV016GCL");
+  const recovered=await fetchPcFactoryProduct("https://www.pcfactory.cl/producto/98765","83DV016GCL");
+  equal(recovered?.branches[0]?.quantity,2);equal(stockCalls,2);
+ }finally{globalThis.fetch=original;}
+});

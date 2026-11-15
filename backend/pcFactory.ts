@@ -29,7 +29,8 @@ export function parsePcFactoryProduct(product:any,prices:any,stock:any,sku:strin
    }
   }
  }
- return {priceClp:amount(price?.efectivo),listPriceClp:amount(price?.referencia),availability,branches,checkedAt};
+ return {priceClp:amount(price?.efectivo),listPriceClp:amount(price?.referencia),availability,branches,checkedAt,
+  stockVerified:stock?.id===id&&Array.isArray(stock.disponibilidad)};
 }
 type Result=ReturnType<typeof parsePcFactoryProduct>;
 const cache=new Map<string,{at:number;result:Result}>();
@@ -53,7 +54,7 @@ export async function fetchPcFactoryProduct(url:string,sku:string,fetcher:typeof
    // Identity must succeed; price and stock can fail independently.
    const [product,prices,stock]=await Promise.all([get(""),get("/precio").catch(()=>null),get("/stock").catch(()=>null)]);
    const result=parsePcFactoryProduct(product,prices,stock,sku,id,new Date().toISOString());
-   if(fetcher===fetch&&result)cache.set(key,{at:Date.now(),result});
+   if(fetcher===fetch&&result?.stockVerified)cache.set(key,{at:Date.now(),result});
    return result;
   }catch{return null;}
  })().finally(()=>pending.delete(key));

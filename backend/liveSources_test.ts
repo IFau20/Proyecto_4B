@@ -70,3 +70,9 @@ Deno.test("accepts a regional manufacturer suffix without accepting another mode
  equal(parseRetailOffer(html,"D0CJ4LA").priceClp,507990);
  equal(parseRetailOffer(html,"D0CJ4L").priceClp,null);
 });
+Deno.test("structured used or refurbished offers do not become new-laptop prices",()=>{
+ for(const condition of ["UsedCondition","RefurbishedCondition"]){
+  const html='<script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"83GSX029CL",offers:{price:699990,priceCurrency:"CLP",availability:"https://schema.org/InStock",itemCondition:"https://schema.org/"+condition}})+'</script>';
+  equal(parseRetailOffer(html,"83GSX029CL").priceClp,null);
+ }
+});

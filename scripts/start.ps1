@@ -15,6 +15,11 @@ foreach ($command in @("node", "npm.cmd", "deno")) {
         throw "Missing required command: $command. Install Node.js LTS and Deno 2."
     }
 }
+$configuration = Join-Path $root "backend\.env"
+if (-not (Test-Path $configuration)) {
+    Copy-Item (Join-Path $root "backend\.env.example") $configuration
+    Write-Host "Microsoft login is not configured. Run .\scripts\configure-sso.ps1 after registering the Entra app."
+}
 Write-Host "Installing PC Tracker frontend dependencies..."
 Push-Location (Join-Path $root "frontend")
 try { & npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw "npm ci failed" } }
@@ -23,5 +28,5 @@ Write-Host "Launching Deno backend and Vite frontend..."
 Start-Process powershell.exe -WorkingDirectory (Join-Path $root "backend") -ArgumentList @("-NoExit", "-Command", "deno task dev")
 Start-Process powershell.exe -WorkingDirectory (Join-Path $root "frontend") -ArgumentList @("-NoExit", "-Command", "npm.cmd run dev")
 Start-Sleep -Seconds 5
-Start-Process "http://127.0.0.1:5173"
+Start-Process "http://localhost:5173"
 Write-Host "PC Tracker opened. Close both new PowerShell windows to stop the servers."
