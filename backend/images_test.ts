@@ -18,3 +18,11 @@ Deno.test("proxy refuses arbitrary image requests and unsupported content types"
  equal((await proxyNotebookImage("UNKNOWN",[laptop] as any,fake as typeof fetch)).status,404);
  equal((await proxyNotebookImage("D0CJ4LA",[{...laptop,imageUrl:"https://evil.test/" }] as any,fake as typeof fetch)).status,404);
 });
+
+Deno.test("curated model-family image is used for Lenovo's blocked picture endpoint",async()=>{
+ let requested="";
+ const fake=async (url:string)=>{requested=url;return new Response(new Uint8Array([137,80,78,71]),{headers:{"content-type":"image/png"}});};
+ const result=await proxyNotebookImage("83JC0080CL",[{sku:"83JC0080CL",imageUrl:"https://api.solotodo.com/products/255350/picture/"}] as any,fake as typeof fetch);
+ equal(result.status,200);
+ equal(requested.includes("p4-ofp.static.pub"),true);
+});
