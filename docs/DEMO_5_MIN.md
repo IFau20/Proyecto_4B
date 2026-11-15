@@ -1,58 +1,21 @@
-# PC Tracker — Guía de demostración (5 minutos)
+# PC Tracker: demo de cinco minutos
 
-**Antes de la DEMO:** tener Node LTS, Deno 2, Git y conexión a internet. Usar la rama `develop`. Ejecutar `scripts/start.ps1` en Windows o dos terminales de desarrollo. Nunca inventar precios, stock, resultados de una tienda, ni commits de semanas pasadas.
+La preparación actualizada está en [PREPARACION_PRESENTACION.md](PREPARACION_PRESENTACION.md): guion cronometrado, acciones, 47 preguntas con respuestas modelo, arquitectura, archivos y contingencias. El ingreso Google real fue confirmado por el usuario.
 
-## Guion
+| Tiempo | Demostración |
+|---|---|
+| 0:00–0:20 | Problema y tres criterios: RAM, GPU y procesador. |
+| 0:20–0:45 | Ingreso con Google. |
+| 0:45–1:15 | Filtros combinados y limpiar filtros. |
+| 1:15–2:00 | Buscar `15-fd0331la`, comparar comercios y distinguir referencias de verificación. |
+| 2:00–2:40 | Historial de un modelo con varias fechas previamente comprobado. |
+| 2:40–3:35 | Buscar `15IRX10`, seleccionar su historial, ubicación y stock por sucursal. |
+| 3:35–4:00 | Horarios, fecha y feriados; el stock sigue siendo actual. |
+| 4:00–4:25 | Español/inglés y vista móvil. |
+| 4:25–4:45 | Logout y cierre. |
 
-| Tiempo aprox. | Demostración | Evidencia |
-|---|---|---|
-| 0:00–0:35 | Abrir PC Tracker, mostrar que se adapta al ancho de la ventana y activar el modo oscuro. | React + CSS responsive + preferencia guardada. |
-| 0:35–1:15 | Buscar y filtrar por RAM, GPU y procesador. | Tres criterios elegidos, búsqueda en catálogo API. |
-| 1:15–2:00 | Buscar D0CJ4LA y abrir Comparar tiendas; esperar la verificación y mostrar precios de tres o más fuentes si responden. | Comparar tres fuentes, distinguir precios de referencia de datos vivos. |
-| 2:00–2:45 | Mostrar stock publicado por tienda y estado "sin verificar" cuando se bloquea la consulta. | Scrapers de producto y verificación de SKU. |
-| 2:45–3:30 | Mostrar historial real por tienda con fecha, variación y gráfico cuando existan 2+ observaciones; nunca fingir que existen datos antiguos. | `GET /api/history?sku=...`, almacenamiento JSON persistente. |
-| 3:30–4:10 | Ver direcciones/horarios oficiales: seleccionar Lenovo 83JE0184CL y "Buscar cerca de mí" (dar permiso si corresponde); probar filtro de stock y una fecha festiva. | `GET /api/stores` y `/api/branch-stock`, coordenadas, distancias y evidencia física por sucursal. |
-| 4:10–4:40 | Cambiar a inglés y volver a español; demostrar traducciones sin API externa. | Traducciones locales. |
-| 4:40–5:00 | Mostrar inicio Microsoft si el tenant está configurado; si no, explicar que falta el registro institucional y no dar este requisito por demostrado. | OIDC backend configurable; no fingir sesión real. |
+La búsqueda actual usa nombre/GPU/procesador, no SKU. Los SKU para reconocer las fichas son D0CJ4LA y 83JE0184CL. Al elegir otro notebook, pulsar su botón de historial para actualizar los paneles. Limpiar filtros antes de cambiar de caso.
 
-## Requisitos originales
+El catálogo es público; el login no añade favoritos ni roles. Las tiendas pueden fallar y no todos los modelos tienen tres ofertas vigentes. El historial público se atribuye a SoloTodo y el propio solo contiene observaciones capturadas. No fingir datos o sesiones. Mostrar Google en lugar del antiguo recorrido de Microsoft.
 
-- **Tres criterios elegidos:** RAM, GPU y procesador.
-- **Tres o más fuentes:** Lenovo 3 URLs y HP 4 URLs; precios referenciales de HP de 3 fichas reales, claramente separados de verificación en vivo.
-- **Historial:** registra solamente observaciones reales con fechas y tendencias cuando haya suficiente información.
-- **Horarios:** scraping de páginas de contacto y verificación de información publicada; incluye pausas de atención cuando correspondan.
-- **Stock:** estados reconocidos por producto y por fuente; "sin verificar" cuando las páginas no entregan evidencia.
-- **Georreferencia:** direcciones, ubicación con permiso del navegador y orden por distancia cuando hay coordenadas.
-- **Responsive:** CSS con rejillas de 4/2/1 columnas y controles móviles. Hacer comprobación visual manual.
-- **SSO:** backend Microsoft Entra OIDC implementado; requiere registro del cliente y secreto institucional. El inicio completo no es verificable sin ello.
-- **Multilenguaje:** español/inglés con diccionario mantenido en el código, sin Google Translate.
-- **GitHub:** commits incrementales en `develop`; el calendario real de commits no se puede falsificar retroactivamente.
-- **Código en inglés y atribución:** módulos, funciones y pruebas en inglés, mensajes de interfaz traducidos; desarrollo asistido con ChatGPT/OpenAI.
-
-## Preguntas técnicas posibles
-
-**¿Cómo llega un computador al catálogo?** React realiza peticiones GET a la API Deno. Las identidades de los 48 modelos son reales; los precios provienen de tiendas o de referencias públicas etiquetadas.
-
-**¿Cómo evitan comparar modelos distintos?** El identificador del fabricante SKU es exacto, los enlaces están permitidos explícitamente, y la falta de datos no se reemplaza por números inventados.
-
-**¿Cómo calculan el ahorro?** Los precios válidos se ordenan de menor a mayor y se resta el mínimo al máximo. Si existe un solo precio no se informa un ahorro ficticio de cero.
-
-**¿Por qué el historial está vacío al inicio?** Solo registra observaciones auténticas; dos fechas de consulta diferentes permiten visualizar la variación.
-
-**¿Qué ocurre si una tienda bloquea un scraper?** Aparece "no verificado" y la app sigue funcionando; el servicio informa bloqueo o error y deja enlaces oficiales para comprobar.
-
-**¿Cómo funcionan SSO y multilenguaje?** Microsoft Entra ID utiliza autorización OIDC con código/PKCE, cookies HttpOnly y validación de firma; idiomas mediante diccionario en archivos JS.
-
-**¿Cómo se confirma stock cercano?** El servicio público de PC Factory informa existencias por sucursal para el modelo exacto. React filtra las sucursales con stock antes de ordenarlas por distancia. La dirección por sí sola no prueba stock.
-
-## Validación antes de entregar
-
-1. `cd backend; deno task test`.
-2. `cd frontend; npm.cmd ci; npm.cmd test; npm.cmd run build`.
-3. Revisar GitHub Actions en verde y la rama `develop`.
-4. Comprobar diseño en móvil real o emulación, en 320, 375, 768 y 1440 px.
-5. Comprobar SSO real solo después de configurar el tenant y credenciales.
-6. Comparar al menos tres ofertas publicadas y mostrar claramente las limitaciones de scraping automatizado.
-7. Mantener `main` sin cambios hasta aprobar el trabajo.
-
-La app está implementada como prototipo de clase; no hay afirmación de producción comercial ni de accesibilidad exhaustivamente certificada.
+El PDF exige máximo cinco minutos sin PPT. La interpretación de notebooks como alcance está pendiente de confirmación docente. El cumplimiento funcional no elimina las semanas sin commits.
