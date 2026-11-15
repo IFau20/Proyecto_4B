@@ -101,3 +101,18 @@ La fuente pública no tiene SLA y no se eluden controles ni sesiones de SoloTodo
 - Caché de fotografías limitada a 40 archivos; el frontend carga fotos en segundo plano solo para las tarjetas visibles.
 - El guardado del historial se hace mediante **una escritura atómica por ciclo**, en vez de reabrir el archivo por cada SKU, evitando reescrituras y consultas duplicadas de modelos Lenovo/HP.
 - El catálogo utiliza caché HTTP de 60 segundos; los datos de tiendas no son garantía de stock físico.
+
+## Carga rápida y actualización comercial no bloqueante (15 noviembre 2026)
+
+PC Tracker separa la navegación del catálogo del proceso de actualización comercial:
+
+1. `GET /api/notebooks?preview=1` responde inmediatamente con las **48 identidades reales** y características de `NOTEBOOKS`. Incluye solo precios publicados de referencia atribuidos, cuando existen; no inventa montos ni hace scraping durante la petición.
+2. En paralelo, el navegador consulta `GET /api/notebooks`, que espera la actualización del backend y sustituye la vista con las ofertas disponibles. La página, filtros, paginación y navegación siguen funcionando.
+3. Se reutiliza la última carga válida en `sessionStorage` por hasta **cinco minutos**, para que recargar o regresar a la misma pestaña no requiera volver a esperar a las tiendas.
+4. El backend limita las solicitudes directas a comercios (6 simultáneas) y consulta las fichas públicas en grupos de 12 con como máximo **dos solicitudes simultáneas**. La redirección/copia de las imágenes no bloquea la respuesta rápida del catálogo.
+5. Las consultas `GET /api/notebook-image?sku=...` ya no esperan la construcción del catálogo completo; primero usan las fuentes permitidas disponibles. Cuando se reciben nuevas imágenes válidas, el frontend vuelve a intentarlo.
+6. Las consultas concurrentes de distintos visitantes comparten la misma promesa de actualización en el backend; no se dispara una ronda completa de scraping por visitante.
+
+**Rendimiento medido en GitHub Actions:** una construcción completa de 48 notebooks tardó **8.453 s** antes y **5.102 s** con consultas independientes en paralelo (reducción cercana al 40%). Son ejecuciones puntuales, no garantías de tiempo. El tiempo de respuesta del preview no depende de fuentes comerciales, aunque la actualización de descuentos sí depende de las tiendas y puede tardar o fallar.
+
+**Protecciones:** el precio exclusivo de una tarjeta no se trata como descuento general. Los valores publicados de referencia e históricos se siguen identificando y no se guardan como observaciones en vivo. El historial y el stock requieren evidencia auténtica. Los tests incluyen catálogo rápido, actualización progresiva, caché de sesión y límite de concurrencia de las consultas públicas.
