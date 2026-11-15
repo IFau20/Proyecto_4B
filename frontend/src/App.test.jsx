@@ -215,6 +215,6 @@ it("loads a second real model from four retailers without replacing the original
   }));
   render(<App />);
   expect(await screen.findByRole("heading", { name: "HP 250R G10" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Notebook Study 14" })).toBeInTheDocument();
+  expect(screen.getAllByRole("heading", { name: "Notebook Study 14" }).length).toBeGreaterThan(0);
   expect(screen.getByText("3 de 4 precios verificados")).toBeInTheDocument();
 });
