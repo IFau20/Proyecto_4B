@@ -196,3 +196,25 @@ it("switches between Spanish and English and persists the language", () => {
   fireEvent.click(screen.getByRole("button", { name: "Cambiar a español" }));
   expect(screen.getByRole("heading", { name: /Tu próximo computador/ })).toBeInTheDocument();
 });
+
+it("loads a second real model from four retailers without replacing the original catalog", async () => {
+  const hp = {
+    id: "hp-real", name: "HP 250R G10", sku: "DB9V5AT#ABM",
+    ramGb: 16, gpu: "Intel Graphics", processor: "Intel Core 5 120U", isLive: true,
+    verification: { totalSources: 4, verifiedPrices: 3, verifiedStocks: 3, comparable: true, stockComplete: false },
+    offers: [
+      { sourceId:"winpy",sourceName:"Winpy",priceClp:559968,availability:"in_stock" },
+      { sourceId:"spdigital",sourceName:"SP Digital",priceClp:877530,availability:"unknown" },
+      { sourceId:"pcexpress",sourceName:"PC Express",priceClp:549900,availability:"in_stock" },
+      { sourceId:"greenchip",sourceName:"GreenChip",priceClp:null,availability:"unknown" },
+    ],
+  };
+  fetch.mockImplementation(async (url) => ({
+    ok: true,
+    json: async () => url === "/api/live-comparisons-hp" ? hp : [sample],
+  }));
+  render(<App />);
+  expect(await screen.findByRole("heading", { name: "HP 250R G10" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Notebook Study 14" })).toBeInTheDocument();
+  expect(screen.getByText("3 de 4 precios verificados")).toBeInTheDocument();
+});

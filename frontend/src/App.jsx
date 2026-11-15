@@ -122,8 +122,13 @@ export default function App() {
   const t = (key) => translate(key, locale);
   const [demoComputers, setDemoComputers] = useState([]);
   const [liveComputer, setLiveComputer] = useState(null);
+  const [hpComputer, setHpComputer] = useState(null);
+  const [hpStatus, setHpStatus] = useState("loading");
+  const [selectedSku, setSelectedSku] = useState("");
+  const liveProducts = [hpComputer, liveComputer].filter(Boolean);
   const [liveStatus, setLiveStatus] = useState("loading");
-  const computers = liveComputer ? [liveComputer, ...demoComputers] : demoComputers;
+  const computers = [...liveProducts, ...demoComputers];
+  const displayedLiveProduct = liveProducts.find((computer) => computer.sku === selectedSku) ?? liveProducts[0] ?? null;
   const [status, setStatus] = useState("loading");
   const [filters, setFilters] = useState({ search: "", minRam: "", gpu: "", processor: "" });
   const filteredComputers = filterComputers(computers, filters);
@@ -208,6 +213,25 @@ export default function App() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadHpComputer() {
+      try {
+        const response = await fetch("/api/live-comparisons-hp", { signal: controller.signal });
+        if (!response.ok) throw Error("HP comparison unavailable");
+        const computer = await response.json();
+        if (!computer?.isLive || !Array.isArray(computer.offers) || computer.sku !== "DB9V5AT#ABM") {
+          throw Error("Invalid HP data");
+        }
+        if (!controller.signal.aborted) { setHpComputer(computer); setHpStatus("ready"); }
+      } catch {
+        if (!controller.signal.aborted) setHpStatus("error");
+      }
+    }
+    loadHpComputer();
+    return () => controller.abort();
+  }, []);
+
   return (
     <div className="app-shell">
       <header className="site-header">
@@ -275,6 +299,12 @@ export default function App() {
               liveComputer?.verification?.comparable
                 ? t("Comparación de tres precios verificados disponible.")
                 : `Consulta de tiendas: ${liveComputer?.verification?.verifiedPrices ?? 0} de 3 precios verificados. Las fuentes restantes figuran sin verificar.`}</p>
+            <p className="live-catalog-status">
+              {hpStatus === "loading" ? (locale === "es" ? "Consultando cuatro tiendas para el HP 250R…" : "Checking four retailers for the HP 250R…") :
+                hpStatus === "error" ? (locale === "es" ? "No se pudo consultar el HP 250R; siguen disponibles los demás productos." : "HP 250R lookup failed; other products remain available.") :
+                (locale === "es" ? "HP 250R: " : "HP 250R: ") + (hpComputer?.verification?.verifiedPrices ?? 0) +
+                  (locale === "es" ? " de 4 precios verificados." : " of four prices verified.")}
+            </p>
             {status === "ready" && computers.length > 0 && (
               <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} t={t} />
             )}
@@ -295,7 +325,19 @@ export default function App() {
             <p className="catalog-notice">{t("Nota: los cuatro equipos originales son ficticios. El Lenovo LOQ 83JC0080CL es un modelo real; sus precios solo aparecen cuando se pueden verificar.")}</p>
           </div>
         </section>
-        <FeaturesPanel liveComputer={liveComputer} t={t} locale={locale} />
+        {liveProducts.length > 1 && (
+          <div className="container feature-product-picker">
+            <label htmlFor="feature-product">
+              {locale === "es" ? "Consultar historial y tiendas de:" : "Show history and stores for:"}
+            </label>
+            <select id="feature-product" value={displayedLiveProduct?.sku ?? ""}
+              onChange={(event) => setSelectedSku(event.target.value)}>
+              {liveProducts.map((computer) =>
+                <option key={computer.sku} value={computer.sku}>{computer.name}</option>)}
+            </select>
+          </div>
+        )}
+        <FeaturesPanel liveComputer={displayedLiveProduct} t={t} locale={locale} />
       </main>
 
       <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>Diseño de Software · Proyecto 4B</span></div></footer>
