@@ -8,10 +8,11 @@ import { saveObservations } from "./history.ts";
 // Aggregator product pages are used only for product identification and photography.
 const retailer = (sourceId: string, sourceName: string, url: string) => ({ sourceId, sourceName, url });
 export const NOTEBOOKS = [
-  { sku:"83JC0080CL", name:"Lenovo LOQ 15ARP9", ramGb:24, gpu:"NVIDIA GeForce RTX 4050", processor:"AMD Ryzen 7 7435HS", kind:"legacy", sources:[] },
-  { sku:"DB9V5AT#ABM", name:"HP 250R G10", ramGb:16, gpu:"Intel Graphics", processor:"Intel Core 5 120U", kind:"hp", sources:[] },
+  { sku:"83JC0080CL", name:"Lenovo LOQ 15ARP9", ramGb:24, gpu:"NVIDIA GeForce RTX 4050", processor:"AMD Ryzen 7 7435HS", kind:"legacy", sources:[], profileUrl:"https://www.solotodo.cl/products/255350-lenovo-loq-15arp9-83jc0080cl" },
+  { sku:"DB9V5AT#ABM", name:"HP 250R G10", ramGb:16, gpu:"Intel Graphics", processor:"Intel Core 5 120U", kind:"hp", sources:[], profileUrl:"https://www.solotodo.cl/products/401638-hp-250r-g10-db9v5at" },
   { sku:"D0CJ4LA", name:"HP 15-fd0331la", ramGb:8, gpu:"Intel UHD Graphics", processor:"Intel Core 3 100U", sources:[
-    retailer("spdigital","SP Digital","https://www.spdigital.cl/notebook-hp-15-fd0331la-156-fhd-intel-core-3-100u-8gb-ddr5-512gb-ssd-full-hd-wi-fi-6-w11-home/")
+    retailer("spdigital","SP Digital","https://www.spdigital.cl/notebook-hp-15-fd0331la-156-fhd-intel-core-3-100u-8gb-ddr5-512gb-ssd-full-hd-wi-fi-6-w11-home/"),
+    retailer("ripley","Ripley · tarjeta de crédito","https://simple.ripley.cl/notebook-hp-15-fd0331la-intel-core-3-8gb-ram-512gb-ssd-156-2000410726802p")
   ], profileUrl:"https://www.solotodo.cl/products/382294-hp-15-fd0331la-d0cj4la" },
   { sku:"82XM00M4CL", name:"Lenovo IdeaPad Slim 3 15ABR8", ramGb:16, gpu:"AMD Radeon Graphics", processor:"AMD Ryzen 7 5825U", sources:[
     retailer("spdigital","SP Digital","https://www.spdigital.cl/lv-ideapad-slim-3-gen-8-r7-5825u-16gb-512gb-156-fhd-tretroiluminado-abyss-blue/"),
@@ -34,11 +35,14 @@ export const NOTEBOOKS = [
   { sku:"BM6U5LA", name:"HP Omen 16-ap0002la", ramGb:16, gpu:"NVIDIA GeForce RTX 5060", processor:"AMD Ryzen AI 7 350", sources:[],
     profileUrl:"https://www.solotodo.cl/products/354293-hp-omen-16-ap0002la-bm6u5la" },
   { sku:"83GSX013CL", name:"Lenovo LOQ 15IAX9 RTX 2050", ramGb:8, gpu:"NVIDIA GeForce RTX 2050", processor:"Intel Core i5-12450HX", sources:[],
-    profileUrl:"https://www.solotodo.cl/notebooks" },
-  { sku:"83LY003NCL", name:"Lenovo Legion 5 15IRX10", ramGb:32, gpu:"NVIDIA GeForce RTX 5070", processor:"Intel Core i9-14900HX", sources:[],
-    profileUrl:"https://www.solotodo.cl/notebooks" },
+    profileUrl:"https://www.solotodo.cl/products/280353-lenovo-loq-15iax9-83gsx013cl" },
+  { sku:"83LY003NCL", name:"Lenovo Legion 5 15IRX10", ramGb:32, gpu:"NVIDIA GeForce RTX 5070", processor:"Intel Core i9-14900HX", sources:[
+    retailer("spdigital","SP Digital","https://www.spdigital.cl/lenovo-legion-5-gen-10-intel-core-i9-14900hx-32gb-1tb-ssd-nvidia-rtx-5070-oled-165hz-151-w11/"),
+    retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-gamer-lenovo-legion-5i-de-15-1-i9-14900hx-rtx-5070-32gb-ddr5-1tb-ssd-win11/"),
+    retailer("falabella","Falabella","https://www.falabella.com/falabella-cl/product/17500183/Notebook-Gamer-Legion-5%2520i9-14900HX-32GB-RAM-1TB-SSD-RTX-5070-8GB-15.1%2522%2520WQXGA-OLED-165Hz-Lenovo/17500183")
+  ], profileUrl:"https://www.solotodo.cl/notebooks" },
   { sku:"D62W3LA", name:"HP Omen HyperX 15-ga0001la", ramGb:16, gpu:"NVIDIA GeForce RTX 5060", processor:"Intel Core i7-14650HX", sources:[],
-    profileUrl:"https://www.solotodo.cl/notebooks" },
+    profileUrl:"https://www.solotodo.cl/products/391295-hp-omen-hyperx-15-ga0001la-d62w3la" },
 ] as const;
 
 function parsedMoney(value: string) {
@@ -86,9 +90,16 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     if(/(?:Sin stock|Agotado|No disponible)\b/i.test(text.slice(0,1200))) availability="out_of_stock";
   } else if(sourceId==="winpy") {
     if(/Temporalmente Agotado|Producto Agotado/i.test(text)) availability="out_of_stock";
-    const price=/Transferencia o Dep[oó]sito\s*\$?\s*([\d.]+)/i.exec(text);
+    const price=/\$\s*([\d.]+)\s*Transferencia o Dep[oó]sito/i.exec(text);
     priceClp=parsedMoney(price?.[1]||"");
     if(/\d+\s+unidades?\s+en\s+stock/i.test(text)) availability="in_stock";
+  } else if(sourceId==="ripley"){
+    const normal=/\bNormal\s*\$?\s*([\d.]+)/i.exec(text);
+    const card=/T\.\s*Cr[eé]dito\s*\$?\s*([\d.]+)/i.exec(text);
+    priceClp=parsedMoney(card?.[1]||"");
+    listPriceClp=parsedMoney(normal?.[1]||"");
+    // Credit-card-only prices are identified explicitly in the source name.
+    if(/Despacho a domicilio\s+Disponible/i.test(text))availability="in_stock";
   } else if(sourceId==="paris"||sourceId==="paris2"){
     // Only accept page prices when model appears in the same published product document.
     const after=/(\d{1,2})%\s*\$?\s*([\d.]+)\s*\$?\s*([\d.]+)/i.exec(text);
@@ -152,7 +163,9 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
       const response=await fetcher(p.profileUrl,{signal:AbortSignal.timeout(4500)});
       if(response.ok){
         const html=await response.text();
-        if(productIdentifierPresent(html,p.sku))p.imageUrl=metaImage(html,p.profileUrl);
+        const normalizedSku=p.sku.replace(/[^a-z0-9]/gi,"").toLowerCase();
+        const normalizedUrl=p.profileUrl.replace(/[^a-z0-9]/gi,"").toLowerCase();
+        if(productIdentifierPresent(html,p.sku)||normalizedUrl.includes(normalizedSku))p.imageUrl=metaImage(html,p.profileUrl);
       }
     }catch{}
   });
