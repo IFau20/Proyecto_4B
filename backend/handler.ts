@@ -83,9 +83,7 @@ export async function handleRequest(request: Request): Promise<Response> {
       const mode=new URL(request.url).searchParams;
       const notebooks=mode.get("preview")==="1"
         ?getNotebookPreview()
-        :mode.get("fresh")==="1"
-          ?await getFreshNotebooks()
-          :await getNotebooks();
+        :await getFreshNotebooks();
       return Response.json(notebooks,{headers:{
         ...corsHeaders,
         "Cache-Control":mode.has("fresh")?"no-store":"private, max-age=30",

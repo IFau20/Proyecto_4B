@@ -293,3 +293,6 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 .pagination-controls button:disabled {opacity:.4;cursor:not-allowed;}
 .pagination-controls button:not(:disabled):hover {border-color:#4e9deb;}
 @media(max-width:640px){.catalog-pagination {justify-content:center;}.pagination-info{width:100%;text-align:center;}}
+
+/* Nonblocking catalog refresh status. The filtered grid stays interactive. */
+.catalog-refreshing {font-size:12px;color:#76a6dc;font-weight:600;margin:0 0 16px;}

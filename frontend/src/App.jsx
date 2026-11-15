@@ -9,6 +9,26 @@ import { getPriceComparison } from "./priceComparison.js";
 
 const money = (value) => "$" + Number(value).toLocaleString("es-CL");
 const THEME_KEY = "pc-tracker-theme";
+const CATALOG_SESSION_KEY="pc-tracker-catalog-v2";
+const SESSION_TTL_MS=5*60*1000;
+function isValidCatalog(data) {
+ return Array.isArray(data)&&data.length>0&&
+   data.every(product=>product&&typeof product.sku==="string"&&
+     typeof product.name==="string"&&product.isLive===true);
+}
+function fromSession() {
+ try{
+   const cache=JSON.parse(sessionStorage.getItem(CATALOG_SESSION_KEY)||"null");
+   if(cache&&Number.isFinite(cache.at)&&Date.now()-cache.at>=0&&
+      Date.now()-cache.at<SESSION_TTL_MS&&isValidCatalog(cache.data))return cache.data;
+ }catch{/* Storage may be blocked or full. */}
+ return [];
+}
+function saveSession(data) {
+ try{sessionStorage.setItem(CATALOG_SESSION_KEY,JSON.stringify({at:Date.now(),data}));}
+ catch{/* Storage is optional; network requests still work. */}
+}
+
 export const PAGE_SIZE=12;
 export function paginateNotebooks(computers,page,pageSize=PAGE_SIZE) {
  const totalPages=Math.max(1,Math.ceil(computers.length/pageSize));
@@ -121,8 +141,9 @@ export default function App() {
   });
   const t = (key) => translate(key,locale);
   const [auth,setAuth]=useState(null);
-  const [notebooks,setNotebooks]=useState([]);
-  const [status,setStatus]=useState("loading");
+  const [notebooks,setNotebooks]=useState(fromSession);
+  const [status,setStatus]=useState(()=>fromSession().length?"ready":"loading");
+  const [refreshing,setRefreshing]=useState(true);
   const [filters,setFilters]=useState({search:"",minRam:"",gpu:"",processor:""});
   const [selectedSku,setSelectedSku]=useState("");
   const [page,setPage]=useState(1);
@@ -151,12 +172,30 @@ export default function App() {
   },[]);
   useEffect(() => {
     const controller=new AbortController();
-    fetch("/api/notebooks",{signal:controller.signal})
-      .then((r)=>{if(!r.ok)throw Error("Catalog unavailable");return r.json();})
-      .then((data)=>{
-        if(!Array.isArray(data) || data.some((p)=>!p.sku||!p.name||!p.isLive))throw Error("Invalid catalog");
-        if(!controller.signal.aborted){setNotebooks(data);setStatus("ready");}
-      }).catch(()=>{if(!controller.signal.aborted)setStatus("error");});
+    // Fast: obtain real notebook identities immediately, without waiting for
+    // retailer scrapers. Session cache already displays previous verified data.
+    void fetch("/api/notebooks?preview=1",{signal:controller.signal})
+      .then(r=>r.ok?r.json():null)
+      .then(data=>{
+        if(controller.signal.aborted||!isValidCatalog(data))return;
+        setNotebooks(current=>current.length?current:data);
+        setStatus("ready");
+      }).catch(()=>{});
+    // Fresh: refresh prices and discounts independently, without blocking
+    // browsing, filtering, pagination or the first product images.
+    void fetch("/api/notebooks",{signal:controller.signal,cache:"no-store"})
+      .then(r=>{if(!r.ok)throw Error("Catalog unavailable");return r.json();})
+      .then(data=>{
+        if(!isValidCatalog(data))throw Error("Invalid catalog");
+        if(controller.signal.aborted)return;
+        setNotebooks(data);setStatus("ready");saveSession(data);
+      })
+      .catch(()=>{
+        if(!controller.signal.aborted){
+          setStatus(current=>current==="ready"?"ready":"error");
+        }
+      })
+      .finally(()=>{if(!controller.signal.aborted)setRefreshing(false);});
     return()=>controller.abort();
   },[]);
   async function logout() {
@@ -204,7 +243,7 @@ export default function App() {
             <span><b>03</b><small>{t("PROCESADOR")}</small></span>
           </div>
         </div>
-        <DealsCarousel deals={deals} loading={status==="loading"} t={t} locale={locale}/>
+        <DealsCarousel deals={deals} loading={refreshing} t={t} locale={locale}/>
       </section>
       <section className="catalog-section" aria-labelledby="catalog-title">
         <div className="container">
@@ -213,6 +252,8 @@ export default function App() {
             <h2 id="catalog-title">{t("Notebooks disponibles para comparar")}</h2>
             <p className="section-subtitle">{t("Compara especificaciones y ofertas publicadas. Los precios y el stock se verifican por tienda.")}</p>
           </div>{status==="ready" && <span className="result-count" aria-live="polite">{visible.length} / {notebooks.length}</span>}</div>
+          {status==="ready" && refreshing &&
+            <p className="catalog-refreshing" role="status">{t("Actualizando precios y descuentos…")}</p>}
           {status==="ready" && notebooks.length>0 && <CatalogFilters filters={filters} options={options}
             t={t} onChange={changeFilter}
             onClear={clearFilters}/>}

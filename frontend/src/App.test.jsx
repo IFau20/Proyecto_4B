@@ -126,3 +126,27 @@ it("moves between groups of 12 without losing filters",async()=>{
  expect(within(document.querySelector(".computer-grid")).queryByRole("heading",{name:"Notebook 0"})).not.toBeInTheDocument();
  expect(screen.getByText(/Página 2 de 3/)).toBeInTheDocument();
 });
+
+it("shows notebook specifications quickly even while store prices are pending",async()=>{
+ const data=sample.map(product=>({...product,offers:[]}));
+ let completeFresh;
+ fetch.mockImplementation(async url=>{
+   if(url==="/api/notebooks?preview=1")return {ok:true,json:async()=>data};
+   if(url==="/api/notebooks")return new Promise(resolve=>{completeFresh=resolve;});
+   return {ok:true,json:async()=>[]};
+ });
+ const {container}=render(<App/>);
+ await screen.findByRole("heading",{name:"HP Victus"});
+ expect(within(container.querySelector(".computer-grid")).getAllByRole("article")).toHaveLength(2);
+ expect(screen.getByText("Actualizando precios y descuentos…")).toBeInTheDocument();
+ completeFresh({ok:true,json:async()=>sample});
+ expect(await screen.findByRole("link",{name:"Ver oferta en tienda"})).toBeInTheDocument();
+});
+it("shows cached catalog immediately on repeat visits even if network is pending",async()=>{
+ sessionStorage.setItem("pc-tracker-catalog-v2",JSON.stringify({at:Date.now(),data:sample}));
+ fetch.mockImplementation(async url=>url==="/api/notebooks"?
+   new Promise(()=>{}):{ok:true,json:async()=>[]});
+ const {container}=render(<App/>);
+ expect(within(container.querySelector(".computer-grid")).getByRole("heading",{name:"HP Victus"})).toBeInTheDocument();
+ expect(screen.getByText("Actualizando precios y descuentos…")).toBeInTheDocument();
+});

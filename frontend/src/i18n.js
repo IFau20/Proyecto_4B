@@ -1,4 +1,5 @@
 export const english = {
+  "Actualizando precios y descuentos…": "Updating prices and discounts…",
   "Páginas del catálogo": "Catalog pages",
   "Página anterior": "Previous page",
   "Página siguiente": "Next page",

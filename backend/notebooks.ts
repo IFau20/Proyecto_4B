@@ -369,7 +369,7 @@ export async function getFreshNotebooks() {
   return refreshCatalog();
 }
 export async function collectNotebookHistory() {
-  const products=await getNotebooks();
+  const products=await getFreshNotebooks();
   const points=products.flatMap(product=>product.offers
     .filter(offer=>Number.isSafeInteger(offer.priceClp)&&offer.priceClp>0&&
       offer.availability!=="out_of_stock"&&typeof offer.checkedAt==="string")
