@@ -1,4 +1,4 @@
-import { getNotebooks, getFreshNotebooks, getNotebookPreview } from "./notebooks.ts";
+import { getNotebooks, getFreshNotebooks, getNotebookPreview, verifyNotebookOffers } from "./notebooks.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -22,7 +22,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (authResponse) return authResponse;
   const { pathname } = new URL(request.url);
 
-  if (pathname !== "/api/notebooks" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image" && pathname !== "/api/holidays" && pathname !== "/api/branch-stock") {
+  if (pathname !== "/api/notebooks" && pathname !== "/api/verify-notebook" && pathname !== "/api/live-comparisons" && pathname !== "/api/live-comparisons-hp" && pathname !== "/api/history" && pathname !== "/api/stores" && pathname !== "/api/notebook-image" && pathname !== "/api/holidays" && pathname !== "/api/branch-stock") {
     return new Response("Not found", { status: 404, headers: corsHeaders });
   }
 
@@ -52,6 +52,17 @@ export async function handleRequest(request: Request): Promise<Response> {
       console.error("Unable to persist observed prices", error);
     }
     return Response.json(computer, { headers: corsHeaders });
+  }
+
+  if (pathname === "/api/verify-notebook") {
+    const sku=new URL(request.url).searchParams.get("sku")??"";
+    if(!NOTEBOOKS.some(n=>n.sku===sku))return Response.json({error:"Unknown SKU"},{status:404,headers:corsHeaders});
+    try{
+      const product=(await getFreshNotebooks()).find(p=>p.sku===sku)!;
+      const result=await verifyNotebookOffers(product);
+      try{await saveObservations(sku,result.offers);}catch(error){console.error("Unable to save verified prices",error);}
+      return Response.json(result,{headers:{...corsHeaders,"Cache-Control":"private, max-age=60"}});
+    }catch{return Response.json({error:"Retailer verification unavailable"},{status:503,headers:corsHeaders});}
   }
 
   if (pathname === "/api/notebook-image") {

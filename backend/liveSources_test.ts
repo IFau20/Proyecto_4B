@@ -59,3 +59,14 @@ Deno.test("HTTP blocking keeps price and stock unknown", async () => {
   same(result.offers.map((offer) => offer.queryStatus), ["verified", "verified", "blocked"]);
   equal(result.verification.comparable, false);
 });
+
+Deno.test("manufacturer MPN can identify a product when the shop uses its own numeric SKU",()=>{
+ const html='<h1>83JE0184CL</h1><script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"60264",mpn:"83JE0184CL",offers:{price:1620970,priceCurrency:"CLP",availability:"https://schema.org/InStock"}})+'</script>';
+ equal(parseRetailOffer(html,"83JE0184CL").priceClp,1620970);
+ equal(parseRetailOffer(html,"OTHER").priceClp,null);
+});
+Deno.test("accepts a regional manufacturer suffix without accepting another model number",()=>{
+ const html='<script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"D0CJ4LA#ABM",offers:{price:507990,priceCurrency:"CLP",availability:"https://schema.org/InStock"}})+'</script>';
+ equal(parseRetailOffer(html,"D0CJ4LA").priceClp,507990);
+ equal(parseRetailOffer(html,"D0CJ4L").priceClp,null);
+});

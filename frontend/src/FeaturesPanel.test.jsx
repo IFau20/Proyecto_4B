@@ -30,3 +30,43 @@ it("selects the hours for the requested date",()=>{
  expect(hoursOnDate(store,"2026-11-16")).toEqual(["09:00","18:00"]);
  expect(hoursOnDate(store,"2026-11-15")).toBeNull();
 });
+
+it("finds confirmed stock beyond the first six branches instead of truncating before filtering",()=>{
+ const stores=Array.from({length:8},(_,i)=>({sourceId:"s"+i,name:"Store "+i,address:"Santiago",lat:-33.4-i*.001,lon:-70.6}));
+ const records=[{sourceId:"s7",status:"in_stock"},{sourceId:"s0",status:"out_of_stock"}];
+ expect(nearestSixStores(stores,{lat:-33.4,lon:-70.6},records).map(s=>s.sourceId)).toEqual(["s7"]);
+ expect(nearestSixStores(stores,{lat:-33.4,lon:-70.6},[])).toEqual([]);
+});
+
+import {render,screen,fireEvent} from "@testing-library/react";
+import {vi} from "vitest";
+import FeaturesPanel from "./FeaturesPanel.jsx";
+it("shows only confirmed nearby branches and lets users include unknown stores",async()=>{
+ vi.stubGlobal("navigator",{geolocation:{getCurrentPosition:success=>success({coords:{latitude:-33.4,longitude:-70.6}})}});
+ const stores=Array.from({length:8},(_,i)=>({sourceId:"s"+i,name:"Branch "+i,address:"Santiago",lat:-33.4-i*.001,lon:-70.6,weekly:{},scheduleVerified:false,contactUrl:"https://shop.cl"}));
+ vi.stubGlobal("fetch",vi.fn(async url=>({ok:true,json:async()=>String(url).startsWith("/api/stores")?stores:
+  String(url).startsWith("/api/branch-stock")?{sku:"83JE0184CL",records:[{sourceId:"s7",sku:"83JE0184CL",status:"in_stock",quantity:2,checkedAt:"2026-11-15T08:00:00Z"}]}:
+  String(url).startsWith("/api/holidays")?{holiday:null,status:"calendar_unavailable"}:{sources:[],points:[],observations:0}})));
+ const {container}=render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={s=>s} locale="es"/>);
+ fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
+ expect(await screen.findByRole("heading",{name:"1. Branch 7"})).toBeInTheDocument();
+ expect(container.querySelectorAll(".store-card")).toHaveLength(1);
+ expect(screen.getByText("No se pudo verificar el calendario de feriados.")).toBeInTheDocument();
+ fireEvent.click(screen.getByRole("checkbox",{name:"Solo sucursales con stock confirmado"}));
+ expect(container.querySelectorAll(".store-card")).toHaveLength(6);
+ vi.unstubAllGlobals();
+});
+it.each(["http","network"])("reports %s inventory outages separately from a successful empty search",async failure=>{
+ vi.stubGlobal("navigator",{geolocation:{getCurrentPosition:success=>success({coords:{latitude:-33.4,longitude:-70.6}})}});
+ vi.stubGlobal("fetch",vi.fn(async url=>{
+  if(String(url).startsWith("/api/branch-stock")){
+   if(failure==="network")throw Error("offline");
+   return {ok:false,status:503,json:async()=>({error:"unavailable"})};
+  }
+  return {ok:true,json:async()=>String(url).startsWith("/api/stores")?[]:String(url).startsWith("/api/holidays")?{holiday:null}:{sources:[],points:[],observations:0}};
+ }));
+ render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={s=>s} locale="es"/>);
+ fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
+ expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo verificar el stock por sucursal.");
+ expect(screen.getByRole("button",{name:"Reintentar stock"})).toBeInTheDocument();
+});

@@ -1,7 +1,8 @@
+import {fetchPcFactoryProduct} from "./pcFactory.ts";
 import {STORES} from "./stores.ts";
 import {getNotebookPreview} from "./notebooks.ts";
 export type BranchStock={sourceId:string;sku:string;status:"in_stock"|"out_of_stock";
- quantity:number|null;checkedAt:string;sourceUrl:string;};
+ quantity:number|null;approximate?:boolean;closedAtCheck?:boolean;checkedAt:string;sourceUrl:string;};
 const cache=new Map<string,{at:number;records:BranchStock[]}>();
 const pending=new Map<string,Promise<BranchStock[]>>();
 const clean=(s:string)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").toLowerCase().trim();
@@ -60,6 +61,8 @@ export async function branchStockForSku(sku:string,fetcher:typeof fetch=fetch):P
    const checkedAt=new Date().toISOString();
    const results=await Promise.all(urls.map(async url=>{
      try{
+       const api=await fetchPcFactoryProduct(url,sku,fetcher);
+       if(api?.branches.length)return api.branches;
        const response=await fetcher(url,{signal:AbortSignal.timeout(6000),headers:{Accept:"text/html"}});
        return response.ok?parseBranchInventory(await response.text(),sku,url,checkedAt):[];
      }catch{return [];}

@@ -33,9 +33,14 @@ export async function holidayOn(date:string,fetcher:typeof fetch=fetch):Promise<
     if(!pending){
       pending=(async()=>{
         const response=await fetcher("https://feriados.devschile.cl/api/holidays/"+year,{
-          signal:AbortSignal.timeout(5000),headers:{Accept:"application/json"}});
+          signal:AbortSignal.timeout(10000),headers:{Accept:"application/json"}});
         if(!response.ok)throw Error("Holiday source unavailable");
-        return parseChileanHolidays(await response.json(),year);
+        const data=await response.json();
+        if(!data?.feriados || typeof data.feriados!=="object" || Array.isArray(data.feriados))
+          throw Error("Invalid holiday calendar response");
+        const days=parseChileanHolidays(data,year);
+        if(!days.size)throw Error("Empty holiday calendar response");
+        return days;
       })().finally(()=>{inflight.delete(year);});
       inflight.set(year,pending);
     }
@@ -45,7 +50,7 @@ export async function holidayOn(date:string,fetcher:typeof fetch=fetch):Promise<
     }catch{
       // If the official calendar mirror cannot be read, holiday is unknown,
       // not 'not a holiday' and not an assertion that the branch will open.
-      if(!entry)return null;
+      throw Error("Holiday calendar unavailable");
     }
   }
   return entry?.days.get(date)||null;

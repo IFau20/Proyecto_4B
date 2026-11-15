@@ -167,3 +167,14 @@ it("compares three distinct published retailer prices without calling them live-
  expect(screen.getByText("$70.000")).toBeInTheDocument();
  expect(screen.queryByText(/Diferencia entre precios verificados/)).not.toBeInTheDocument();
 });
+
+it("rechecks selected notebook retailers and replaces references only with matching verified data",async()=>{
+ const references=[{...sample[0],offers:[{sourceId:"shop",sourceName:"Shop",url:"https://shop.cl/product",priceClp:null,referencePriceClp:560000,availability:"unknown"}]}];
+ fetch.mockImplementation(async url=>({ok:true,json:async()=>url==="/api/notebooks"?references:
+  String(url).startsWith("/api/verify-notebook?")?{sku:"D0CJ4LA",offers:[{...references[0].offers[0],priceClp:510000,availability:"in_stock"}]}:[]}));
+ const {container}=render(<App/>);
+ await screen.findByRole("heading",{name:"HP 15-fd0331la"});
+ fireEvent.click(within(container.querySelector(".computer-grid")).getByRole("button",{name:"Comparar tiendas (1)"}));
+ expect(await screen.findByText("Stock publicado: disponible")).toBeInTheDocument();
+ expect(screen.getAllByText("$510.000").length).toBeGreaterThan(0);
+});

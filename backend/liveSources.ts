@@ -55,8 +55,9 @@ function structuredOffer(html: string, sku: string) {
     let json;
     try { json = JSON.parse(source); } catch { continue; }
     for (const product of walkProducts(json)) {
-      const identifier = String(product.sku ?? product.mpn ?? product.productID ?? "").trim();
-      if (identifier.toUpperCase() !== sku.toUpperCase()) continue;
+      const identifiers=[product.mpn,product.sku,product.productID]
+        .filter(value=>typeof value==="string").map(value=>value.split("#")[0].trim().toUpperCase());
+      if (!identifiers.includes(sku.split("#")[0].toUpperCase())) continue;
       const offers = Array.isArray(product.offers) ? product.offers : [product.offers];
       for (const offer of offers) {
         if (!offer || typeof offer !== "object") continue;
@@ -106,7 +107,7 @@ function visibleOffer(html: string, sku: string, sourceId: string) {
 }
 
 export function parseRetailOffer(html: string, sku: string, sourceId = "") {
-  if (!html.toUpperCase().includes(sku.toUpperCase())) {
+  if (!html.toUpperCase().includes(sku.split("#")[0].toUpperCase())) {
     return { priceClp: null, availability: "unknown" };
   }
   const primary = structuredOffer(html, sku);

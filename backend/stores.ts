@@ -1,3 +1,4 @@
+import {fetchPcFactoryStores} from "./pcFactoryStores.ts";
 // Publicly listed locations and hours. Physical inventory is never inferred from the address.
 export const STORES = [
   {
@@ -129,7 +130,8 @@ export function distanceKm(lat1:number,lon1:number,lat2:number,lon2:number) {
 let cached: Awaited<ReturnType<typeof checkStores>> | null=null;
 let cachedAt=0;
 export async function checkStores(fetcher:typeof fetch=fetch,now=Date.now()) {
-  return await Promise.all(STORES.map(async (store)=>{
+  const pcStoresPromise=fetchPcFactoryStores(fetcher);
+  const regular=await Promise.all(STORES.map(async (store)=>{
     let scheduleVerified=false;
     try {
       if (store.hourPhrases.length===0) throw Error("Opening hours not provided by source");
@@ -139,6 +141,15 @@ export async function checkStores(fetcher:typeof fetch=fetch,now=Date.now()) {
     const {addressPhrase:_a,hourPhrases:_h,...publicInfo}=store;
     return {...publicInfo,scheduleVerified,checkedAt:new Date(now).toISOString()};
   }));
+  const pcStores=await pcStoresPromise;
+  return regular.map(store=>{
+    const current=pcStores.find(s=>s.sourceId===store.sourceId);
+    if(!current)return {...store,scheduleText:null as string|null};
+    return {...store,lat:current.lat??store.lat,lon:current.lon??store.lon,
+      weekly:current.weekly,scheduleText:current.scheduleText,
+      scheduleNotice:current.scheduleNotice,closedUntilNotice:current.closedUntilNotice,
+      scheduleVerified:Object.keys(current.weekly).length>0};
+  });
 }
 let pendingStores:Promise<Awaited<ReturnType<typeof checkStores>>>|null=null;
 function refreshStores(){

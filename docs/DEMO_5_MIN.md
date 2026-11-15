@@ -8,12 +8,12 @@
 |---|---|---|
 | 0:00–0:35 | Abrir PC Tracker, mostrar que se adapta al ancho de la ventana y activar el modo oscuro. | React + CSS responsive + preferencia guardada. |
 | 0:35–1:15 | Buscar y filtrar por RAM, GPU y procesador. | Tres criterios elegidos, búsqueda en catálogo API. |
-| 1:15–2:00 | Abrir comparación de Lenovo y HP: cantidad de fuentes, diferencia de precios, enlaces. | Comparar tres fuentes, distinguir precios de referencia de datos vivos. |
+| 1:15–2:00 | Buscar D0CJ4LA y abrir Comparar tiendas; esperar la verificación y mostrar precios de tres o más fuentes si responden. | Comparar tres fuentes, distinguir precios de referencia de datos vivos. |
 | 2:00–2:45 | Mostrar stock publicado por tienda y estado "sin verificar" cuando se bloquea la consulta. | Scrapers de producto y verificación de SKU. |
 | 2:45–3:30 | Mostrar historial real por tienda con fecha, variación y gráfico cuando existan 2+ observaciones; nunca fingir que existen datos antiguos. | `GET /api/history?sku=...`, almacenamiento JSON persistente. |
-| 3:30–4:10 | Ver direcciones/horarios oficiales y "Buscar cerca de mí" (dar permiso si corresponde). | `GET /api/stores`, coordenadas y distancias; NO stock físico confirmado. |
+| 3:30–4:10 | Ver direcciones/horarios oficiales: seleccionar Lenovo 83JE0184CL y "Buscar cerca de mí" (dar permiso si corresponde); probar filtro de stock y una fecha festiva. | `GET /api/stores` y `/api/branch-stock`, coordenadas, distancias y evidencia física por sucursal. |
 | 4:10–4:40 | Cambiar a inglés y volver a español; demostrar traducciones sin API externa. | Traducciones locales. |
-| 4:40–5:00 | Mostrar inicio Microsoft si el tenant está configurado; si no, mostrar el estado "SSO sin configurar" y explicar qué falta. | OIDC backend configurable; no fingir sesión real. |
+| 4:40–5:00 | Mostrar inicio Microsoft si el tenant está configurado; si no, explicar que falta el registro institucional y no dar este requisito por demostrado. | OIDC backend configurable; no fingir sesión real. |
 
 ## Requisitos originales
 
@@ -31,7 +31,7 @@
 
 ## Preguntas técnicas posibles
 
-**¿Cómo llega un computador al catálogo?** React realiza peticiones GET a la API Deno. Los datos ficticios vienen de JSON, los reales se consultan en tiendas mediante extractores.
+**¿Cómo llega un computador al catálogo?** React realiza peticiones GET a la API Deno. Las identidades de los 48 modelos son reales; los precios provienen de tiendas o de referencias públicas etiquetadas.
 
 **¿Cómo evitan comparar modelos distintos?** El identificador del fabricante SKU es exacto, los enlaces están permitidos explícitamente, y la falta de datos no se reemplaza por números inventados.
 
@@ -43,7 +43,7 @@
 
 **¿Cómo funcionan SSO y multilenguaje?** Microsoft Entra ID utiliza autorización OIDC con código/PKCE, cookies HttpOnly y validación de firma; idiomas mediante diccionario en archivos JS.
 
-**¿Geolocalización confirma stock?** No. Se calcula la proximidad de ubicaciones conocidas, sin enviar las coordenadas al backend; disponibilidad por sucursal requiere una publicación específica.
+**¿Cómo se confirma stock cercano?** El servicio público de PC Factory informa existencias por sucursal para el modelo exacto. React filtra las sucursales con stock antes de ordenarlas por distancia. La dirección por sí sola no prueba stock.
 
 ## Validación antes de entregar
 

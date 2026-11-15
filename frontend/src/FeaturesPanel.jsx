@@ -48,8 +48,9 @@ function PriceHistory({sku,t,locale}) {
   </section>;
 }
 
-export function nearestSixStores(stores,position) {
+export function nearestSixStores(stores,position,records=null) {
   return (stores||[])
+    .filter(store=>records===null||branchStatus(store,records)==="in_stock")
     .filter(store=>Number.isFinite(store.lat)&&Number.isFinite(store.lon)&&
       typeof store.address==="string"&&store.address.length>0)
     .map(store=>({...store,distance:kilometersBetween(position,store)}))
@@ -66,25 +67,32 @@ export function hoursOnDate(store,date) {
 const localToday=()=>{const n=new Date();return new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,10);};
 function StoreLocator({offers,sku,t,locale}) {
   const [userPosition,setUserPosition]=useState(null);
-  const [nearby,setNearby]=useState([]);
+  const [stores,setStores]=useState([]);
+  const [confirmedOnly,setConfirmedOnly]=useState(true);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const [date,setDate]=useState(localToday);
   const [holiday,setHoliday]=useState(null);
   const [holidayUnknown,setHolidayUnknown]=useState(false);
-  const [stock,setStock]=useState([]);
+  const [stockSnapshot,setStockSnapshot]=useState(null);
+  const stock=stockSnapshot?.sku===sku?stockSnapshot.records:[];
   const [stockLoading,setStockLoading]=useState(false);
+  const [stockError,setStockError]=useState(false);
+  const [stockAttempt,setStockAttempt]=useState(0);
+  const nearby=useMemo(()=>userPosition?nearestSixStores(stores,userPosition,confirmedOnly?stock:null):[],
+    [stores,userPosition,confirmedOnly,stock]);
   useEffect(()=>{
     if(!userPosition||!sku)return;
     const controller=new AbortController();
-    setStock([]);setStockLoading(true);
+    setStockSnapshot(null);setStockLoading(true);setStockError(false);
     fetch("/api/branch-stock?sku="+encodeURIComponent(sku),{signal:controller.signal})
-      .then(r=>r.ok?r.json():{records:[]})
-      .then(data=>{if(!controller.signal.aborted)setStock(Array.isArray(data.records)?data.records:[]);})
-      .catch(()=>{if(!controller.signal.aborted)setStock([]);})
+      .then(r=>{if(!r.ok)throw Error("Branch stock unavailable");return r.json();})
+      .then(data=>{if(data.sku!==sku||!Array.isArray(data.records))throw Error("Invalid branch response");
+        if(!controller.signal.aborted)setStockSnapshot({sku,records:data.records});})
+      .catch(()=>{if(!controller.signal.aborted){setStockSnapshot(null);setStockError(true);}})
       .finally(()=>{if(!controller.signal.aborted)setStockLoading(false);});
     return()=>controller.abort();
-  },[userPosition,sku]);
+  },[userPosition,sku,stockAttempt]);
   useEffect(()=>{
     if(!userPosition)return;
     const controller=new AbortController();
@@ -107,22 +115,23 @@ function StoreLocator({offers,sku,t,locale}) {
         const response=await fetch("/api/stores?nearby=1");
         if(!response.ok)throw Error("Stores unavailable");
         const stores=await response.json();
-        setNearby(nearestSixStores(Array.isArray(stores)?stores:[],coordinates));
+        setStores(Array.isArray(stores)?stores:[]);
         setError("");
       }catch{
         setError(t("No se pudo consultar la ubicación de las tiendas."));
-        setNearby([]);
+        setStores([]);
       }finally{setLoading(false);}
     },()=>{
       setLoading(false);
       setUserPosition(null);
-      setNearby([]);
+      setStores([]);
       setError(t("No se pudo obtener tu ubicación. Revisa el permiso del navegador."));
     },{enableHighAccuracy:false,timeout:12000,maximumAge:60000});
   };
   const days={es:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
     en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]};
   const openingText=store=>{
+    if(store.closedUntilNotice)return t("Cerrada hasta nuevo aviso según la tienda.");
     if(!store.scheduleVerified)return t("Horario habitual no verificado.");
     const slots=hoursOnDate(store,date);
     if(!slots?.length)return t("No hay horario confirmado para este día.");
@@ -159,8 +168,13 @@ function StoreLocator({offers,sku,t,locale}) {
         {" "+t("Confirma el horario especial directamente con la tienda.")}
       </p>}
       {holidayUnknown&&<p className="feature-note">{t("No se pudo verificar el calendario de feriados.")}</p>}
-      <p className="feature-note">{t("Se muestran las seis sucursales más cercanas. El stock solo se confirma con evidencia de esa sucursal y notebook.")}</p>
-      {stockLoading?<p role="status" className="feature-note">{t("Verificando stock por sucursal…")}</p>:
+      <p className="feature-footnote">{t("El stock corresponde a la consulta actual; la fecha seleccionada se aplica a los horarios.")}</p>
+      <label className="nearby-stock-filter"><input type="checkbox" checked={confirmedOnly}
+        onChange={e=>setConfirmedOnly(e.target.checked)}/> {t("Solo sucursales con stock confirmado")}</label>
+      <p className="feature-note">{t("Las sucursales se ordenan por distancia después de filtrar el stock del notebook seleccionado.")}</p>
+      {stockLoading?<p role="status" className="feature-note">{t("Verificando stock por sucursal…")}</p>:stockError?
+        <div><p role="alert" className="feature-note">{t("No se pudo verificar el stock por sucursal.")}</p>
+          <button type="button" className="feature-button" onClick={()=>setStockAttempt(v=>v+1)}>{t("Reintentar stock")}</button></div>:
         <p className="feature-note" aria-live="polite">
           {t("Sucursales cercanas con stock confirmado")}: {nearby.filter(store=>branchStatus(store,stock)==="in_stock").length} / {nearby.length}.
           {" "+t("Sin confirmación no significa agotado.")}
@@ -173,10 +187,12 @@ function StoreLocator({offers,sku,t,locale}) {
             <div className="store-title"><h3>{i+1}. {store.name}</h3><strong>{store.distance.toFixed(1)} km</strong></div>
             <p>{store.address}</p>
             <p className="store-stock-status" data-stock={state}>
-              {state==="in_stock"?t("Stock en sucursal confirmado")+(record?.quantity!=null?" · "+record.quantity+" "+t("unidades"):""):
+              {state==="in_stock"?t("Stock en sucursal confirmado")+(record?.quantity!=null?" · "+record.quantity+" "+t("unidades")+(record.approximate?" ("+t("aproximado")+")":""):""):
                 state==="out_of_stock"?t("Sin stock en sucursal"):t("Stock de sucursal sin verificar")}
             </p>
             <p className="store-times">{openingText(store)}</p>
+            {store.scheduleNotice&&<p className="feature-footnote">{t("Aviso publicado por la tienda")}: {store.scheduleNotice}</p>}
+            {record?.closedAtCheck&&<p className="feature-footnote">{t("La tienda informa cierre al momento de consultar; confirma el retiro antes de viajar.")}</p>}
             {holiday&&<p className="feature-footnote">{t("Horario de feriado no confirmado.")}</p>}
             {record&&<p className="feature-footnote">{t("Comprobado")}: {new Date(record.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}</p>}
             <div className="store-links">
@@ -191,7 +207,7 @@ function StoreLocator({offers,sku,t,locale}) {
           </article>;
         })}
       </div>
-      {nearby.length<6&&<p className="feature-note">{t("Se encontraron menos de seis sucursales con coordenadas disponibles.")} ({nearby.length})</p>}
+      {!stockLoading&&!stockError&&confirmedOnly&&nearby.length===0&&<p className="feature-note" role="status">{t("No se encontraron sucursales con stock confirmado para este notebook. Puedes desmarcar el filtro para consultar otras tiendas.")}</p>}
     </div>}
   </section>;
 }

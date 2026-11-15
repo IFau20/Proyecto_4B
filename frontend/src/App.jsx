@@ -69,7 +69,25 @@ export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
 }
 function ProductCard({ product, t, onHistory, locale }) {
   const [expanded, setExpanded] = useState(false);
-  const standardOffers=(product.offers||[]).filter(offer=>!hasSpecialCondition(offer));
+  const [verification,setVerification]=useState(null);
+  const [checking,setChecking]=useState(false);
+  const [checkFailed,setCheckFailed]=useState(false);
+  useEffect(()=>{
+    if(!expanded)return;
+    const controller=new AbortController();
+    setChecking(true);setCheckFailed(false);
+    fetch("/api/verify-notebook?sku="+encodeURIComponent(product.sku),{signal:controller.signal})
+      .then(response=>{if(!response.ok)throw Error("Verification unavailable");return response.json();})
+      .then(data=>{
+        if(data.sku!==product.sku||!Array.isArray(data.offers))throw Error("Invalid verification");
+        if(!controller.signal.aborted)setVerification(data);
+      })
+      .catch(()=>{if(!controller.signal.aborted)setCheckFailed(true);})
+      .finally(()=>{if(!controller.signal.aborted)setChecking(false);});
+    return()=>controller.abort();
+  },[expanded,product.sku]);
+  const currentOffers=verification?.sku===product.sku?verification.offers:product.offers;
+  const standardOffers=(currentOffers||[]).filter(offer=>!hasSpecialCondition(offer));
   const comparison = getPriceComparison(standardOffers);
   const verified = comparison.offers.filter((offer) => offer.priceClp !== null).length;
   const referencePrices = comparison.offers.filter((offer) => Number.isSafeInteger(offer.referencePriceClp));
@@ -114,6 +132,8 @@ function ProductCard({ product, t, onHistory, locale }) {
             {expanded?t("Ocultar comparación"):t("Comparar tiendas")+" ("+comparison.offers.length+")"}
           </button>
           {expanded && <div id={"offers-"+product.id} className="comparison-content">
+            {checking&&<p role="status" className="feature-note">{t("Verificando precios y stock en las tiendas…")}</p>}
+            {checkFailed&&<p role="status" className="feature-note">{t("No se pudo completar la verificación. Se conserva la última información disponible.")}</p>}
             {verified>=2 && <p className="comparison-summary">{t("Diferencia entre precios verificados")}: <strong>{money(comparison.potentialSavings)}</strong></p>}
             {verified<2 && publishedSavings!==null &&
               <p className="comparison-summary">{t("Comparación de precios publicados de al menos tres comercios (referencial)")}: <strong>{money(publishedSavings)}</strong></p>}
@@ -125,7 +145,7 @@ function ProductCard({ product, t, onHistory, locale }) {
               <span className="offer-source"><a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a></span>
               <strong className="offer-price">{offer.priceClp!==null?money(offer.priceClp):offer.referencePriceClp!=null
                 ? money(offer.referencePriceClp)+" ("+t("referencia")+")":t("No verificado")}</strong>
-              <span className="offer-extra">{offer.availability==="in_stock" ? t("Stock publicado: disponible") :
+              <span className="offer-extra">{offer.paymentMethod==="transfer"&&<>{t("Precio por transferencia")}{" · "}</>}{offer.availability==="in_stock" ? t("Stock publicado: disponible") :
                 offer.availability==="out_of_stock" ? t("Stock publicado: agotado") :
                 offer.availability==="preorder" ? t("Stock publicado: reserva") :
                 offer.reportedAvailability==="in_stock" ? t("Disponibilidad online informada por fuente pública; sin verificación directa") :

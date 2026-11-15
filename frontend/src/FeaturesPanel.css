@@ -89,3 +89,6 @@
 .store-stock-status{font-weight:800;}
 .store-stock-status[data-stock="in_stock"]{color:#29845d!important;}
 .store-stock-status[data-stock="out_of_stock"]{color:#c05c5c!important;}
+
+.nearby-stock-filter {display:flex;align-items:flex-start;gap:10px;line-height:1.5;margin:12px 0;cursor:pointer;}
+.nearby-stock-filter input {flex:0 0 auto;width:18px;height:18px;margin-top:2px;accent-color:#3173d9;}

@@ -9,6 +9,7 @@
     "audit:public-history": "deno run --allow-net --allow-read scripts/checkPublicHistory.ts",
     "audit:images": "deno run --allow-net scripts/checkImages.ts",
     "audit:geocode": "deno run --allow-net scripts/checkStoreGeocoding.ts",
-    "audit:rubric": "deno run --allow-net --allow-read scripts/auditRubric.ts"
+    "audit:rubric": "deno run --allow-net --allow-read scripts/auditRubric.ts",
+    "audit:comparison": "deno run --allow-net --allow-read scripts/checkComparison.ts"
   }
 }

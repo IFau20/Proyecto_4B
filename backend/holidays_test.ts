@@ -19,3 +19,10 @@ Deno.test("queries public calendar, not user coordinates, and caches same-year d
  equal(await holidayOn("2028-05-02",fake as typeof fetch),null);
  equal(requests,1);
 });
+
+Deno.test("calendar failure is not reported as a verified non-holiday",async()=>{
+ await rejects(()=>holidayOn("2030-12-25",(async()=>{throw Error("offline");}) as typeof fetch),/calendar|offline|unavailable/i);
+});
+Deno.test("malformed calendar response is not accepted as an empty calendar",async()=>{
+ await rejects(()=>holidayOn("2027-12-25",(async()=>Response.json({error:"maintenance"})) as typeof fetch),/calendar|invalid/i);
+});

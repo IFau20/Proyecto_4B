@@ -49,3 +49,13 @@ Deno.test("new branches reuse sourced coordinates without repeated geocoding",()
  equal(added.length,17);
  equal(STORES.filter(s=>s.lat!==null&&s.lon!==null).length,21);
 });
+
+Deno.test("store directory scrapes weekly hours from the official dynamically loaded widget",async()=>{
+ const data=await checkStores((async(url)=>{
+  if(String(url)==="https://www.pcfactory.cl/tiendas")return new Response('<div data-widget-name="Tiendas lista-mapa"></div><script>var css_url = "https://www.pcfactory.cl/widget_manager/test/file.css";</script>');
+  if(String(url).endsWith("file.js"))return new Response('var $stores = [{"meta":{"tags":[]},"fields":{"id":"2","Horario":"Lunes a Viernes 09:30 a 19:00"}}]; var $schedules = [];');
+  return new Response("unavailable",{status:503});
+ }) as typeof fetch);
+ const montt=data.find(s=>s.sourceId==="pcfactory-montt")!;
+ equal(montt.scheduleVerified,true);equal(montt.weekly[1]?.[0],"09:30");
+});

@@ -29,3 +29,15 @@ Deno.test("reads real pc Factory branch stock quantities but ignores web-wide to
  equal(result.find(x=>x.sourceId==="pcfactory-costanera")?.quantity,15);
  equal(result.find(x=>x.sourceId==="pcfactory-vina")?.quantity,10);
 });
+
+Deno.test("branch endpoint falls back to public product API when HTML has no inventory",async()=>{
+ const sku="83JE0184CL";
+ const records=await branchStockForSku(sku,(async(url)=>{
+  const path=String(url);
+  if(path.includes("api.pcfactory.cl"))return Response.json(path.endsWith("/stock")?
+   {id:55428,disponibilidad:[{sucursales:[{id:2,nombre:"Manuel Montt",aproximado:"12",retiro:true,cerrada:false}]}]}:
+   path.endsWith("/precio")?{id:55428,precio:{efectivo:1419990,normal:1463890}}:{id:55428,partNumber:sku});
+  return new Response("<html>JavaScript product shell</html>");
+ }) as typeof fetch);
+ equal(records.find(r=>r.sourceId==="pcfactory-montt")?.quantity,12);
+});

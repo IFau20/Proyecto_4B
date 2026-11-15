@@ -1,3 +1,9 @@
+# Estado actualizado de la pauta
+
+Ver [implementación, comprobaciones y límites de la entrega](RUBRIC_COMPLETION_2026-11-15.md). La nueva implementación consulta el servicio público de PC Factory para stock físico y precios, extrae horarios del widget oficial y verifica enlaces comerciales al abrir una comparación. SSO real sigue pendiente de configuración institucional.
+
+---
+
 # Evidencia para la pauta de PC Tracker
 
 Comparación de tres tiendas: la interfaz calcula diferencias entre precios publicados por al menos tres comercios distintos si están disponibles, indicando que son referenciales. Se mantiene un conteo separado para tres precios comprobados directamente y no se presentan referencias como verificadas.

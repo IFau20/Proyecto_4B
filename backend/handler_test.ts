@@ -42,3 +42,11 @@ Deno.test("branch stock refuses unknown notebook codes",async()=>{
  const response=await handleRequest(new Request("http://localhost:8000/api/branch-stock?sku=NOT-REAL"));
  assertEquals(response.status,404);
 });
+Deno.test("calendar source failure reaches the UI as an explicit unavailable status",async()=>{
+ const original=globalThis.fetch;
+ try{
+  globalThis.fetch=async()=>{throw Error("offline");};
+  const response=await handleRequest(new Request("http://localhost/api/holidays?date=2030-12-25"));
+  assertEquals((await response.json()).status,"calendar_unavailable");
+ }finally{globalThis.fetch=original;}
+});

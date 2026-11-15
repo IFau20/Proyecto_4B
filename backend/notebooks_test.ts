@@ -128,3 +128,35 @@ Deno.test("two exact notebook models have a sourced PC Factory product listing",
  equal(NOTEBOOKS.find(x=>x.sku==="83JE0184CL")?.sources.some(x=>x.sourceId==="pcfactory"),true);
  equal(NOTEBOOKS.find(x=>x.sku==="NP750XGJ-KS5CL")?.sources.some(x=>x.sourceId==="pcfactory"),true);
 });
+
+Deno.test("on-demand comparison verifies three retailer responses instead of promoting public references",async()=>{
+ const {verifyNotebookOffers}=await import("./notebooks.ts");
+ const product={sku:"83JE0184CL",offers:[
+  {sourceId:"solotodo-1",sourceName:"Winpy",url:"https://www.winpy.cl/venta/model",priceClp:null,referencePriceClp:1000000,availability:"unknown"},
+  {sourceId:"solotodo-2",sourceName:"Centrale",url:"https://centrale.cl/producto/model",priceClp:null,referencePriceClp:1100000,availability:"unknown"},
+  {sourceId:"solotodo-3",sourceName:"SP Digital",url:"https://www.spdigital.cl/model/",priceClp:null,referencePriceClp:1200000,availability:"unknown"},
+  {sourceId:"unsafe",sourceName:"Unsafe",url:"https://127.0.0.1/private",priceClp:null,availability:"unknown"}
+ ]};
+ const result=await verifyNotebookOffers(product,(async(url)=>{
+  if(String(url).includes("127.0.0.1"))throw Error("SSRF");
+  return new Response('<h1>83JE0184CL</h1><script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"83JE0184CL",offers:{priceCurrency:"CLP",price:999990,availability:"https://schema.org/InStock"}})+'</script>');
+ }) as typeof fetch);
+ equal(result.verification.verifiedPrices,3);equal(result.offers.find((o:any)=>o.sourceId==="unsafe")?.priceClp,null);
+ const blocked=await verifyNotebookOffers(product,(async()=>new Response("blocked",{status:403})) as typeof fetch);
+ equal(blocked.verification.verifiedPrices,0);equal(blocked.offers[0].referencePriceClp,1000000);
+});
+Deno.test("structured manufacturer identity can verify a product without visible SKU text",()=>{
+ const html='<script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"shop-123",mpn:"83JE0184CL",offers:{price:999990,priceCurrency:"CLP",availability:"https://schema.org/InStock"}})+'</script>';
+ equal(parseStorePage(html,"83JE0184CL","eylstore").priceClp,999990);
+});
+Deno.test("retailer redirects cannot leave the approved retailer origin",async()=>{
+ const {verifyNotebookOffers}=await import("./notebooks.ts");
+ const product={sku:"83JE0184CL",offers:[{sourceId:"w",sourceName:"Winpy",url:"https://www.winpy.cl/venta/item",priceClp:null,availability:"unknown"}]};
+ const html='<h1>83JE0184CL</h1><script type="application/ld+json">'+JSON.stringify({"@type":"Product",sku:"83JE0184CL",offers:{priceCurrency:"CLP",price:999990}})+'</script>';
+ const result=await verifyNotebookOffers(product,(async(_url,init)=>init?.redirect==="manual"?
+  new Response(null,{status:302,headers:{Location:"https://127.0.0.1/private"}}):new Response(html)) as typeof fetch);
+ equal(result.verification.verifiedPrices,0);
+ const canonical=await verifyNotebookOffers(product,(async(url,init)=>String(url).endsWith("/item")?
+  new Response(null,{status:301,headers:{Location:"/venta/canonical"}}):new Response(html)) as typeof fetch);
+ equal(canonical.verification.verifiedPrices,1);
+});

@@ -1,3 +1,4 @@
+import {fetchPcFactoryProduct} from "./pcFactory.ts";
 import {mapWithConcurrency} from "./concurrency.ts";
 import {parseRetailOffer} from "./liveSources.ts";
 import { publicHistory } from "./solotodoHistory.ts";
@@ -8,8 +9,8 @@ import { parseAvailability } from "./liveSources.ts";
 import { savePricePoints } from "./history.ts";
 
 // All laptop identities and specifications are sourced from public manufacturer/retailer
-// listings or SoloTodo product pages. Prices are NOT imported from SoloTodo.
-// Aggregator product pages are used only for product identification and photography.
+// listings or SoloTodo product pages. Public aggregator prices are references;
+// only retailer responses can establish directly verified prices and inventory.
 const retailer = (sourceId: string, sourceName: string, url: string) => ({ sourceId, sourceName, url });
 export const NOTEBOOKS = [
   { sku:"83JC0080CL", name:"Lenovo LOQ 15ARP9", ramGb:24, gpu:"NVIDIA GeForce RTX 4050", processor:"AMD Ryzen 7 7435HS", kind:"legacy", sources:[], profileUrl:"https://www.solotodo.cl/products/255350-lenovo-loq-15arp9-83jc0080cl" },
@@ -154,7 +155,8 @@ function metaImage(html:string,baseUrl:string) {
 export function parseStorePage(html:string,sku:string,sourceId:string) {
   const empty={ priceClp:null as number|null, listPriceClp:null as number|null,
     discountPercent:null as number|null, availability:"unknown", imageUrl:null as string|null };
-  if(!productIdentifierPresent(html,sku)) return empty;
+  const structured=parseRetailOffer(html,sku,sourceId);
+  if(!productIdentifierPresent(html,sku)) return {...empty,...structured};
   const text=plain(html);
   let priceClp:null|number=null, listPriceClp:null|number=null, availability="unknown";
   // Specific labels, not unrelated merchandising, crossed-out cart totals or installments.
@@ -211,7 +213,6 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
   }
   // Many retailers publish standardized product JSON-LD even when their visible
   // price layout differs. Only accept it after exact SKU and CLP validation.
-  const structured=parseRetailOffer(html,sku,sourceId);
   priceClp??=structured.priceClp;
   if(availability==="unknown")availability=structured.availability;
   // A known card-only price never becomes the unrestricted advertised price.
@@ -223,12 +224,36 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
   return {...empty,priceClp,listPriceClp,discountPercent:calcDiscount(priceClp,listPriceClp),availability};
 }
 const LIMIT_MS=7500;
+async function fetchRetailerPage(url:string,fetcher:typeof fetch){
+  const initial=new URL(url);
+  const host=initial.hostname.replace(/^www\./,"");
+  let current=initial;
+  const signal=AbortSignal.timeout(LIMIT_MS);
+  for(let redirects=0;redirects<=3;redirects++){
+    const response=await fetcher(current.href,{signal,redirect:"manual",headers:{Accept:"text/html"}});
+    if(![301,302,303,307,308].includes(response.status))return response;
+    const location=response.headers.get("Location");
+    await response.body?.cancel();
+    if(!location)throw Error("Missing retailer redirect");
+    const next=new URL(location,current);
+    if(next.protocol!=="https:"||next.hostname.replace(/^www\./,"")!==host||
+      next.port||next.username||next.password)throw Error("Retailer redirect left trusted origin");
+    current=next;
+  }
+  throw Error("Too many retailer redirects");
+}
 async function fetchSource(model:typeof NOTEBOOKS[number],source:{sourceId:string;sourceName:string;url:string},fetcher:typeof fetch,checkedAt:string) {
   let details= {priceClp:null as number|null,listPriceClp:null as number|null,
     discountPercent:null as number|null,availability:"unknown",imageUrl:null as string|null };
   let queryStatus="unverified";
   try{
-    const response=await fetcher(source.url,{signal:AbortSignal.timeout(LIMIT_MS),headers:{Accept:"text/html"}});
+    if(source.sourceId==="pcfactory"){
+      const api=await fetchPcFactoryProduct(source.url,model.sku,fetcher);
+      if(api&&(api.priceClp!==null||api.availability!=="unknown"))return {...source,...details,
+        priceClp:api.priceClp,listPriceClp:api.listPriceClp,availability:api.availability,
+        paymentMethod:"transfer",discountPercent:calcDiscount(api.priceClp,api.listPriceClp),queryStatus:"verified",checkedAt:api.checkedAt};
+    }
+    const response=await fetchRetailerPage(source.url,fetcher);
     if(!response.ok){queryStatus=[403,429].includes(response.status)?"blocked":"http_error";}
     else {
       const html=await response.text();
@@ -238,7 +263,8 @@ async function fetchSource(model:typeof NOTEBOOKS[number],source:{sourceId:strin
       queryStatus=details.priceClp!==null||details.availability!=="unknown"?"verified":"unverified";
     }
   }catch{queryStatus="network_error";}
-  return {...source,...details,queryStatus,checkedAt};
+  return {...source,...details,queryStatus,checkedAt,
+    ...(source.sourceId==="ripley"&&details.priceClp!==null?{sourceName:"Ripley",paymentCondition:null,condition:null}: {})};
 }
 let catalogCache:Awaited<ReturnType<typeof buildNotebooks>>|null=null;
 let cacheAt=0, pending:Promise<Awaited<ReturnType<typeof buildNotebooks>>>|null=null;
@@ -417,4 +443,42 @@ export async function collectNotebookHistory() {
       priceClp:offer.priceClp,checkedAt:offer.checkedAt})));
   try{await savePricePoints(points);}
   catch(error){console.error("Unable to persist notebook price observations",error);}
+}
+
+// Recheck public product links on demand; unknown hosts never become server-side requests.
+const RETAILER_HOSTS:Record<string,string>={
+ "spdigital.cl":"spdigital","winpy.cl":"winpy","centrale.cl":"centrale",
+ "pcfactory.cl":"pcfactory","simple.ripley.cl":"ripley","paris.cl":"paris",
+ "tienda.pc-express.cl":"pcexpress","greenchip.cl":"greenchip","tishop.cl":"tishop",
+ "eylstore.cl":"eylstore","kdtec.cl":"kdtec","notebookstore.cl":"notebookstore","falabella.com":"falabella",
+ "hp.com":"hp","asus.com":"asus"
+};
+const verifiedNotebookCache=new Map<string,{at:number;result:any}>();
+const pendingVerifications=new Map<string,Promise<any>>();
+export async function verifyNotebookOffers(product:{sku:string;offers:any[]},fetcher:typeof fetch=fetch){
+ const known=NOTEBOOKS.find(p=>p.sku===product.sku);
+ if(!known)throw Error("Unknown notebook SKU");
+ const cache=verifiedNotebookCache.get(product.sku);
+ if(fetcher===fetch&&cache&&Date.now()-cache.at<10*60*1000)return cache.result;
+ if(fetcher===fetch&&pendingVerifications.has(product.sku))return pendingVerifications.get(product.sku)!;
+ const work=(async()=>{
+  const checkedAt=new Date().toISOString();
+  const offers=await mapWithConcurrency(product.offers,4,async offer=>{
+   let sourceId:string|undefined;
+   try{const url=new URL(offer.url);if(url.protocol!=="https:"||url.port||url.username||url.password)return offer;
+    sourceId=RETAILER_HOSTS[url.hostname.replace(/^www\./,"")];
+   }catch{return offer;}
+   if(!sourceId)return offer;
+   const result=await fetchSource(known,{...offer,sourceId},fetcher,checkedAt);
+   return {...offer,...result,sourceId:offer.sourceId};
+  });
+  const domains=new Set(offers.filter(o=>Number.isSafeInteger(o.priceClp)).map(o=>new URL(o.url).hostname.replace(/^www\./,"")));
+  const result={sku:product.sku,offers,verification:{totalSources:offers.length,
+    verifiedPrices:offers.filter(o=>Number.isSafeInteger(o.priceClp)).length,
+    verifiedStocks:offers.filter(o=>o.availability!=="unknown").length,
+    verifiedRetailers:domains.size,comparable:domains.size>=3},checkedAt};
+  if(fetcher===fetch)verifiedNotebookCache.set(product.sku,{at:Date.now(),result});
+  return result;
+ })().finally(()=>pendingVerifications.delete(product.sku));
+ if(fetcher===fetch)pendingVerifications.set(product.sku,work);return work;
 }

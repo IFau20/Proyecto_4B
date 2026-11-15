@@ -17,7 +17,7 @@ Proyecto académico de Diseño de Software. **Solo notebooks reales**, identific
 
 ## Limitaciones que deben entenderse antes de la entrega
 
-Las páginas comerciales pueden bloquear consultas automatizadas. La auditoría de GitHub Actions del 15 de noviembre detectó 13 imágenes de 13 modelos, **0 precios en vivo** y 3 estados de stock entre 18 fichas. Los valores de referencia de fichas web no se convierten silenciosamente en precios en vivo. Si la tienda bloquea la consulta, la diferencia de precios en vivo y el estado de stock se mantienen como no verificados.
+Se completaron consultas directas al abrir la comparación, stock físico mediante el servicio público de PC Factory y scraping de horarios del widget oficial de sucursales. La comprobación de D0CJ4LA obtuvo cuatro precios directos; la de 83JE0184CL recuperó 18 estados de sucursales. Son mediciones puntuales y las tiendas pueden bloquear o cambiar sus respuestas. Las referencias siguen separadas de la verificación directa. Ver [evidencia y límites de la entrega](docs/RUBRIC_COMPLETION_2026-11-15.md).
 
 El historial empieza a construirse cuando el servicio observa precios en vivo; no puede representar años anteriores sin datos auténticos. Los archivos de historial residen en `backend/data/price-history.json` y requieren un volumen persistente si la app se despliega. El SSO debe registrarse en Microsoft Entra antes de poder comprobar un ingreso institucional.
 
@@ -42,6 +42,7 @@ Requiere Git, Node.js LTS y Deno 2. URL: http://127.0.0.1:5173.
 Set-Location "$HOME\PCTracker\backend"
 deno task test
 deno task audit:catalog
+deno task audit:comparison
 Set-Location "$HOME\PCTracker\frontend"
 npm.cmd ci
 npm.cmd test

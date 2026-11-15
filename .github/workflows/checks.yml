@@ -104,3 +104,7 @@ jobs:
         working-directory: backend
         run: deno task audit:rubric
         continue-on-error: true
+      - name: Check three current retailer prices for the same notebook (informational)
+        working-directory: backend
+        run: deno task audit:comparison
+        continue-on-error: true
