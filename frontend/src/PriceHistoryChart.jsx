@@ -44,7 +44,10 @@ export default function PriceHistoryChart({history,t,locale}) {
     visible:collapseUnchangedPrices(source.points.filter(point=>
       Date.parse(point.checkedAt)>=cutoff&&inDateRange(point,from,to))),
   })),[history,cutoff,from,to]);
-  const drawn=sources.filter(source=>!hidden.includes(source.sourceId));
+  // Hide retailers without observations in the selected date range, including
+  // their legend checkboxes and summary cards. Do not mutate the source data.
+  const storesWithData=sources.filter(source=>source.raw.length>0);
+  const drawn=storesWithData.filter(source=>!hidden.includes(source.sourceId));
   const all=drawn.flatMap(s=>s.raw);
   const times=all.map(p=>Date.parse(p.checkedAt));
   const minTime=all.length?Math.min(...times):0;
@@ -100,7 +103,7 @@ export default function PriceHistoryChart({history,t,locale}) {
             </g>;
           })}
           {drawn.map(source=>{
-            const color=COLORS[sources.findIndex(s=>s.sourceId===source.sourceId)%COLORS.length];
+            const color=COLORS[storesWithData.findIndex(s=>s.sourceId===source.sourceId)%COLORS.length];
             const path=makePath(source.visible,Date.parse(source.raw.at(-1)?.checkedAt||source.visible.at(-1)?.checkedAt));
             return <g key={source.sourceId}>
               <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"/>
@@ -127,16 +130,16 @@ export default function PriceHistoryChart({history,t,locale}) {
           <small>{dateText(hover.date,locale)}</small>
         </div>}
       </div>}
-    {sources.length>0&&<div className="history-legend">
-      {sources.map((source,i)=><label key={source.sourceId}>
+    {storesWithData.length>0&&<div className="history-legend">
+      {storesWithData.map((source,i)=><label key={source.sourceId}>
         <input type="checkbox" checked={!hidden.includes(source.sourceId)}
           onChange={e=>{setHover(null);setHidden(current=>e.target.checked?current.filter(x=>x!==source.sourceId):[...current,source.sourceId]);}}/>
         <span className="history-dot" style={{background:COLORS[i%COLORS.length]}}/>
         {source.sourceName||source.sourceId}
       </label>)}
     </div>}
-    {sources.length>0&&<div className="history-summary">
-      {sources.map(source=><article className="trend-card" key={source.sourceId}>
+    {storesWithData.length>0&&<div className="history-summary">
+      {storesWithData.map(source=><article className="trend-card" key={source.sourceId}>
         <h3>{source.sourceName||source.sourceId}</h3>
         {source.visible.length?<>
           <p>{t("Último precio observado")}: <strong>{money(source.visible.at(-1).priceClp)}</strong></p>

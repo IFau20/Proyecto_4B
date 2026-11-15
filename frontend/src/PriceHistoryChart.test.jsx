@@ -26,3 +26,23 @@ it("shows a point only when the price changes, preserving chronological order",(
  expect(priceAtTime(points,Date.parse("2026-01-03T12:00:00Z")).priceClp).toBe(700000);
  expect(priceAtTime(points,Date.parse("2026-01-05T12:00:00Z")).priceClp).toBe(650000);
 });
+
+import {render,screen,fireEvent} from "@testing-library/react";
+import PriceHistoryChart from "./PriceHistoryChart.jsx";
+it("hides stores without observations in selected period from both cards and legend",()=>{
+ const history={sources:[
+  {sourceId:"recent",sourceName:"Tienda Reciente",points:[{checkedAt:"2026-11-15T00:00:00Z",priceClp:800000}]},
+  {sourceId:"old",sourceName:"Tienda Antigua",points:[{checkedAt:"2025-03-01T00:00:00Z",priceClp:900000}]},
+ ]};
+ const translate=(s)=>s;
+ const {container}=render(<PriceHistoryChart history={history} locale="es" t={translate}/>);
+ expect(screen.getByRole("heading",{name:"Tienda Antigua"})).toBeInTheDocument();
+ fireEvent.change(screen.getByLabelText("Desde"),{target:{value:"2026-11-01"}});
+ expect(screen.queryByRole("heading",{name:"Tienda Antigua"})).not.toBeInTheDocument();
+ expect(screen.queryByLabelText("Tienda Antigua")).not.toBeInTheDocument();
+ expect(screen.getByRole("heading",{name:"Tienda Reciente"})).toBeInTheDocument();
+ expect(container.querySelectorAll(".trend-card")).toHaveLength(1);
+ fireEvent.change(screen.getByLabelText("Desde"),{target:{value:"2027-01-01"}});
+ expect(container.querySelectorAll(".trend-card")).toHaveLength(0);
+ expect(screen.getByText("No hay observaciones reales para este período.")).toBeInTheDocument();
+});
