@@ -1,7 +1,7 @@
 import {getNotebooks} from "../notebooks.ts";
 import {proxyNotebookImage} from "../images.ts";
 const notebooks=await getNotebooks();
-for(const sku of ["83JC0080CL","DB9V5AT#ABM"]) {
+for(const sku of ["83JC0080CL","DB9V5AT#ABM","82XM00M4CL","BA1U9LA","CH8Z6LA","83GSX029CL","83GSX013CL","NH.DADAL.002.1","BM6U5LA","D62W3LA"]) {
  const product=notebooks.find(p=>p.sku===sku);
  const image=product?.imageUrl || "";
  const hostname=image?new URL(image).hostname:"none";
