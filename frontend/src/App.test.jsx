@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import App, { validDeals } from "./App.jsx";
 
 const sample=[
@@ -18,7 +18,8 @@ beforeEach(()=>{
 describe("real notebook storefront",()=>{
  it("renders only real notebooks from API and no demo label",async()=>{
   render(<App/>);
-  expect(await screen.findByRole("heading",{name:"HP 15-fd0331la"})).toBeInTheDocument();
+  await screen.findByRole("heading",{name:"HP Victus"});
+  expect(within(document.querySelector(".computer-grid")).getByRole("heading",{name:"HP 15-fd0331la"})).toBeInTheDocument();
   expect(screen.getByRole("heading",{name:"HP Victus"})).toBeInTheDocument();
   expect(screen.queryByText(/ficticios/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/AVANCE 05/)).not.toBeInTheDocument();
@@ -26,7 +27,7 @@ describe("real notebook storefront",()=>{
  it("filters notebooks by GPU and RAM",async()=>{
   render(<App/>); await screen.findByRole("heading",{name:"HP Victus"});
   fireEvent.change(screen.getByLabelText("RAM mínima"),{target:{value:"16"}});
-  expect(screen.queryByRole("heading",{name:"HP 15-fd0331la"})).not.toBeInTheDocument();
+  expect(within(document.querySelector(".computer-grid")).queryByRole("heading",{name:"HP 15-fd0331la"})).not.toBeInTheDocument();
  });
  it("hides unconfigured SSO and preserves dark mode",async()=>{
   render(<App/>); await screen.findByRole("heading",{name:"HP Victus"});
