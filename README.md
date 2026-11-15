@@ -5,7 +5,7 @@ Proyecto académico de Diseño de Software. **Solo notebooks reales**, identific
 ## Funcionalidades
 
 - React + Vite, Deno 2 REST y CSS responsive.
-- Catálogo de **13 modelos reales** y 18 fichas comerciales asociadas, con fotografías leídas de metadatos de páginas de producto.
+- Catálogo de **36 modelos reales** y 18 fichas comerciales asociadas, con fotografías leídas de metadatos de páginas de producto.
 - Búsqueda y filtros combinables: **RAM, GPU y procesador**.
 - Comparación por tiendas: precios obtenidos por scraper y, cuando bloquean la consulta, **referencias publicadas** separadas explícitamente de precios verificados.
 - Carrusel: solo rebajas **iguales o superiores a 20% respecto del precio normal de la misma tienda**. No considera diferencias entre tiendas como descuento. Las referencias deben ser recientes y se etiquetan como no verificadas en vivo.
@@ -81,3 +81,11 @@ enlace de origen y un estado vacío cuando ambas fuentes fallan.
 
 Pruebas específicas: `cd backend; deno task audit:public-history`.
 La fuente pública no tiene SLA y no se eluden controles ni sesiones de SoloTodo.
+
+## Ampliación de catálogo e historial — noviembre de 2026
+
+- **36 notebooks reales**, 23 más que en la versión anterior; cada SKU tiene una ficha de producto y especificaciones propias. Marcas: ASUS, Lenovo, HP, Acer y Gigabyte. Los precios se obtienen de publicaciones de tiendas o se señalan como últimos precios históricos con su fecha: nunca se generan precios ficticios.
+- El feed público de comercios se consulta en **lotes de hasta 12 productos** para no perder resultados con catálogos grandes. Las ofertas se emparejan por SKU exacto y se excluyen publicaciones reacondicionadas identificadas.
+- El historial de precios **oculta tiendas sin observaciones** dentro del período seleccionado, tanto en la leyenda como en las tarjetas de resumen. Si no hay registros, se muestra un mensaje en lugar de tarjetas vacías.
+- Auditoría de referencia: 36 modelos, 115 publicaciones de tiendas, 102 referencias de precios, 27 modelos con precios publicados por comercios, 7 con solo precio histórico y 2 sin precio recuperable en esa consulta. Esta cobertura puede variar según las fuentes; no equivale a 102 cotizaciones vivas.
+- Ver los 23 modelos añadidos en [docs/CATALOG_EXPANSION.md](docs/CATALOG_EXPANSION.md).
