@@ -76,7 +76,7 @@ export const STORES = [
   {sourceId:"pcfactory-maipu",name:"PC Factory — Maipú",kind:"store",
     address:"Avenida Américo Vespucio 399, Maipú, Santiago, Chile",lat:-33.4827018,lon:-70.7505165,
     contactUrl:"https://www.pcfactory.cl/tiendas",
-    weekly:{},addressPhrase:"",hourPhrases:[]},,
+    weekly:{},addressPhrase:"",hourPhrases:[]},
   {sourceId:"pcfactory-cantagallo",name:"PC Factory — Cantagallo",kind:"store",
     address:"Avenida Las Condes 12340, Vitacura, Santiago, Chile",lat:null,lon:null,
     contactUrl:"https://www.pcfactory.cl/tiendas",
