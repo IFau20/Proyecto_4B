@@ -1,4 +1,7 @@
 export const english = {
+  "Precios publicados de referencia": "Published reference prices",
+  "Valores publicados en fichas comerciales durante la investigación; no son cotizaciones verificadas en tiempo real.": "Prices published in product listings during research; they are not verified live quotations.",
+  "Verifica el valor y la disponibilidad en la tienda antes de comprar.": "Check prices and stock directly with the seller before purchasing.",
   "de": "of",
   "Diseño de Software · Proyecto 4B": "Software Design · Project 4B",
   "Criterios de comparación": "Comparison criteria",

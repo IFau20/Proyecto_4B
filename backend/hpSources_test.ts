@@ -40,3 +40,12 @@ Deno.test("four real sources can produce a comparable model under fixtures",asyn
  equal(result.verification.comparable,true);
  equal(result.verification.verifiedPrices,4);
 });
+
+Deno.test("reference listings are kept separate from live price verification",async()=>{
+ const mockFetch=async()=>new Response("",{status:503});
+ const response=await fetchHpProduct(mockFetch as typeof fetch,new Date("2026-11-15T12:00:00Z"));
+ equal(response.verification.verifiedPrices,0);
+ equal(response.verification.comparable,false);
+ equal(response.offers.filter(offer=>offer.referencePriceClp!==undefined).length,3);
+ equal(response.offers.every(offer=>offer.priceClp===null),true);
+});

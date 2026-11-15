@@ -120,3 +120,7 @@ El extractor ahora revisa datos estructurados de `schema.org/Product` asociados 
 **Cómo comprobarlo en vivo:** desde `backend/`, ejecuta `deno task check:live`. Consulta las páginas públicas e imprime `verifiedPrices`, `verifiedStocks`, `comparable` y `stockComplete`. El comando finaliza con error cuando no se verifican los tres precios y los tres estados de stock. No afirma que un producto agotado tenga precio de venta disponible.
 
 Se añadieron pruebas automáticas en GitHub Actions; el scraping en vivo debe revisarse por separado, porque las tiendas pueden cambiar, bloquear bots o dejar de vender el SKU.
+
+## Precios publicados de referencia (respaldo para la DEMO)
+
+Cuando una tienda bloquea el scraper, PC Tracker conserva la distinción entre precios **verificados automáticamente** y valores **referenciales provenientes de fichas públicas**. Para el HP 250R G10 se incluyen tres precios publicados observados durante la investigación de noviembre de 2026: PC Express $539.900, Winpy $559.968 y SP Digital $877.530 CLP. No se afirma que continúen vigentes. Se muestran en un bloque aparte, enlazados con su origen, **sin** incorporarlos al historial de observaciones automáticas y **sin** convertir el estado de stock en verificado.

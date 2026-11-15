@@ -7,14 +7,17 @@ export const HP_PRODUCT = {
   sources: [
     {
       sourceId: "winpy", sourceName: "Winpy",
+      referencePriceClp: 559968, referenceType: "published_listing",
       url: "https://www.winpy.cl/venta/notebook-hp-250r-g10-de-15-6-core-5-120u-16gb-ddr5-512gb-ssd-freedos/",
     },
     {
       sourceId: "spdigital", sourceName: "SP Digital",
+      referencePriceClp: 877530, referenceType: "published_listing",
       url: "https://www.spdigital.cl/hp-250r-g10-intel-5120u-15-16gb-512-ssd-freedos/",
     },
     {
       sourceId: "pcexpress", sourceName: "PC Express",
+      referencePriceClp: 539900, referenceType: "published_listing",
       url: "https://tienda.pc-express.cl/21702-notebook-hp-250r-intel-core-5-120u-16gb-512-gb-15-6-freedos-3-0-p-n-db9v5at-abm",
     },
     {

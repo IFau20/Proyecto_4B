@@ -85,6 +85,24 @@ function ComputerCard({ computer, index, t }) {
                   </li>
                 ))}
               </ul>
+
+              {computer.sku === "DB9V5AT#ABM" && comparison.offers.some((offer) => offer.referencePriceClp != null) && (
+                <section className="reference-comparison" aria-label={t("Precios publicados de referencia")}>
+                  <h4>{t("Precios publicados de referencia")}</h4>
+                  <p>{t("Valores publicados en fichas comerciales durante la investigación; no son cotizaciones verificadas en tiempo real.")}</p>
+                  <ul className="reference-prices">
+                    {comparison.offers.filter((offer) => Number.isFinite(offer.referencePriceClp))
+                      .sort((a,b) => a.referencePriceClp - b.referencePriceClp)
+                      .map((offer) => (
+                        <li key={offer.sourceId}>
+                          <a href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a>
+                          <strong>{formatPrice(offer.referencePriceClp)}</strong>
+                        </li>
+                      ))}
+                  </ul>
+                  <p>{t("Verifica el valor y la disponibilidad en la tienda antes de comprar.")}</p>
+                </section>
+              )}
               {computer.isLive && (
                 <ul className="stock-list" aria-label={t("Disponibilidad de las tiendas")}>
                   {comparison.offers.map((offer) => (

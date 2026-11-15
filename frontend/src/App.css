@@ -209,3 +209,15 @@ h3 { font-size: 16px; line-height: 1.4; margin: 0; letter-spacing: -.25px; min-h
 .feature-product-picker select {min-width:min(100%,340px);max-width:100%;border:1px solid #a9c0dc;border-radius:10px;padding:12px;background:#fff;color:#263d57;font:600 13px 'DM Sans',Arial,sans-serif;}
 :root[data-theme="dark"] .feature-product-picker label {color:#cedff1;}
 :root[data-theme="dark"] .feature-product-picker select {background:#152942;color:#eff7ff;border-color:#546f90;}
+
+.reference-comparison { margin-top:18px;padding:13px;border:1px solid #d7c99d;background:#fffbef;border-radius:10px; }
+.reference-comparison h4 {margin:0 0 8px;font-family:Manrope,sans-serif;font-size:12px;color:#6b4d10;}
+.reference-comparison p {font-size:10px;line-height:1.6;color:#705d3c;}
+.reference-prices {list-style:none;margin:10px 0;padding:0;display:grid;gap:7px;}
+.reference-prices li {display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;}
+.reference-prices a {color:#2b6195;font-weight:700;}
+.reference-prices strong {white-space:nowrap;color:#2c4058;}
+:root[data-theme="dark"] .reference-comparison {background:#3a3222;border-color:#8c7145;}
+:root[data-theme="dark"] .reference-comparison h4,:root[data-theme="dark"] .reference-comparison p {color:#f4ddad;}
+:root[data-theme="dark"] .reference-prices a {color:#9ac8ff;}
+:root[data-theme="dark"] .reference-prices strong {color:#fff1cf;}
