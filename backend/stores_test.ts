@@ -1,7 +1,7 @@
 import {strictEqual as equal} from "node:assert/strict";
 import {STORES,verifyHours,distanceKm,checkStores} from "./stores.ts";
 Deno.test("official stores have addresses and known coordinates where available",()=>{
- equal(STORES.length,14);
+ equal(STORES.length,23);
  equal(STORES.filter(s=>s.lat!==null&&s.lon!==null).length,13);
  equal(STORES.every(s=>s.address.endsWith('Chile')),true);
 });
@@ -35,4 +35,11 @@ Deno.test("six or more partner locations have sourced, usable coordinates",()=>{
  equal(located.length>=6,true);
  equal(located.some(s=>s.sourceId==="pcfactory-vina"),true);
  equal(located.some(s=>s.sourceId==="pcexpress"),true);
+});
+
+Deno.test("expanded official pickup and retail branch directory keeps addresses unique",()=>{
+ equal(STORES.length,23);
+ equal(new Set(STORES.map(store=>store.sourceId)).size,STORES.length);
+ equal(STORES.some(s=>s.sourceId==="notebookstore"),true);
+ equal(STORES.filter(s=>s.name.startsWith("PC Factory")).length,18);
 });
