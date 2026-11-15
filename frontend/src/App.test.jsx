@@ -218,3 +218,14 @@ it("loads a second real model from four retailers without replacing the original
   expect(screen.getAllByRole("heading", { name: "Notebook Study 14" }).length).toBeGreaterThan(0);
   expect(screen.getByText("3 de 4 precios verificados")).toBeInTheDocument();
 });
+
+it("uses the backend login URL from the SSO configuration", async () => {
+  fetch.mockImplementation(async (url) => ({
+    ok:true, json: async () => url==="/api/auth/me"
+      ? { enabled:true, user:null, loginUrl:"http://localhost:8000/api/auth/login" }
+      : [],
+  }));
+  render(<App />);
+  expect(await screen.findByRole("link", { name:"Iniciar sesión" }))
+    .toHaveAttribute("href","http://localhost:8000/api/auth/login");
+});

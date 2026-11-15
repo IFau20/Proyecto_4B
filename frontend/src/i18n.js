@@ -1,4 +1,7 @@
 export const english = {
+  "de": "of",
+  "Diseño de Software · Proyecto 4B": "Software Design · Project 4B",
+  "Criterios de comparación": "Comparison criteria",
   "Activar modo claro": "Enable light mode",
   "Activar modo oscuro": "Enable dark mode",
   "Modo claro": "Light mode",

@@ -58,7 +58,7 @@ export async function handleAuth(request: Request): Promise<Response | null> {
   const s = settings();
   if (pathname === "/api/auth/me" && request.method === "GET") {
     const session = sessions.get(cookie(request, "pct_session"));
-    return json({ enabled: enabled(s), user: session && session.expires > seconds()
+    return json({ enabled: enabled(s), loginUrl: new URL("/api/auth/login", request.url).href, user: session && session.expires > seconds()
       ? { name: session.name, email: session.email } : null });
   }
   if (pathname === "/api/auth/login" && request.method === "GET") {

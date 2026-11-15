@@ -42,9 +42,9 @@ function ComputerCard({ computer, index, t }) {
         <h3>{computer.name}</h3>
         <p className="price">
           {comparison.lowestPrice === null ? t("Sin precios") : formatPrice(comparison.lowestPrice)}
-          {comparison.lowestPrice !== null && <span>CLP · desde</span>}
+          {comparison.lowestPrice !== null && <span>{t("CLP · desde")}</span>}
           {computer.isLive && <small className="price-coverage">
-            {verifiedPriceCount} de {comparison.offers.length} {t("precios verificados")}
+            {verifiedPriceCount} {t("de")} {comparison.offers.length} {t("precios verificados")}
           </small>}
         </p>
         <dl className="specification-list">
@@ -97,7 +97,7 @@ function ComputerCard({ computer, index, t }) {
                           t("Stock sin verificar")}
                       </span>
                       {offer.checkedAt && <time className="checked-at" dateTime={offer.checkedAt}>
-                        Consulta: {new Date(offer.checkedAt).toLocaleString("es-CL")}
+                        {t("Consulta:")} {new Date(offer.checkedAt).toLocaleString("es-CL")}
                       </time>}
                     </li>
                   ))}
@@ -249,7 +249,7 @@ export default function App() {
             </button>
             {auth?.enabled && (auth.user
               ? <button type="button" className="auth-button" onClick={logout}>{t("Cerrar sesión")}</button>
-              : <a className="auth-button" href="/api/auth/login">{t("Iniciar sesión")}</a>)}
+              : <a className="auth-button" href={auth.loginUrl || "/api/auth/login"}>{t("Iniciar sesión")}</a>)}
             {auth && !auth.enabled && <span className="sso-unconfigured">{t("SSO sin configurar")}</span>}
             <button
               className="theme-toggle"
@@ -268,11 +268,11 @@ export default function App() {
       <main id="inicio">
         <section className="hero container" aria-labelledby="hero-title">
           <div className="hero-content">
-            <div className="hero-label"><span className="live-dot" /> ELIGE CON MÁS INFORMACIÓN</div>
+            <div className="hero-label"><span className="live-dot" /> {t("ELIGE CON MÁS INFORMACIÓN")}</div>
             <h1 id="hero-title">{t("Tu próximo computador,")} <em>{t("más claro.")}</em></h1>
             <p className="hero-description">{t("Filtra computadores por RAM, GPU y procesador y compara precios y stock cuando cada tienda publique esos datos.")}</p>
             <div className="hero-chips" aria-label="Criterios de comparación">
-              <span>01 / RAM</span><span>02 / GPU</span><span>03 / PROCESADOR</span>
+              <span>01 / RAM</span><span>02 / GPU</span><span>03 / {t("PROCESADOR")}</span>
             </div>
           </div>
           <div className="hero-art" aria-hidden="true">
@@ -298,7 +298,7 @@ export default function App() {
               liveStatus === "error" ? t("No se pudo consultar el modelo real; el catálogo de prueba sigue disponible.") :
               liveComputer?.verification?.comparable
                 ? t("Comparación de tres precios verificados disponible.")
-                : `Consulta de tiendas: ${liveComputer?.verification?.verifiedPrices ?? 0} de 3 precios verificados. Las fuentes restantes figuran sin verificar.`}</p>
+                : t("Consulta de tiendas:") + " " + (liveComputer?.verification?.verifiedPrices ?? 0) + " " + t("de 3 precios verificados. Las fuentes restantes figuran sin verificar.")}</p>
             <p className="live-catalog-status">
               {hpStatus === "loading" ? (locale === "es" ? "Consultando cuatro tiendas para el HP 250R…" : "Checking four retailers for the HP 250R…") :
                 hpStatus === "error" ? (locale === "es" ? "No se pudo consultar el HP 250R; siguen disponibles los demás productos." : "HP 250R lookup failed; other products remain available.") :
@@ -340,7 +340,7 @@ export default function App() {
         <FeaturesPanel liveComputer={displayedLiveProduct} t={t} locale={locale} />
       </main>
 
-      <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>Diseño de Software · Proyecto 4B</span></div></footer>
+      <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>{t("Diseño de Software · Proyecto 4B")}</span></div></footer>
     </div>
   );
 }
