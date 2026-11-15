@@ -185,3 +185,14 @@ it("explains when only one retailer price is verified instead of showing a false
   expect(screen.getByText("Tienda bloqueó la consulta")).toBeInTheDocument();
   expect(screen.getByText("Stock publicado: agotado")).toBeInTheDocument();
 });
+
+it("switches between Spanish and English and persists the language", () => {
+  fetch.mockReturnValue(new Promise(() => {}));
+  render(<App />);
+  fireEvent.click(screen.getByRole("button", { name: "Switch to English" }));
+  expect(screen.getByRole("heading", { name: /Your next computer/ })).toBeInTheDocument();
+  expect(document.documentElement).toHaveAttribute("lang", "en");
+  expect(window.localStorage.getItem("pc-tracker-locale")).toBe("en");
+  fireEvent.click(screen.getByRole("button", { name: "Cambiar a español" }));
+  expect(screen.getByRole("heading", { name: /Tu próximo computador/ })).toBeInTheDocument();
+});

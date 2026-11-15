@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import CatalogFilters from "./CatalogFilters.jsx";
+import FeaturesPanel from "./FeaturesPanel.jsx";
+import { translate } from "./i18n.js";
 import { filterComputers, getFilterOptions } from "./catalogFilters.js";
 import { getPriceComparison } from "./priceComparison.js";
 
@@ -19,7 +21,7 @@ function getInitialTheme() {
 }
 
 
-function ComputerCard({ computer, index }) {
+function ComputerCard({ computer, index, t }) {
   const [showOffers, setShowOffers] = useState(false);
   const comparison = getPriceComparison(computer.offers);
   const verifiedPriceCount = computer.isLive
@@ -29,26 +31,26 @@ function ComputerCard({ computer, index }) {
   return (
     <article className="computer-card">
       <div className="computer-visual" aria-hidden="true">
-        <span className="model-index">MODELO {String(index + 1).padStart(2, "0")}</span>
+        <span className="model-index">{t("MODELO")} {String(index + 1).padStart(2, "0")}</span>
         <div className="laptop-illustration">
           <div className="laptop-screen"><span className="screen-mark" /></div>
           <div className="laptop-base" />
         </div>
       </div>
       <div className="computer-details">
-        <p className="card-eyebrow">{computer.isLive ? "MODELO REAL · TRES TIENDAS" : "COMPUTADOR DE EJEMPLO"}</p>
+        <p className="card-eyebrow">{computer.isLive ? t("MODELO REAL · TRES TIENDAS") : t("COMPUTADOR DE EJEMPLO")}</p>
         <h3>{computer.name}</h3>
         <p className="price">
-          {comparison.lowestPrice === null ? "Sin precios" : formatPrice(comparison.lowestPrice)}
+          {comparison.lowestPrice === null ? t("Sin precios") : formatPrice(comparison.lowestPrice)}
           {comparison.lowestPrice !== null && <span>CLP · desde</span>}
           {computer.isLive && <small className="price-coverage">
-            {verifiedPriceCount} de {comparison.offers.length} precios verificados
+            {verifiedPriceCount} de {comparison.offers.length} {t("precios verificados")}
           </small>}
         </p>
         <dl className="specification-list">
           <div><dt>RAM</dt><dd>{computer.ramGb} GB</dd></div>
           <div><dt>GPU</dt><dd>{computer.gpu}</dd></div>
-          <div><dt>Procesador</dt><dd>{computer.processor}</dd></div>
+          <div><dt>{t("Procesador")}</dt><dd>{computer.processor}</dd></div>
         </dl>
         <div className="price-comparison">
           <button
@@ -59,12 +61,12 @@ function ComputerCard({ computer, index }) {
             disabled={comparison.offers.length === 0}
             onClick={() => setShowOffers((current) => !current)}
           >
-            {showOffers ? "Ocultar comparación" : `Comparar precios (${comparison.offers.length} fuentes)`}
+            {showOffers ? t("Ocultar comparación") : t("Comparar precios") + " (" + comparison.offers.length + " " + t("fuentes") + ")"}
           </button>
           {showOffers && (
             <div id={`offers-${computer.id}`} className="comparison-content">
-              <p className="comparison-summary">Diferencia entre precios: <strong>
-                {verifiedPriceCount < 2 ? "Se necesitan dos precios verificados" : formatPrice(comparison.potentialSavings)}
+              <p className="comparison-summary">{t("Diferencia entre precios:")} <strong>
+                {verifiedPriceCount < 2 ? t("Se necesitan dos precios verificados") : formatPrice(comparison.potentialSavings)}
               </strong></p>
               <ul className="offer-list">
                 {comparison.offers.map((offer) => (
@@ -72,27 +74,27 @@ function ComputerCard({ computer, index }) {
                     <span className="offer-source">{offer.url
                       ? <a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a>
                       : offer.sourceName}</span>
-                    <strong className="offer-price">{offer.priceClp === null ? "No verificado" : formatPrice(offer.priceClp)}</strong>
+                    <strong className="offer-price">{offer.priceClp === null ? t("No verificado") : formatPrice(offer.priceClp)}</strong>
                     <span className="offer-extra">{offer.priceClp === null
-                      ? offer.queryStatus === "blocked" ? "Tienda bloqueó la consulta"
-                        : offer.queryStatus === "http_error" ? "Error de la página de la tienda"
-                        : offer.queryStatus === "network_error" ? "No se pudo conectar con la tienda"
-                        : "Precio no publicado o no verificable"
-                      : offer.priceClp === comparison.lowestPrice ? "Menor precio encontrado" :
-                        `+${formatPrice(offer.priceClp - comparison.lowestPrice)} frente al menor`}</span>
+                      ? offer.queryStatus === "blocked" ? t("Tienda bloqueó la consulta")
+                        : offer.queryStatus === "http_error" ? t("Error de la página de la tienda")
+                        : offer.queryStatus === "network_error" ? t("No se pudo conectar con la tienda")
+                        : t("Precio no publicado o no verificable")
+                      : offer.priceClp === comparison.lowestPrice ? t("Menor precio encontrado") :
+                        "+" + formatPrice(offer.priceClp - comparison.lowestPrice) + " " + t("frente al menor")}</span>
                   </li>
                 ))}
               </ul>
               {computer.isLive && (
-                <ul className="stock-list" aria-label="Disponibilidad de las tiendas">
+                <ul className="stock-list" aria-label={t("Disponibilidad de las tiendas")}>
                   {comparison.offers.map((offer) => (
                     <li key={offer.sourceId}>
                       <strong>{offer.sourceName}</strong>
                       <span className={`stock-status stock-${offer.availability ?? "unknown"}`}>
-                        {offer.availability === "in_stock" ? "Stock publicado: disponible" :
-                          offer.availability === "out_of_stock" ? "Stock publicado: agotado" :
-                          offer.availability === "preorder" ? "Stock publicado: reserva" :
-                          "Stock sin verificar"}
+                        {offer.availability === "in_stock" ? t("Stock publicado: disponible") :
+                          offer.availability === "out_of_stock" ? t("Stock publicado: agotado") :
+                          offer.availability === "preorder" ? t("Stock publicado: reserva") :
+                          t("Stock sin verificar")}
                       </span>
                       {offer.checkedAt && <time className="checked-at" dateTime={offer.checkedAt}>
                         Consulta: {new Date(offer.checkedAt).toLocaleString("es-CL")}
@@ -101,7 +103,7 @@ function ComputerCard({ computer, index }) {
                   ))}
                 </ul>
               )}
-              <p className="demo-sources-note">{computer.isLive ? "Enlaces reales. Confirma los precios directamente con cada comercio." : "Fuentes y precios ficticios para la demostración."}</p>
+              <p className="demo-sources-note">{computer.isLive ? t("Enlaces reales. Confirma los precios directamente con cada comercio.") : t("Fuentes y precios ficticios para la demostración.")}</p>
             </div>
           )}
         </div>
@@ -112,6 +114,12 @@ function ComputerCard({ computer, index }) {
 
 export default function App() {
   const [theme, setTheme] = useState(getInitialTheme);
+  const [locale, setLocale] = useState(() => {
+    try { return window.localStorage.getItem("pc-tracker-locale") === "en" ? "en" : "es"; }
+    catch { return "es"; }
+  });
+  const [auth, setAuth] = useState(null);
+  const t = (key) => translate(key, locale);
   const [demoComputers, setDemoComputers] = useState([]);
   const [liveComputer, setLiveComputer] = useState(null);
   const [liveStatus, setLiveStatus] = useState("loading");
@@ -129,6 +137,27 @@ export default function App() {
       // Theme remains usable even when persistence is unavailable.
     }
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    try { window.localStorage.setItem("pc-tracker-locale", locale); } catch {}
+  }, [locale]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/auth/me", { signal: controller.signal })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (!controller.signal.aborted && data && !Array.isArray(data)) setAuth(data); })
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
+
+  async function logout() {
+    try {
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (response.ok) setAuth((old) => old ? { ...old, user: null } : null);
+    } catch {}
+  }
 
   function updateFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }));
@@ -188,16 +217,25 @@ export default function App() {
             PC <span>Tracker</span><span className="brand-dot">.</span>
           </a>
           <div className="header-actions">
-            <span className="header-tag">PROYECTO 4B · AVANCE 05</span>
+            <span className="header-tag">{t("PROYECTO 4B · AVANCE 05")}</span>
+            <button className="locale-toggle" type="button"
+              aria-label={locale === "es" ? "Switch to English" : "Cambiar a español"}
+              onClick={() => setLocale((value) => value === "es" ? "en" : "es")}>
+              {locale === "es" ? "EN" : "ES"}
+            </button>
+            {auth?.enabled && (auth.user
+              ? <button type="button" className="auth-button" onClick={logout}>{t("Cerrar sesión")}</button>
+              : <a className="auth-button" href="/api/auth/login">{t("Iniciar sesión")}</a>)}
+            {auth && !auth.enabled && <span className="sso-unconfigured">{t("SSO sin configurar")}</span>}
             <button
               className="theme-toggle"
               type="button"
-              aria-label={theme === "dark" ? "Activar modo claro" : "Activar modo oscuro"}
+              aria-label={theme === "dark" ? t("Activar modo claro") : t("Activar modo oscuro")}
               aria-pressed={theme === "dark"}
               onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
             >
               <span className="theme-toggle-icon" aria-hidden="true">{theme === "dark" ? "☀" : "☾"}</span>
-              <span className="theme-toggle-label">{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
+              <span className="theme-toggle-label">{theme === "dark" ? t("Modo claro") : t("Modo oscuro")}</span>
             </button>
           </div>
         </div>
@@ -207,8 +245,8 @@ export default function App() {
         <section className="hero container" aria-labelledby="hero-title">
           <div className="hero-content">
             <div className="hero-label"><span className="live-dot" /> ELIGE CON MÁS INFORMACIÓN</div>
-            <h1 id="hero-title">Tu próximo computador, <em>más claro.</em></h1>
-            <p className="hero-description">Filtra computadores por RAM, GPU y procesador y compara precios y stock cuando cada tienda publique esos datos.</p>
+            <h1 id="hero-title">{t("Tu próximo computador,")} <em>{t("más claro.")}</em></h1>
+            <p className="hero-description">{t("Filtra computadores por RAM, GPU y procesador y compara precios y stock cuando cada tienda publique esos datos.")}</p>
             <div className="hero-chips" aria-label="Criterios de comparación">
               <span>01 / RAM</span><span>02 / GPU</span><span>03 / PROCESADOR</span>
             </div>
@@ -225,38 +263,39 @@ export default function App() {
           <div className="container">
             <div className="section-heading">
               <div>
-                <p className="section-kicker">EXPLORA / CATÁLOGO</p>
-                <h2 id="catalog-title">Computadores disponibles</h2>
-                <p className="section-subtitle">Filtra por especificaciones y consulta precios y stock cuando la fuente permita verificarlos.</p>
+                <p className="section-kicker">{t("EXPLORA / CATÁLOGO")}</p>
+                <h2 id="catalog-title">{t("Computadores disponibles")}</h2>
+                <p className="section-subtitle">{t("Filtra por especificaciones y consulta precios y stock cuando la fuente permita verificarlos.")}</p>
               </div>
-              {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} de {computers.length} equipos</span>}
+              {status === "ready" && <span className="result-count" aria-live="polite">{filteredComputers.length} {locale === "es" ? "de" : "of"} {computers.length} {t("equipos")}</span>}
             </div>
 
-            <p className="live-catalog-status">{liveStatus === "loading" ? "Consultando tres tiendas para el modelo real…" :
-              liveStatus === "error" ? "No se pudo consultar el modelo real; el catálogo de prueba sigue disponible." :
+            <p className="live-catalog-status">{liveStatus === "loading" ? t("Consultando tres tiendas para el modelo real…") :
+              liveStatus === "error" ? t("No se pudo consultar el modelo real; el catálogo de prueba sigue disponible.") :
               liveComputer?.verification?.comparable
-                ? "Comparación de tres precios verificados disponible."
+                ? t("Comparación de tres precios verificados disponible.")
                 : `Consulta de tiendas: ${liveComputer?.verification?.verifiedPrices ?? 0} de 3 precios verificados. Las fuentes restantes figuran sin verificar.`}</p>
             {status === "ready" && computers.length > 0 && (
-              <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} />
+              <CatalogFilters filters={filters} options={filterOptions} onChange={updateFilter} onClear={clearFilters} t={t} />
             )}
-            {status === "loading" && <div className="state-panel" role="status">Cargando computadores…</div>}
-            {status === "error" && <div className="state-panel error-panel" role="alert">No se pudo cargar el catálogo. Comprueba que el servidor Deno esté ejecutándose e inténtalo de nuevo.</div>}
-            {status === "ready" && computers.length === 0 && <div className="state-panel">Todavía no hay computadores disponibles.</div>}
+            {status === "loading" && <div className="state-panel" role="status">{t("Cargando computadores…")}</div>}
+            {status === "error" && <div className="state-panel error-panel" role="alert">{t("No se pudo cargar el catálogo. Comprueba que el servidor Deno esté ejecutándose e inténtalo de nuevo.")}</div>}
+            {status === "ready" && computers.length === 0 && <div className="state-panel">{t("Todavía no hay computadores disponibles.")}</div>}
             {status === "ready" && computers.length > 0 && filteredComputers.length === 0 && (
               <div className="state-panel no-results">
-                <p>No encontramos computadores con esos filtros.</p>
-                <button type="button" className="clear-filters" onClick={clearFilters}>Limpiar filtros</button>
+                <p>{t("No encontramos computadores con esos filtros.")}</p>
+                <button type="button" className="clear-filters" onClick={clearFilters}>{t("Limpiar filtros")}</button>
               </div>
             )}
             {status === "ready" && filteredComputers.length > 0 && (
               <div className="computer-grid">
-                {filteredComputers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} />)}
+                {filteredComputers.map((computer, index) => <ComputerCard key={computer.id} computer={computer} index={index} t={t} />)}
               </div>
             )}
-            <p className="catalog-notice">Nota: los cuatro equipos originales son ficticios. El Lenovo LOQ 83JC0080CL es un modelo real; sus precios solo aparecen cuando se pueden verificar.</p>
+            <p className="catalog-notice">{t("Nota: los cuatro equipos originales son ficticios. El Lenovo LOQ 83JC0080CL es un modelo real; sus precios solo aparecen cuando se pueden verificar.")}</p>
           </div>
         </section>
+        <FeaturesPanel liveComputer={liveComputer} t={t} locale={locale} />
       </main>
 
       <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>Diseño de Software · Proyecto 4B</span></div></footer>
