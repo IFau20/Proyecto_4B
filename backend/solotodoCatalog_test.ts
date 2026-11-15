@@ -24,3 +24,22 @@ Deno.test("rejects wrong SKU, used, unavailable and non-CLP listings",()=>{
  equal(addPublishedOffers(p,{results:[{product:{id:355283,part_number:"BA1U9LA"},entities}]},[]),0);
  equal(p[0].offers.length,0);
 });
+
+Deno.test("public price lookup requests multiple exact SKU batches without exceeding two in flight",async()=>{
+ const products=Array.from({length:25},(_,i)=>({
+   sku:"SKU-"+i,profileUrl:"https://www.solotodo.cl/products/"+(90000+i)+"-demo",
+   imageUrl:null,offers:[],
+ }));
+ let active=0,maximum=0,batches=0;
+ const fetcher=async(url:string)=>{
+   if(url.endsWith("/stores/"))return Response.json([]);
+   active++;maximum=Math.max(maximum,active);batches++;
+   await new Promise(resolve=>setTimeout(resolve,2));
+   active--;
+   return Response.json({results:[]});
+ };
+ const found=await enrichPublishedNotebookOffers(products,fetcher as typeof fetch);
+ equal(found,0);
+ equal(batches,3);
+ equal(maximum<=2,true);
+});

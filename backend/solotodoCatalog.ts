@@ -1,3 +1,4 @@
+import {mapWithConcurrency} from "./concurrency.ts";
 import {getPublicProductId} from "./solotodoHistory.ts";
 
 // Fetch the public currently listed offers for a matched manufacturer SKU.
@@ -71,20 +72,20 @@ export async function enrichPublishedNotebookOffers(products:CatalogLaptop[],fet
   if(!ids.length)return 0;
   // Keep requests bounded: the endpoint can page large product collections.
   // Each response is for at most 12 exact product IDs, no bulk catalog scraping.
-  let results=0;
-  let storeDirectory:unknown=[];
-  try {storeDirectory=await getJson(API+"/stores/",fetcher);}catch{}
-  for(let offset=0;offset<ids.length;offset+=12){
-    const part=ids.slice(offset,offset+12);
+  // Two independent price-feed batches at once; store directory fetched in parallel.
+  // This avoids serial network latency without high-volume scraping.
+  const storeDirectoryPromise=getJson(API+"/stores/",fetcher).catch(()=>[]);
+  const chunks:number[][]=[];
+  for(let offset=0;offset<ids.length;offset+=12)chunks.push(ids.slice(offset,offset+12));
+  const responses=await mapWithConcurrency(chunks,2,async(part,offset)=>{
     const url=new URL(API+"/products/available_entities/");
     for(const productId of part)url.searchParams.append("ids",String(productId));
     url.searchParams.set("page_size",String(part.length));
-    try{
-      const rows=await getJson(url.href,fetcher);
-      results+=addPublishedOffers(products,rows,storeDirectory);
-    }catch(error){
-      console.warn("Public notebook prices unavailable for batch",offset,error);
-    }
-  }
+    try{return await getJson(url.href,fetcher);}
+    catch(error){console.warn("Public notebook prices unavailable for batch",offset,error);return null;}
+  });
+  const stores=await storeDirectoryPromise;
+  let results=0;
+  for(const rows of responses)if(rows)results+=addPublishedOffers(products,rows,stores);
   return results;
 }
