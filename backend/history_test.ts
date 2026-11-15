@@ -31,3 +31,16 @@ Deno.test("history accepts manufacturer SKUs containing hash and dots",()=>{
  ]);
  equal(h.points.length,2);
 });
+
+Deno.test("large batches keep the newest observation per SKU and source without duplicates",()=>{
+ const points=Array.from({length:500},(_,i)=>({
+  sku:"SKU"+i,sourceId:"store",priceClp:600000+i,checkedAt:"2026-11-14T12:00:00Z"
+ }));
+ const result=mergePricePoints({version:1,points},[
+  {sku:"SKU499",sourceId:"store",priceClp:700000,checkedAt:"2026-11-14T13:00:00Z"},
+  {sku:"SKU499",sourceId:"other",priceClp:700000,checkedAt:"2026-11-14T13:00:00Z"},
+  {sku:"SKU499",sourceId:"store",priceClp:650000,checkedAt:"2026-11-15T12:00:00Z"}
+ ]);
+ equal(result.points.length,502);
+ equal(result.points.at(-1)?.priceClp,650000);
+});

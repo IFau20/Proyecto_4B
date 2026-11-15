@@ -7,14 +7,19 @@ let writeQueue: Promise<void> = Promise.resolve();
 
 export function mergePricePoints(existing: PriceHistory, entries: PricePoint[]): PriceHistory {
   const merged = [...existing.points];
+  // Avoid scanning/reversing the entire history for every incoming observation.
+  const lastBySource=new Map<string,PricePoint>();
+  for(const point of merged)lastBySource.set(point.sku+"\u0000"+point.sourceId,point);
   for (const point of entries) {
     if (!point || !/^[A-Za-z0-9_.#-]{1,100}$/.test(point.sku) || !/^[A-Za-z0-9_.#-]{1,100}$/.test(point.sourceId) ||
         !Number.isSafeInteger(point.priceClp) || point.priceClp <= 0 ||
         !Number.isFinite(Date.parse(point.checkedAt))) continue;
-    const last = [...merged].reverse().find((previous) =>
-      previous.sku === point.sku && previous.sourceId === point.sourceId);
+    const key=point.sku+"\u0000"+point.sourceId;
+    const last=lastBySource.get(key);
     if (last && Math.abs(Date.parse(point.checkedAt) - Date.parse(last.checkedAt)) < SIX_HOURS) continue;
-    merged.push({ sku: point.sku, sourceId: point.sourceId, priceClp: point.priceClp, checkedAt: point.checkedAt });
+    const accepted={sku:point.sku,sourceId:point.sourceId,priceClp:point.priceClp,checkedAt:point.checkedAt};
+    merged.push(accepted);
+    lastBySource.set(key,accepted);
   }
   return { version: 1, points: merged.slice(-10000) };
 }
