@@ -180,8 +180,9 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     if(stock)availability=Number(stock[1])>0?"in_stock":"out_of_stock";
   } else if(sourceId==="ripley"){
     const normal=/\bNormal\s*\$?\s*([\d.]+)/i.exec(text);
-    const card=/T\.\s*Cr[eé]dito\s*\$?\s*([\d.]+)/i.exec(text);
-    priceClp=parsedMoney(card?.[1]||"");
+    // "Internet" is the unrestricted price. Credit-card offers are separate.
+    const standard=/\bInternet\s*\$?\s*([\d.]+)/i.exec(text);
+    priceClp=parsedMoney(standard?.[1]||"");
     listPriceClp=parsedMoney(normal?.[1]||"");
     // Credit-card-only prices are identified explicitly in the source name.
     if(/Despacho a domicilio\s+Disponible/i.test(text))availability="in_stock";
@@ -205,9 +206,10 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
   priceClp??=structured.priceClp;
   if(availability==="unknown")availability=structured.availability;
   // A known card-only price never becomes the unrestricted advertised price.
-  if(sourceId==="ripley"&&/T\.\s*Cr[eé]dito/i.test(text) &&
-     !/Precio internet|Precio oferta|Precio normal pagado sin tarjeta/i.test(text)){
-    priceClp=structured.priceClp;
+  // For Ripley, structured prices are only accepted if there is no card
+  // promotion in the text; otherwise the standard Internet price is authoritative.
+  if(sourceId==="ripley"&&/T\.\s*Cr[eé]dito/i.test(text)){
+    priceClp=parsedMoney(/\bInternet\s*\$?\s*([\d.]+)/i.exec(text)?.[1]||"");
   }
   return {...empty,priceClp,listPriceClp,discountPercent:calcDiscount(priceClp,listPriceClp),availability};
 }

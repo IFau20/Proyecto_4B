@@ -29,12 +29,12 @@ Deno.test("an unknown store never produces a made-up price",()=>{
   equal(parseStorePage("SKU:ABCD Oferta $400.000", "ABCD", "unknown").priceClp,null);
 });
 
-Deno.test("Ripley 20 percent card discount is sourced from marked same-store normal price",()=>{
+Deno.test("Ripley keeps the unrestricted Internet price, never the credit-card price",()=>{
  const html="<h1>HP 15</h1> Part Number D0CJ4LA Normal $549.990 Internet $459.990 T. Crédito $439.990 -20% Opciones de entrega Despacho a domicilio Disponible";
  const offer=parseStorePage(html,"D0CJ4LA","ripley");
- equal(offer.priceClp,439990);
+ equal(offer.priceClp,459990);
  equal(offer.listPriceClp,549990);
- equal(offer.discountPercent,20);
+ equal(offer.discountPercent,null);
  equal(offer.availability,"in_stock");
 });
 
