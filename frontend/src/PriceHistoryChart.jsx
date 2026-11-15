@@ -39,11 +39,13 @@ export default function PriceHistoryChart({history,t,locale}) {
   const cutoff=days==="all"?-Infinity:Date.now()-Number(days)*86400000;
   const sources=useMemo(()=>(history.sources||[]).map(source=>({
     ...source,
+    raw:source.points.filter(point=>
+      Date.parse(point.checkedAt)>=cutoff&&inDateRange(point,from,to)),
     visible:collapseUnchangedPrices(source.points.filter(point=>
       Date.parse(point.checkedAt)>=cutoff&&inDateRange(point,from,to))),
   })),[history,cutoff,from,to]);
   const drawn=sources.filter(source=>!hidden.includes(source.sourceId));
-  const all=drawn.flatMap(s=>s.visible);
+  const all=drawn.flatMap(s=>s.raw);
   const times=all.map(p=>Date.parse(p.checkedAt));
   const minTime=all.length?Math.min(...times):0;
   const maxTime=all.length?Math.max(...times):0;
@@ -51,7 +53,7 @@ export default function PriceHistoryChart({history,t,locale}) {
   const maxPrice=all.length?Math.max(...all.map(p=>p.priceClp)):0;
   const xAt=(time)=>PAD_X+(time-minTime)*(WIDTH-PAD_X*2)/Math.max(1,maxTime-minTime);
   const yAt=(price)=>HEIGHT-PAD_Y-(price-minPrice)*(HEIGHT-PAD_Y*2)/Math.max(1,maxPrice-minPrice);
-  const makePath=(points)=>{
+  const makePath=(points,lastTime)=>{
     if(!points.length)return "";
     const first=points[0],startX=xAt(Date.parse(first.checkedAt)),startY=yAt(first.priceClp);
     let path="M "+startX+" "+startY;
@@ -59,7 +61,7 @@ export default function PriceHistoryChart({history,t,locale}) {
       const point=points[i],x=xAt(Date.parse(point.checkedAt)),y=yAt(point.priceClp);
       path+=" H "+x+" V "+y;
     }
-    path+=" H "+(WIDTH-PAD_X);
+    path+=" H "+xAt(lastTime);
     return path;
   };
   const setTooltip=(event,source)=>{
@@ -99,7 +101,7 @@ export default function PriceHistoryChart({history,t,locale}) {
           })}
           {drawn.map(source=>{
             const color=COLORS[sources.findIndex(s=>s.sourceId===source.sourceId)%COLORS.length];
-            const path=makePath(source.visible);
+            const path=makePath(source.visible,Date.parse(source.raw.at(-1)?.checkedAt||source.visible.at(-1)?.checkedAt));
             return <g key={source.sourceId}>
               <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"/>
               <path d={path} fill="none" stroke="transparent" strokeWidth="16"
