@@ -1,4 +1,6 @@
 export const english = {
+  "Comparación de precios publicados de al menos tres comercios (referencial)":"Comparison of published prices from three or more retailers (reference only)",
+
  "Fecha de consulta":"Date to check",
  "Feriado en Chile":"Chilean holiday",
  "Irrenunciable":"Mandatory holiday",

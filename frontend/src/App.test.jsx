@@ -151,3 +151,19 @@ it("shows cached catalog immediately on repeat visits even if network is pending
  expect(within(container.querySelector(".computer-grid")).getByRole("heading",{name:"HP Victus"})).toBeInTheDocument();
  expect(screen.getByText("Actualizando precios y descuentos…")).toBeInTheDocument();
 });
+
+it("compares three distinct published retailer prices without calling them live-verified",async()=>{
+ const offers=[
+  {sourceId:"a",sourceName:"Tienda A",priceClp:null,referencePriceClp:550000,url:"https://a.cl"},
+  {sourceId:"b",sourceName:"Tienda B",priceClp:null,referencePriceClp:500000,url:"https://b.cl"},
+  {sourceId:"c",sourceName:"Tienda C",priceClp:null,referencePriceClp:570000,url:"https://c.cl"},
+ ];
+ fetch.mockImplementation(async url=>({ok:true,json:async()=>url==="/api/notebooks"?[
+ {...sample[0],offers}]:[]}));
+ const {container}=render(<App/>);
+ await screen.findByRole("heading",{name:"HP 15-fd0331la"});
+ fireEvent.click(within(container.querySelector(".computer-grid")).getByRole("button",{name:"Comparar tiendas (3)"}));
+ expect(screen.getByText(/Comparación de precios publicados de al menos tres comercios/)).toBeInTheDocument();
+ expect(screen.getByText("$70.000")).toBeInTheDocument();
+ expect(screen.queryByText(/Diferencia entre precios verificados/)).not.toBeInTheDocument();
+});

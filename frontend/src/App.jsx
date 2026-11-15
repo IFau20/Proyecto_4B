@@ -74,6 +74,17 @@ function ProductCard({ product, t, onHistory, locale }) {
   const verified = comparison.offers.filter((offer) => offer.priceClp !== null).length;
   const referencePrices = comparison.offers.filter((offer) => Number.isSafeInteger(offer.referencePriceClp));
   const referenceMin = referencePrices.length ? Math.min(...referencePrices.map((offer) => offer.referencePriceClp)) : null;
+  const byRetailer=new Map();
+  for(const offer of standardOffers){
+    const price=Number.isSafeInteger(offer.priceClp)?offer.priceClp:offer.referencePriceClp;
+    if(!Number.isSafeInteger(price)||price<=0)continue;
+    const name=offer.sourceName.trim().toLowerCase();
+    const previous=byRetailer.get(name);
+    if(previous===undefined||price<previous)byRetailer.set(name,price);
+  }
+  const listedPrices=[...byRetailer.values()];
+  const publishedSavings=listedPrices.length>=3?
+    Math.max(...listedPrices)-Math.min(...listedPrices):null;
   const shownPrice = comparison.lowestPrice ?? referenceMin ?? product.historicalPriceClp ?? null;
   return (
     <article className="computer-card">
@@ -104,7 +115,10 @@ function ProductCard({ product, t, onHistory, locale }) {
           </button>
           {expanded && <div id={"offers-"+product.id} className="comparison-content">
             {verified>=2 && <p className="comparison-summary">{t("Diferencia entre precios verificados")}: <strong>{money(comparison.potentialSavings)}</strong></p>}
-            {verified<2 && <p className="comparison-summary">{t("No hay suficientes precios verificables para calcular la diferencia.")}</p>}
+            {verified<2 && publishedSavings!==null &&
+              <p className="comparison-summary">{t("Comparación de precios publicados de al menos tres comercios (referencial)")}: <strong>{money(publishedSavings)}</strong></p>}
+            {verified<2 && publishedSavings===null &&
+              <p className="comparison-summary">{t("No hay suficientes precios verificables para calcular la diferencia.")}</p>}
             {comparison.offers.length===0 && <p className="feature-note">{t("Todavía no se detectaron tiendas para este modelo.")} {product.profileUrl &&
               <a href={product.profileUrl} target="_blank" rel="noopener noreferrer">{t("Consultar ficha del modelo")}</a>}</p>}
             <ul className="offer-list">{comparison.offers.map((offer) => <li key={offer.sourceId} className="offer-row">
