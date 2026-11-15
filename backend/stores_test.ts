@@ -2,7 +2,7 @@ import {strictEqual as equal} from "node:assert/strict";
 import {STORES,verifyHours,distanceKm,checkStores} from "./stores.ts";
 Deno.test("official stores have addresses and known coordinates where available",()=>{
  equal(STORES.length,14);
- equal(STORES.filter(s=>s.lat!==null&&s.lon!==null).length,3);
+ equal(STORES.filter(s=>s.lat!==null&&s.lon!==null).length,13);
  equal(STORES.every(s=>s.address.endsWith('Chile')),true);
 });
 Deno.test("hours require both address and time strings",()=>{
@@ -28,4 +28,11 @@ Deno.test("PC Factory stores are grounded in official published branch addresses
  equal(STORES.filter(s=>s.sourceId.startsWith("pcfactory-")).length,10);
  equal(STORES.every(s=>s.address.endsWith("Chile")),true);
  equal(verifyHours("Manuel Montt 170 Lunes 09:00",STORES.find(s=>s.sourceId==="pcfactory-montt")!),false);
+});
+
+Deno.test("six or more partner locations have sourced, usable coordinates",()=>{
+ const located=STORES.filter(s=>Number.isFinite(s.lat)&&Number.isFinite(s.lon));
+ equal(located.length>=6,true);
+ equal(located.some(s=>s.sourceId==="pcfactory-vina"),true);
+ equal(located.some(s=>s.sourceId==="pcexpress"),true);
 });
