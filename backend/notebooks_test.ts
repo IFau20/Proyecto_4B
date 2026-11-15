@@ -1,7 +1,7 @@
 import { strictEqual as equal } from "node:assert/strict";
 import { NOTEBOOKS,calcDiscount,parseStorePage } from "./notebooks.ts";
 Deno.test("all catalog entries are real notebooks with unique manufacturer SKUs",()=>{
-  equal(NOTEBOOKS.length>=10,true);
+  equal(NOTEBOOKS.length>=30,true);
   equal(new Set(NOTEBOOKS.map(x=>x.sku)).size,NOTEBOOKS.length);
   equal(NOTEBOOKS.every(x=>x.ramGb>0&&x.name&&!x.name.includes("(")),true);
 });
@@ -55,4 +55,14 @@ Deno.test("TIShop and KDTEC read SKU-matched ordinary prices and stock",()=>{
  equal(kdtec.priceClp,772681);
  equal(kdtec.availability,"in_stock");
  equal(parseStorePage('<p>82XM00M4CL $ 841.280 Por transferencia</p>',"83GSX029CL","tishop").priceClp,null);
+});
+
+Deno.test("expanded catalog has uniquely identified ASUS Lenovo HP Acer and Gigabyte models",()=>{
+ const names=NOTEBOOKS.map(n=>n.name);
+ equal(NOTEBOOKS.length,36);
+ equal(new Set(NOTEBOOKS.map(n=>n.sku)).size,36);
+ for(const brand of ["ASUS","Lenovo","HP","Acer","Gigabyte"]){
+   equal(names.some(n=>n.startsWith(brand)),true);
+ }
+ equal(NOTEBOOKS.every(n=>n.profileUrl.includes("solotodo.cl/products/")),true);
 });

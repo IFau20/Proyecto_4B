@@ -52,6 +52,29 @@ export const NOTEBOOKS = [
   ], profileUrl:"https://www.solotodo.cl/notebooks" },
   { sku:"D62W3LA", name:"HP Omen HyperX 15-ga0001la", ramGb:16, gpu:"NVIDIA GeForce RTX 5060", processor:"Intel Core i7-14650HX", sources:[],
     profileUrl:"https://www.solotodo.cl/products/391295-hp-omen-hyperx-15-ga0001la-d62w3la" },
+  { sku:"90NR0QF3-M003Y0",name:"ASUS TUF Gaming A16 FA607NUQ-RL060W",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 170",sources:[],profileUrl:"https://www.solotodo.cl/products/400059-asus-tuf-gaming-a16-fa607nuq-rl060w-90nr0qf3-m003y0" },
+  { sku:"90NR0MU3-M00910",name:"ASUS TUF Gaming A16 FA607NUG-RL146W",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 7445HS",sources:[],profileUrl:"https://www.solotodo.cl/products/354889-asus-tuf-gaming-a16-fa607nug-rl146w-90nr0mu3-m00910" },
+  { sku:"90NR0QE7-M000T0",name:"ASUS TUF A15 FA506NCQ-HN020W",ramGb:8,gpu:"NVIDIA GeForce RTX 3050",processor:"AMD Ryzen 7 170",sources:[],profileUrl:"https://www.solotodo.cl/products/389222-asus-tuf-a15-fa506ncq-hn020w-90nr0qe7-m000t0" },
+  { sku:"90NR0MZ6-M001N0",name:"ASUS TUF F16 FX607VJ-RL028W",ramGb:8,gpu:"NVIDIA GeForce RTX 3050",processor:"Intel Core 5 210H",sources:[],profileUrl:"https://www.solotodo.cl/products/277732-asus-tuf-f16-fx607vj-rl028w-90nr0mz6-m001n0" },
+  { sku:"90NB13U2-M00T50",name:"ASUS VivoBook 14 X1404VA-EB1660W",ramGb:8,gpu:"Intel Iris Xe Graphics",processor:"Intel Core 5 120U",sources:[],profileUrl:"https://www.solotodo.cl/products/378179-asus-vivobook-14-x1404va-eb1660w-90nb13u2-m00t50" },
+  { sku:"90NB13Y1-M01V70",name:"ASUS VivoBook 15 X1504VA-BQ4206W",ramGb:16,gpu:"Intel Iris Xe Graphics",processor:"Intel Core 5 120U",sources:[],profileUrl:"https://www.solotodo.cl/products/378185-asus-vivobook-15-x1504va-bq4206w-90nb13y1-m01v70" },
+  { sku:"83DV016GCL",name:"Lenovo LOQ 15IRX9 i7 RTX 3050",ramGb:24,gpu:"NVIDIA GeForce RTX 3050",processor:"Intel Core i7-13650HX",sources:[],profileUrl:"https://www.solotodo.cl/products/279972-lenovo-loq-15irx9-83dv016gcl" },
+  { sku:"83DV00FXUS",name:"Lenovo LOQ 15IRX9 i7 RTX 4060",ramGb:16,gpu:"NVIDIA GeForce RTX 4060",processor:"Intel Core i7-13650HX",sources:[],profileUrl:"https://www.solotodo.cl/products/245532-lenovo-loq-15irx9-83dv00fxus" },
+  { sku:"83DV00FYUS",name:"Lenovo LOQ 15IRX9 i5 RTX 4050",ramGb:12,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-13450HX",sources:[],profileUrl:"https://www.solotodo.cl/products/266605-lenovo-loq-15irx9-83dv00fyus" },
+  { sku:"83DV009MUS",name:"Lenovo LOQ 15IRX9 i5 RTX 4060",ramGb:16,gpu:"NVIDIA GeForce RTX 4060",processor:"Intel Core i5-13450HX",sources:[],profileUrl:"https://www.solotodo.cl/products/263303-lenovo-loq-15irx9-83dv009mus" },
+  { sku:"83JE0184CL",name:"Lenovo LOQ 15IRX10",ramGb:16,gpu:"NVIDIA GeForce RTX 5050",processor:"Intel Core i7-13645HX",sources:[],profileUrl:"https://www.solotodo.cl/products/386070-lenovo-loq-15irx10-83je0184cl" },
+  { sku:"21SR00B8CL",name:"Lenovo ThinkPad E16 Gen 3",ramGb:16,gpu:"Intel Arc Graphics 140T",processor:"Intel Core Ultra 7 255H",sources:[],profileUrl:"https://www.solotodo.cl/products/392512-lenovo-thinkpad-e16-gen-3-intel-21sr00b8cl" },
+  { sku:"82XQ005VCL",name:"Lenovo IdeaPad Slim 3 15AMN8",ramGb:8,gpu:"AMD Radeon 610M",processor:"AMD Ryzen 3 7320U",sources:[],profileUrl:"https://www.solotodo.cl/products/201341-lenovo-ideapad-slim-3-15amn8-82xq005vcl" },
+  { sku:"BV5C6LA",name:"HP Victus 15-fb3026la",ramGb:16,gpu:"NVIDIA GeForce RTX 3050",processor:"AMD Ryzen 7 7445HS",sources:[],profileUrl:"https://www.solotodo.cl/products/375076-hp-victus-15-fb3026la-bv5c6la" },
+  { sku:"A14LPLA",name:"HP Victus 15-fb2019la",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 8845HS",sources:[],profileUrl:"https://www.solotodo.cl/products/269653-hp-victus-15-fb2019la-a14lpla" },
+  { sku:"BF9V4LA",name:"HP Victus 15-fb3013la",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 8845HS",sources:[],profileUrl:"https://www.solotodo.cl/products/355424-hp-victus-15-fb3013la-bf9v4la" },
+  { sku:"BV5C1LA",name:"HP Victus 15-fb3027la",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 7445HS",sources:[],profileUrl:"https://www.solotodo.cl/products/384795-hp-victus-15-fb3027la-bv5c1la" },
+  { sku:"BK9L9LA",name:"HP Victus 15-fa2018la",ramGb:8,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-13420H",sources:[],profileUrl:"https://www.solotodo.cl/products/357335-hp-victus-15-fa2018la-bk9l9la" },
+  { sku:"BA1U5LA",name:"HP Victus 15-fa2014la",ramGb:16,gpu:"NVIDIA GeForce RTX 3050",processor:"Intel Core i5-13420H",sources:[],profileUrl:"https://www.solotodo.cl/products/279679-hp-victus-15-fa2014la-ba1u5la" },
+  { sku:"NH.DAHAL.003.1",name:"Acer Nitro Lite NL16-71G-50GH-1",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-13420H",sources:[],profileUrl:"https://www.solotodo.cl/products/357476-acer-nitro-lite-16-nl16-71g-50gh-1-nhdahal0031" },
+  { sku:"3THK3LA893PD",name:"Gigabyte Gaming A16 3TH",ramGb:16,gpu:"NVIDIA GeForce RTX 5050",processor:"AMD Ryzen 7 260",sources:[],profileUrl:"https://www.solotodo.cl/products/378949-gigabyte-gaming-a16-3th-3thk3la893pd" },
+  { sku:"5VHP3LA893SH",name:"Gigabyte Gaming A16 5VH",ramGb:16,gpu:"NVIDIA GeForce RTX 5060",processor:"AMD Ryzen 7 170",sources:[],profileUrl:"https://www.solotodo.cl/products/412829-gigabyte-gaming-a16-5vh-5vhp3la893sh" },
+  { sku:"C2DA0LA",name:"HP Omen 16-ap0007la",ramGb:24,gpu:"NVIDIA GeForce RTX 5070",processor:"AMD Ryzen 9 8940HX",sources:[],profileUrl:"https://www.solotodo.cl/products/378901-hp-omen-16-ap0007la-c2da0la" },
 ] as const;
 
 
@@ -229,7 +252,7 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   await enrichPublishedNotebookOffers(base,fetcher);
   // Image metadata never constitutes evidence of a price or product discount.
   const photos=base.map(async (p)=>{
-    p.imageUrl=p.offers.find(o=>o.imageUrl)?.imageUrl??null;
+    p.imageUrl=p.imageUrl??p.offers.find(o=>o.imageUrl)?.imageUrl??null;
     if(p.imageUrl || !p.profileUrl || !p.profileUrl.includes("/products/"))return;
     try{
       const response=await fetcher(p.profileUrl,{signal:AbortSignal.timeout(4500)});
