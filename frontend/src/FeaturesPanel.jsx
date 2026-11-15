@@ -48,77 +48,93 @@ function PriceHistory({sku,t,locale}) {
   </section>;
 }
 
-function StoreLocator({ offers, t, locale }) {
-  const [stores, setStores] = useState(null);
-  const [failed, setFailed] = useState(false);
-  const [userPosition, setUserPosition] = useState(null);
-  const [geoError, setGeoError] = useState("");
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/stores", { signal: controller.signal })
-      .then((response) => { if (!response.ok) throw Error("Failed"); return response.json(); })
-      .then((data) => { if (!controller.signal.aborted) setStores(Array.isArray(data) ? data : []); })
-      .catch(() => { if (!controller.signal.aborted) setFailed(true); });
-    return () => controller.abort();
-  }, []);
-  const sorted = useMemo(() => (stores || []).map((store) => ({
-    ...store,
-    distance: userPosition && Number.isFinite(store.lat) && Number.isFinite(store.lon)
-      ? kilometersBetween(userPosition, store) : null,
-  })).sort((a, b) => (a.distance ?? 99999) - (b.distance ?? 99999)), [stores, userPosition]);
-  const locate = () => {
-    if (!navigator.geolocation) { setGeoError(t("Geolocalización no disponible.")); return; }
-    navigator.geolocation.getCurrentPosition(
-      (position) => { setUserPosition({lat: position.coords.latitude, lon: position.coords.longitude}); setGeoError(""); },
-      () => setGeoError(t("No se pudo obtener tu ubicación. Puedes consultar las direcciones manualmente.")),
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
-    );
-  };
-  const availability = (id) => offers?.find((offer) => offer.sourceId === id)?.availability || "unknown";
-  const openingText = (store) => {
-    const entries = Object.entries(store.weekly || {}).sort(([a],[b])=>Number(a)-Number(b));
-    return entries.map(([day, times]) => DAY_NAMES[locale][Number(day)] + " " +
-      (times.length === 4 ? times[0] + "–" + times[1] + " / " + times[2] + "–" + times[3]
-        : times.join("–"))).join(" · ");
-  };
-
-  return (
-    <section className="feature-panel" aria-labelledby="stores-heading">
-      <div className="feature-heading">
-        <div>
-          <p className="feature-eyebrow">{t("UBICACIÓN Y HORARIOS")}</p>
-          <h2 id="stores-heading">{t("Tiendas y puntos de retiro")}</h2>
-        </div>
-        <button type="button" className="feature-button" onClick={locate}>{t("Buscar cerca de mí")}</button>
-      </div>
-      {geoError && <p role="alert" className="feature-note">{geoError}</p>}
-      {userPosition && <p className="feature-note">{t("Distancias aproximadas en línea recta; nunca se almacena tu ubicación.")}</p>}
-      {failed && <p className="feature-note">{t("No se pudo cargar la información de las tiendas.")}</p>}
-      {!failed && !stores && <p className="feature-note">{t("Consultando horarios de tiendas…")}</p>}
-      {stores && <div className="store-grid">
-        {sorted.map((store) =>
-          <article className="store-card" key={store.sourceId}>
-            <div className="store-title">
-              <h3>{store.name}</h3>
-              <strong>{labelStatus(availability(store.sourceId), t)}</strong>
-            </div>
-            <p>{store.address}</p>
-            {store.distance !== null && <p><strong>{store.distance.toFixed(1)} km</strong> {t("aproximadamente")}</p>}
-            <p className="store-times">{openingText(store)}</p>
-            <p className="feature-footnote">{store.scheduleVerified
-              ? t("Horario publicado comprobado en la web de la tienda.")
-              : t("Horario de referencia: no verificado en esta consulta.")}</p>
-            <p className="feature-footnote">{t("No confirma stock para retiro en esta sucursal ni apertura en feriados.")}</p>
-            <div className="store-links">
-              <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Horario oficial")}</a>
-              <a href={"https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(store.address)}
-                target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
-            </div>
-          </article>)}
-      </div>}
-    </section>
-  );
+export function nearestSixStores(stores,position) {
+  return (stores||[])
+    .filter(store=>Number.isFinite(store.lat)&&Number.isFinite(store.lon)&&
+      typeof store.address==="string"&&store.address.length>0)
+    .map(store=>({...store,distance:kilometersBetween(position,store)}))
+    .sort((a,b)=>a.distance-b.distance||a.name.localeCompare(b.name))
+    .slice(0,6);
 }
+function StoreLocator({offers,t,locale}) {
+  const [userPosition,setUserPosition]=useState(null);
+  const [nearby,setNearby]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState("");
+  const locate=()=>{
+    if(!navigator.geolocation){setError(t("Geolocalización no disponible."));return;}
+    setError("");setLoading(true);
+    navigator.geolocation.getCurrentPosition(async position=>{
+      const coordinates={lat:position.coords.latitude,lon:position.coords.longitude};
+      setUserPosition(coordinates);
+      try{
+        // Only published store addresses are sent to the geocoding service.
+        // The visitor's coordinates never leave the browser.
+        const response=await fetch("/api/stores?nearby=1");
+        if(!response.ok)throw Error("Stores unavailable");
+        const stores=await response.json();
+        setNearby(nearestSixStores(Array.isArray(stores)?stores:[],coordinates));
+        setError("");
+      }catch{
+        setError(t("No se pudo consultar la ubicación de las tiendas."));
+        setNearby([]);
+      }finally{setLoading(false);}
+    },()=>{
+      setLoading(false);
+      setUserPosition(null);
+      setNearby([]);
+      setError(t("No se pudo obtener tu ubicación. Revisa el permiso del navegador."));
+    },{enableHighAccuracy:false,timeout:12000,maximumAge:60000});
+  };
+  const days={es:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
+    en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]};
+  const openingText=store=>{
+    const periods=Object.entries(store.weekly||{}).sort(([a],[b])=>Number(a)-Number(b));
+    if(!periods.length)return t("Horario disponible en el sitio oficial.");
+    return periods.map(([day,times])=>days[locale][Number(day)]+" "+
+      (times.length===4?times[0]+"–"+times[1]+" / "+times[2]+"–"+times[3]:times.join("–")))
+      .join(" · ");
+  };
+  const hasProductListing=(store)=>Boolean(offers?.some(offer=>offer.sourceId===store.sourceId||
+    (store.sourceId.startsWith("pcfactory-")&&/pc\s*factory/i.test(offer.sourceName||""))));
+  return <section className={"feature-panel location-panel"+(userPosition?" location-panel-expanded":"")}
+    aria-labelledby="stores-heading">
+    <div className="feature-heading">
+      <div>
+        <p className="feature-eyebrow">{t("UBICACIÓN Y HORARIOS")}</p>
+        <h2 id="stores-heading">{t("Tiendas y puntos de retiro")}</h2>
+      </div>
+      <button type="button" className="feature-button" onClick={locate} disabled={loading}
+        aria-expanded={Boolean(userPosition&&!loading)}>
+        {loading?t("Buscando las tiendas más cercanas…"):t("Buscar cerca de mí")}
+      </button>
+    </div>
+    {error&&<p role="alert" className="feature-note">{error}</p>}
+    {loading&&<p role="status" className="feature-note">{t("Consultando ubicaciones verificables…")}</p>}
+    {userPosition&&!loading&&<div className="nearby-results">
+      <p className="feature-note">{t("Las seis sucursales más cercanas con dirección y coordenadas verificables. Distancia aproximada en línea recta.")}</p>
+      {nearby.length<6&&<p className="feature-note">
+        {t("Se encontraron menos de seis sucursales con coordenadas disponibles.")} ({nearby.length})
+      </p>}
+      <div className="store-grid">
+        {nearby.map((store,i)=><article className="store-card" key={store.sourceId}>
+          <div className="store-title">
+            <h3>{i+1}. {store.name}</h3><strong>{store.distance.toFixed(1)} km</strong>
+          </div>
+          <p>{store.address}</p>
+          <p className="store-times">{openingText(store)}</p>
+          <p className="feature-footnote">{hasProductListing(store)
+            ?t("Tienda asociada al modelo; stock físico de esta sucursal sin confirmar.")
+            :t("Disponibilidad del notebook en esta sucursal sin confirmar.")}</p>
+          <div className="store-links">
+            <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Información oficial")}</a>
+            <a href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(store.address)}
+              target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
+          </div>
+        </article>)}
+      </div>
+    </div>}
+  </section>;
 
 export default function FeaturesPanel({ liveComputer, t, locale }) {
   if (!liveComputer) return null;

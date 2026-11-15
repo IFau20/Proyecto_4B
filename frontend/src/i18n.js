@@ -1,4 +1,15 @@
 export const english = {
+  "Buscando las tiendas más cercanas…": "Finding the closest stores…",
+  "No se pudo consultar la ubicación de las tiendas.": "Could not load store locations.",
+  "No se pudo obtener tu ubicación. Revisa el permiso del navegador.": "Could not get your location. Check your browser permissions.",
+  "Consultando ubicaciones verificables…": "Checking geocodable store addresses…",
+  "Las seis sucursales más cercanas con dirección y coordenadas verificables. Distancia aproximada en línea recta.": "The six nearest branches with verified addresses and coordinates. Approximate straight-line distance.",
+  "Se encontraron menos de seis sucursales con coordenadas disponibles.": "Fewer than six branches have usable coordinates.",
+  "Horario disponible en el sitio oficial.": "Opening hours available on the official website.",
+  "Tienda asociada al modelo; stock físico de esta sucursal sin confirmar.": "Retailer listed for this model; in-store inventory unconfirmed.",
+  "Disponibilidad del notebook en esta sucursal sin confirmar.": "Laptop inventory at this location unconfirmed.",
+  "Información oficial": "Official information",
+
   "Precio referencial": "Reference price",
   "Historial público de SoloTodo: precios y fechas atribuidos a su fuente.": "Public SoloTodo history: prices and dates attributed to the source.",
   "Historial propio de PC Tracker; se construye con precios reales registrados.": "PC Tracker history is built from actual recorded prices.",
