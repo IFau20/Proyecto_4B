@@ -76,3 +76,7 @@ jobs:
         working-directory: backend
         run: deno task audit:public-history
         continue-on-error: true
+      - name: Verify two notebook images from the same-origin proxy (informational)
+        working-directory: backend
+        run: deno task audit:images
+        continue-on-error: true
