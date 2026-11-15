@@ -17,6 +17,19 @@ export const STORES = [
     addressPhrase: "padre mariano", hourPhrases:["09:00","18:30","18:00"],
   },
   {
+    sourceId: "pcexpress", name: "PC Express", kind: "pickup",
+    address: "Almirante Zegers 784, Providencia, Santiago, Chile",
+    // Not included in the distance ranking until precise coordinates are verified.
+    lat: null, lon: null,
+    contactUrl: "https://tienda.pc-express.cl/sucursales-y-horarios",
+    weekly: {
+      1:["09:30","14:00","15:00","18:30"],2:["09:30","14:00","15:00","18:30"],
+      3:["09:30","14:00","15:00","18:30"],4:["09:30","14:00","15:00","18:30"],
+      5:["09:30","14:00","15:00","18:30"]
+    },
+    addressPhrase: "almirante zegers 784", hourPhrases:["09:30","14:00","15:00","18:30"],
+  },
+  {
     sourceId: "winpy", name: "Winpy", kind: "pickup",
     address: "Av. Antonio Varas 2223, Ñuñoa, Santiago, Chile",
     lat: -33.4478, lon: -70.611,

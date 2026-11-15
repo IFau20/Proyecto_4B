@@ -99,7 +99,8 @@ function StoreLocator({ offers, t, locale }) {
   }, []);
   const sorted = useMemo(() => (stores || []).map((store) => ({
     ...store,
-    distance: userPosition ? kilometersBetween(userPosition, store) : null,
+    distance: userPosition && Number.isFinite(store.lat) && Number.isFinite(store.lon)
+      ? kilometersBetween(userPosition, store) : null,
   })).sort((a, b) => (a.distance ?? 99999) - (b.distance ?? 99999)), [stores, userPosition]);
   const locate = () => {
     if (!navigator.geolocation) { setGeoError(t("Geolocalización no disponible.")); return; }
@@ -112,7 +113,9 @@ function StoreLocator({ offers, t, locale }) {
   const availability = (id) => offers?.find((offer) => offer.sourceId === id)?.availability || "unknown";
   const openingText = (store) => {
     const entries = Object.entries(store.weekly || {}).sort(([a],[b])=>Number(a)-Number(b));
-    return entries.map(([day, times]) => DAY_NAMES[locale][Number(day)] + " " + times.join("–")).join(" · ");
+    return entries.map(([day, times]) => DAY_NAMES[locale][Number(day)] + " " +
+      (times.length === 4 ? times[0] + "–" + times[1] + " / " + times[2] + "–" + times[3]
+        : times.join("–"))).join(" · ");
   };
 
   return (
