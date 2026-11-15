@@ -62,4 +62,5 @@ it("includes only recent sourced retailer markdowns as reference offers",()=>{
  expect(found).toHaveLength(1);
  expect(found[0].isReference).toBe(true);
  expect(validDeals([source],new Date("2026-12-01T12:00:00Z"))).toHaveLength(0);
+ expect(validDeals([source],new Date("2026-11-14T12:00:00Z"))).toHaveLength(0);
 });

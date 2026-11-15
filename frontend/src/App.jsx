@@ -21,8 +21,9 @@ export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
       const verifiedLive = Number.isSafeInteger(offer.priceClp) && Number.isSafeInteger(offer.listPriceClp);
       const price=verifiedLive?offer.priceClp:offer.referencePriceClp;
       const normal=verifiedLive?offer.listPriceClp:offer.referenceNormalPriceClp;
+      const age=now.getTime()-Date.parse((offer.referenceObservedOn||"1900-01-01")+"T00:00:00Z");
       const recentlyPublished=!verifiedLive && offer.referenceObservedOn &&
-        Math.abs(now.getTime()-Date.parse(offer.referenceObservedOn+"T12:00:00Z"))<=7*86400000;
+        Number.isFinite(age) && age>=0 && age<=7*86400000;
       if(!Number.isSafeInteger(price)||!Number.isSafeInteger(normal)||normal<=price ||
         (normal-price)/normal<0.20||offer.availability==="out_of_stock"||
         !product.imageUrl||(!verifiedLive&&!recentlyPublished)) return [];
