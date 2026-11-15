@@ -127,7 +127,9 @@ function ProductCard({ product, t, onHistory, locale }) {
                 ? money(offer.referencePriceClp)+" ("+t("referencia")+")":t("No verificado")}</strong>
               <span className="offer-extra">{offer.availability==="in_stock" ? t("Stock publicado: disponible") :
                 offer.availability==="out_of_stock" ? t("Stock publicado: agotado") :
-                offer.availability==="preorder" ? t("Stock publicado: reserva") : t("Stock sin verificar")}</span>
+                offer.availability==="preorder" ? t("Stock publicado: reserva") :
+                offer.reportedAvailability==="in_stock" ? t("Disponibilidad online informada por fuente pública; sin verificación directa") :
+                t("Stock sin verificar")}</span>
               {offer.discountPercent>=20 && offer.listPriceClp>offer.priceClp &&
                 <span className="retailer-discount">-{offer.discountPercent}% · <s>{money(offer.listPriceClp)}</s></span>}
               {offer.referenceDiscountPercent>=20 && offer.priceClp===null && !hasSpecialCondition(offer) &&

@@ -10,6 +10,7 @@ Deno.test("matches exact manufacturer identifiers before using a public price",(
  equal(p[0].offers[0].referencePriceClp,629990);
  equal(p[0].offers[0].priceClp,null);
  equal(p[0].offers[0].sourceName,"Paris");
+ equal(p[0].offers[0].reportedAvailability,"in_stock");
  equal(p[0].imageUrl,"https://cdn.shopify.com/a.jpg");
 });
 Deno.test("rejects wrong SKU, used, unavailable and non-CLP listings",()=>{

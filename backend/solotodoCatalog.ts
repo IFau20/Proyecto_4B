@@ -59,6 +59,8 @@ export function addPublishedOffers(products:CatalogLaptop[],publicRows:unknown,s
         referenceNormalPriceClp:null,referenceDiscountPercent:null,
         referenceObservedOn:null,paymentCondition:null,availability:"unknown",
         queryStatus:"public_reference",
+        reportedAvailability:"in_stock",
+        reportedAt:entity.last_pricing_update||entity.active_registry?.timestamp||null,
         checkedAt:entity.last_pricing_update||entity.active_registry?.timestamp||null
       });
       added++;
