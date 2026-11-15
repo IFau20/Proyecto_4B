@@ -1,4 +1,5 @@
 export const english = {
+ "Consultar stock del notebook en PC Factory":"Check notebook stock on PC Factory",
  "Disponibilidad online informada por fuente pública; sin verificación directa":"Online availability published by public source; not directly verified",
   "Comparación de precios publicados de al menos tres comercios (referencial)":"Comparison of published prices from three or more retailers (reference only)",
 

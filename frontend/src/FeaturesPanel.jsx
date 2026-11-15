@@ -130,6 +130,9 @@ function StoreLocator({offers,sku,t,locale}) {
     const ranges=slots.length===4?slots[0]+"–"+slots[1]+" / "+slots[2]+"–"+slots[3]:slots.join("–");
     return days[locale][day]+" "+ranges+" · "+t("Horario habitual comprobado");
   };
+  const pcFactoryProduct=(offers||[]).find(offer=>
+    /pc\s*factory/i.test(offer.sourceName||"") &&
+    /^https:\/\/(www\.)?pcfactory\.cl\/producto\//i.test(offer.url||""));
   const hasProductListing=(store)=>Boolean(offers?.some(offer=>offer.sourceId===store.sourceId||
     (store.sourceId.startsWith("pcfactory-")&&/pc\s*factory/i.test(offer.sourceName||""))));
   return <section className={"feature-panel location-panel"+(userPosition?" location-panel-expanded":"")}
@@ -178,6 +181,10 @@ function StoreLocator({offers,sku,t,locale}) {
             {record&&<p className="feature-footnote">{t("Comprobado")}: {new Date(record.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}</p>}
             <div className="store-links">
               <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Información oficial")}</a>
+              {store.sourceId.startsWith("pcfactory-")&&pcFactoryProduct &&
+                <a href={pcFactoryProduct.url} target="_blank" rel="noopener noreferrer">
+                  {t("Consultar stock del notebook en PC Factory")}
+                </a>}
               <a href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(store.address)}
                 target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
             </div>

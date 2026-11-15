@@ -15,3 +15,16 @@ Auditoría: cd backend && deno task audit:rubric emite indicadores reales separa
 Documentación de fuentes: https://www.pcfactory.cl/servicios/compra-mas-facil-con-nosotros , https://www.pcfactory.cl/producto/55428 , https://www.spdigital.cl/tracking/ , https://feriados.devschile.cl/api/holidays/2026 .
 
 Código asistido con ChatGPT/OpenAI.
+
+## Auditoría ejecutada el 15 de noviembre de 2026
+
+Ejecución: https://github.com/IFau20/Proyecto_4B/actions/runs/43690922342
+
+- 48 modelos, 37 nombres de comercios, 17 modelos con precios publicados de tres o más fuentes distintas.
+- Todavía 0 modelos con tres precios confirmados directamente en esa misma ejecución; cuatro observaciones directas de precio, 105 precios de referencia.
+- Siete estados de stock online comprobados directamente y 93 disponibilidades online publicadas por la fuente agregadora.
+- Tres puntos con horario habitual comprobado; calendario de feriados: Navidad identificado correctamente como feriado irrenunciable.
+- 23 puntos físicos, 21 con coordenadas, pero cero sucursales con stock confirmado automáticamente para el SKU de prueba 83JE0184CL en el runner de GitHub.
+- Historial local del runner de pruebas vacío; el historial público se comprueba separadamente por notebook.
+
+Esta auditoría muestra **cobertura parcial de datos de terceros**. Aunque los componentes de la pauta están implementados y pasan pruebas, la aplicación no puede garantizar tres precios directamente verificados ni disponibilidad física por sucursal cuando un comercio bloquea la consulta o no entrega datos. El enlace directo a la ficha oficial permite consultar manualmente el stock de PC Factory, sin inventar la disponibilidad.
