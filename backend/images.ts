@@ -22,7 +22,8 @@ const verifiedModelImages: Record<string,string> = {
 export const additionalNotebookImages: Record<string, string[]> = {
   "82XM00M4CL": [
     "https://media-cdn.bnn.in.th/310124/lenovo-ideapad-slim-3-1515abr8-artic-gray-1.jpg",
-    "https://microless.com/cdn/products/5c86bbccc5832797c338837ff97bd8b9-hi.jpg"
+    "https://microless.com/cdn/products/5c86bbccc5832797c338837ff97bd8b9-hi.jpg",
+    "https://media.falabella.com/falabellaPE/143411067_03/w%3D1500%2Ch%3D1500%2Cfit%3Dcover"
   ],
   "BA1U9LA": [
     "https://cdn.panacompu.com/cdn-img/pv/hp-victus-15-15-fb3009la-right-view.jpg?fixedwidthheight=false&height=400&width=550"
@@ -35,7 +36,8 @@ export const additionalNotebookImages: Record<string, string[]> = {
     "https://www.lacuracao.pe/media/catalog/product/p/s/ps31733728_3.jpg?bg-color=255%2C255%2C255&canvas=700%3A700&fit=bounds&height=700&quality=85&width=700"
   ],
   "83GSX013CL": [
-    "https://www.lacuracao.pe/media/catalog/product/p/s/ps31733728_3.jpg?bg-color=255%2C255%2C255&canvas=700%3A700&fit=bounds&height=700&quality=85&width=700"
+    "https://www.lacuracao.pe/media/catalog/product/p/s/ps31733728_3.jpg?bg-color=255%2C255%2C255&canvas=700%3A700&fit=bounds&height=700&quality=85&width=700",
+    "https://media.falabella.com/falabellaPE/146612892_08/w%3D1500%2Ch%3D1500%2Cfit%3Dcover"
   ],
   "NH.DADAL.002.1": [
     "https://cdn1.technopark.ru/technopark/photos_resized/product/1000_1000/823048/2_823048.jpg?timestamp=2026-03-04_09-38-25"

@@ -46,3 +46,13 @@ Deno.test("Paris keeps unrestricted discount but excludes the additional card di
  equal(result.listPriceClp,869990);
  equal(result.discountPercent,28);
 });
+
+Deno.test("TIShop and KDTEC read SKU-matched ordinary prices and stock",()=>{
+ const tishop=parseStorePage('<h1>Lenovo 82XM00M4CL</h1> $ 841.280 Por transferencia $ 878.950 Otros medios de pago (Stock: 31)',"82XM00M4CL","tishop");
+ equal(tishop.priceClp,841280);
+ equal(tishop.availability,"in_stock");
+ const kdtec=parseStorePage('<h1>82XM00M4CL</h1> $772.681 Transferencia Bancaria $828.701 Tarjeta de Crédito o Débito Disponibilidad: EN STOCK: 64 disponibles',"82XM00M4CL","kdtec");
+ equal(kdtec.priceClp,772681);
+ equal(kdtec.availability,"in_stock");
+ equal(parseStorePage('<p>82XM00M4CL $ 841.280 Por transferencia</p>',"83GSX029CL","tishop").priceClp,null);
+});

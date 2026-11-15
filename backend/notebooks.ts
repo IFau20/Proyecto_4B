@@ -18,7 +18,9 @@ export const NOTEBOOKS = [
   ], profileUrl:"https://www.solotodo.cl/products/382294-hp-15-fd0331la-d0cj4la" },
   { sku:"82XM00M4CL", name:"Lenovo IdeaPad Slim 3 15ABR8", ramGb:16, gpu:"AMD Radeon Graphics", processor:"AMD Ryzen 7 5825U", sources:[
     retailer("spdigital","SP Digital","https://www.spdigital.cl/lv-ideapad-slim-3-gen-8-r7-5825u-16gb-512gb-156-fhd-tretroiluminado-abyss-blue/"),
-    retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-lenovo-ideapad-slim-3-de-15-6-ryzen-7-5825u-16gb-ram-512gb-ssd-win11/")
+    retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-lenovo-ideapad-slim-3-de-15-6-ryzen-7-5825u-16gb-ram-512gb-ssd-win11/"),
+    retailer("tishop","TIShop","https://tishop.cl/products/notebook-lenovo-ideapad-slim-3-15abr8-15-6-amd-ryzen-7-5825u-16-gb-ram-512-gb"),
+    retailer("kdtec","KDTEC","https://kdtec.cl/producto/lenovo-ideapad-slim-3-15abr8/")
   ], profileUrl:"https://www.solotodo.cl/products/269594-lenovo-ideapad-slim-3-15abr8-82xm00m4cl" },
   { sku:"BA1U9LA", name:"HP Victus 15-fb3009la", ramGb:8, gpu:"NVIDIA GeForce RTX 3050", processor:"AMD Ryzen 5 8645HS", sources:[
     retailer("spdigital","SP Digital","https://www.spdigital.cl/victus-laptop-156-fhd-nt-r58645hs-08gb-512gb-rtx305006gb-win-silver/"),
@@ -129,6 +131,16 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     const price=/\$\s*([\d.]+)\s*Transferencia o Dep[oó]sito/i.exec(text);
     priceClp=parsedMoney(price?.[1]||"");
     if(/\d+\s+unidades?\s+en\s+stock/i.test(text)) availability="in_stock";
+  } else if(sourceId==="tishop"){
+    const transfer=/\$\s*([\d.]+)\s*Por transferencia/i.exec(text);
+    priceClp=parsedMoney(transfer?.[1]||"");
+    const stock=/\(Stock\s*:\s*(\d+)\)/i.exec(text);
+    if(stock)availability=Number(stock[1])>0?"in_stock":"out_of_stock";
+  } else if(sourceId==="kdtec"){
+    const transfer=/\$\s*([\d.]+)\s*Transferencia Bancaria/i.exec(text);
+    priceClp=parsedMoney(transfer?.[1]||"");
+    const stock=/EN STOCK\s*:\s*(\d+)/i.exec(text);
+    if(stock)availability=Number(stock[1])>0?"in_stock":"out_of_stock";
   } else if(sourceId==="ripley"){
     const normal=/\bNormal\s*\$?\s*([\d.]+)/i.exec(text);
     const card=/T\.\s*Cr[eé]dito\s*\$?\s*([\d.]+)/i.exec(text);
