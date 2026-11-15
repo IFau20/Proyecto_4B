@@ -56,11 +56,45 @@ export function nearestSixStores(stores,position) {
     .sort((a,b)=>a.distance-b.distance||a.name.localeCompare(b.name))
     .slice(0,6);
 }
-function StoreLocator({offers,t,locale}) {
+export function branchStatus(store,records) {
+  return records.find(r=>r.sourceId===store.sourceId)?.status??"unknown";
+}
+export function hoursOnDate(store,date) {
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
+  return store.weekly?.[new Date(date+"T12:00:00").getDay()]??null;
+}
+const localToday=()=>{const n=new Date();return new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,10);};
+function StoreLocator({offers,sku,t,locale}) {
   const [userPosition,setUserPosition]=useState(null);
   const [nearby,setNearby]=useState([]);
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
+  const [date,setDate]=useState(localToday);
+  const [holiday,setHoliday]=useState(null);
+  const [holidayUnknown,setHolidayUnknown]=useState(false);
+  const [stock,setStock]=useState([]);
+  const [stockLoading,setStockLoading]=useState(false);
+  useEffect(()=>{
+    if(!userPosition||!sku)return;
+    const controller=new AbortController();
+    setStock([]);setStockLoading(true);
+    fetch("/api/branch-stock?sku="+encodeURIComponent(sku),{signal:controller.signal})
+      .then(r=>r.ok?r.json():{records:[]})
+      .then(data=>{if(!controller.signal.aborted)setStock(Array.isArray(data.records)?data.records:[]);})
+      .catch(()=>{if(!controller.signal.aborted)setStock([]);})
+      .finally(()=>{if(!controller.signal.aborted)setStockLoading(false);});
+    return()=>controller.abort();
+  },[userPosition,sku]);
+  useEffect(()=>{
+    if(!userPosition)return;
+    const controller=new AbortController();
+    setHoliday(null);setHolidayUnknown(false);
+    fetch("/api/holidays?date="+encodeURIComponent(date),{signal:controller.signal})
+      .then(r=>r.ok?r.json():{status:"calendar_unavailable"})
+      .then(data=>{if(!controller.signal.aborted){setHoliday(data.holiday??null);setHolidayUnknown(data.status==="calendar_unavailable");}})
+      .catch(()=>{if(!controller.signal.aborted)setHolidayUnknown(true);});
+    return()=>controller.abort();
+  },[userPosition,date]);
   const locate=()=>{
     if(!navigator.geolocation){setError(t("Geolocalización no disponible."));return;}
     setError("");setLoading(true);
@@ -89,11 +123,12 @@ function StoreLocator({offers,t,locale}) {
   const days={es:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
     en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]};
   const openingText=store=>{
-    const periods=Object.entries(store.weekly||{}).sort(([a],[b])=>Number(a)-Number(b));
-    if(!periods.length)return t("Horario disponible en el sitio oficial.");
-    return periods.map(([day,times])=>days[locale][Number(day)]+" "+
-      (times.length===4?times[0]+"–"+times[1]+" / "+times[2]+"–"+times[3]:times.join("–")))
-      .join(" · ");
+    if(!store.scheduleVerified)return t("Horario habitual no verificado.");
+    const slots=hoursOnDate(store,date);
+    if(!slots?.length)return t("No hay horario confirmado para este día.");
+    const day=new Date(date+"T12:00:00").getDay();
+    const ranges=slots.length===4?slots[0]+"–"+slots[1]+" / "+slots[2]+"–"+slots[3]:slots.join("–");
+    return days[locale][day]+" "+ranges+" · "+t("Horario habitual comprobado");
   };
   const hasProductListing=(store)=>Boolean(offers?.some(offer=>offer.sourceId===store.sourceId||
     (store.sourceId.startsWith("pcfactory-")&&/pc\s*factory/i.test(offer.sourceName||""))));
@@ -112,27 +147,44 @@ function StoreLocator({offers,t,locale}) {
     {error&&<p role="alert" className="feature-note">{error}</p>}
     {loading&&<p role="status" className="feature-note">{t("Consultando ubicaciones verificables…")}</p>}
     {userPosition&&!loading&&<div className="nearby-results">
-      <p className="feature-note">{t("Las seis sucursales más cercanas con dirección y coordenadas verificables. Distancia aproximada en línea recta.")}</p>
-      {nearby.length<6&&<p className="feature-note">
-        {t("Se encontraron menos de seis sucursales con coordenadas disponibles.")} ({nearby.length})
+      <label className="nearby-date-label">{t("Fecha de consulta")}
+        <input type="date" value={date} min="2025-01-01" max="2030-12-31"
+          onChange={e=>setDate(e.target.value)}/>
+      </label>
+      {holiday&&<p className="feature-note holiday-warning" role="status">
+        {t("Feriado en Chile")}: {holiday.name}{holiday.irrenunciable?" · "+t("Irrenunciable"):""}.
+        {" "+t("Confirma el horario especial directamente con la tienda.")}
       </p>}
+      {holidayUnknown&&<p className="feature-note">{t("No se pudo verificar el calendario de feriados.")}</p>}
+      <p className="feature-note">{t("Se muestran las seis sucursales más cercanas. El stock solo se confirma con evidencia de esa sucursal y notebook.")}</p>
+      {stockLoading?<p role="status" className="feature-note">{t("Verificando stock por sucursal…")}</p>:
+        <p className="feature-note" aria-live="polite">
+          {t("Sucursales cercanas con stock confirmado")}: {nearby.filter(store=>branchStatus(store,stock)==="in_stock").length} / {nearby.length}.
+          {" "+t("Sin confirmación no significa agotado.")}
+        </p>}
       <div className="store-grid">
-        {nearby.map((store,i)=><article className="store-card" key={store.sourceId}>
-          <div className="store-title">
-            <h3>{i+1}. {store.name}</h3><strong>{store.distance.toFixed(1)} km</strong>
-          </div>
-          <p>{store.address}</p>
-          <p className="store-times">{openingText(store)}</p>
-          <p className="feature-footnote">{hasProductListing(store)
-            ?t("Tienda asociada al modelo; stock físico de esta sucursal sin confirmar.")
-            :t("Disponibilidad del notebook en esta sucursal sin confirmar.")}</p>
-          <div className="store-links">
-            <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Información oficial")}</a>
-            <a href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(store.address)}
-              target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
-          </div>
-        </article>)}
+        {nearby.map((store,i)=>{
+          const record=stock.find(x=>x.sourceId===store.sourceId);
+          const state=branchStatus(store,stock);
+          return <article className="store-card" key={store.sourceId}>
+            <div className="store-title"><h3>{i+1}. {store.name}</h3><strong>{store.distance.toFixed(1)} km</strong></div>
+            <p>{store.address}</p>
+            <p className="store-stock-status" data-stock={state}>
+              {state==="in_stock"?t("Stock en sucursal confirmado")+(record?.quantity!=null?" · "+record.quantity+" "+t("unidades"):""):
+                state==="out_of_stock"?t("Sin stock en sucursal"):t("Stock de sucursal sin verificar")}
+            </p>
+            <p className="store-times">{openingText(store)}</p>
+            {holiday&&<p className="feature-footnote">{t("Horario de feriado no confirmado.")}</p>}
+            {record&&<p className="feature-footnote">{t("Comprobado")}: {new Date(record.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}</p>}
+            <div className="store-links">
+              <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Información oficial")}</a>
+              <a href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(store.address)}
+                target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
+            </div>
+          </article>;
+        })}
       </div>
+      {nearby.length<6&&<p className="feature-note">{t("Se encontraron menos de seis sucursales con coordenadas disponibles.")} ({nearby.length})</p>}
     </div>}
   </section>;
 }
@@ -142,7 +194,7 @@ export default function FeaturesPanel({ liveComputer, t, locale }) {
   return (
     <div className="extra-features container">
       <PriceHistory sku={liveComputer.sku} t={t} locale={locale}/>
-      <StoreLocator offers={liveComputer.offers} t={t} locale={locale}/>
+      <StoreLocator offers={liveComputer.offers} sku={liveComputer.sku} t={t} locale={locale}/>
     </div>
   );
 }

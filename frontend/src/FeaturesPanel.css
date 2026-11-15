@@ -82,3 +82,10 @@
 .location-panel button:disabled {opacity:.65;cursor:progress;}
 @media(max-width:900px){.location-panel .store-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:600px){.location-panel .store-grid{grid-template-columns:1fr;}}
+
+.nearby-date-label{display:inline-flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700;margin-bottom:14px;}
+.nearby-date-label input{padding:7px;border-radius:6px;border:1px solid #7298c4;background:transparent;color:inherit;}
+.holiday-warning{border-left:3px solid #d8a14b;padding:8px 12px;background:rgba(214,160,74,.08);}
+.store-stock-status{font-weight:800;}
+.store-stock-status[data-stock="in_stock"]{color:#29845d!important;}
+.store-stock-status[data-stock="out_of_stock"]{color:#c05c5c!important;}

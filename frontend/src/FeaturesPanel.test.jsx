@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { kilometersBetween,nearestSixStores } from "./FeaturesPanel.jsx";
+import { kilometersBetween,nearestSixStores,branchStatus,hoursOnDate } from "./FeaturesPanel.jsx";
 it("returns zero distance for the same location", () => {
   expect(kilometersBetween({lat:-33.43,lon:-70.61},{lat:-33.43,lon:-70.61})).toBe(0);
 });
@@ -18,4 +18,15 @@ it("returns exactly the nearest six geolocated stores and excludes unlocated ent
  const nearby=nearestSixStores(stores,{lat:-33.4,lon:-70.6});
  expect(nearby).toHaveLength(6);
  expect(nearby.map(s=>s.sourceId)).toEqual(["shop0","shop1","shop2","shop3","shop4","shop5"]);
+});
+
+it("never infers branch availability from online store stock",()=>{
+ expect(branchStatus({sourceId:"pcfactory-montt"},[])).toBe("unknown");
+ expect(branchStatus({sourceId:"pcfactory-montt"},[{sourceId:"pcfactory-montt",status:"in_stock"}])).toBe("in_stock");
+ expect(branchStatus({sourceId:"pcexpress"},[{sourceId:"pcfactory-montt",status:"in_stock"}])).toBe("unknown");
+});
+it("selects the hours for the requested date",()=>{
+ const store={weekly:{1:["09:00","18:00"],2:["10:00","17:00"]}};
+ expect(hoursOnDate(store,"2026-11-16")).toEqual(["09:00","18:00"]);
+ expect(hoursOnDate(store,"2026-11-15")).toBeNull();
 });
