@@ -168,7 +168,7 @@ export default function App() {
   const clearFilters=()=>{setPage(1);setFilters({search:"",minRam:"",gpu:"",processor:""});};
   const changePage=(next)=>{
     setPage(Math.max(1,Math.min(totalPages,next)));
-    document.getElementById("catalog-title")?.scrollIntoView({behavior:"smooth",block:"start"});
+    document.getElementById("catalog-title")?.scrollIntoView?.({behavior:"smooth",block:"start"});
   };
   const chooseHistory=(sku)=>{
     setSelectedSku(sku);

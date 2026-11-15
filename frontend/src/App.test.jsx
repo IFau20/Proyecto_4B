@@ -118,10 +118,11 @@ it("moves between groups of 12 without losing filters",async()=>{
  }));
  fetch.mockImplementation(async(url)=>({ok:true,json:async()=>url==="/api/notebooks"?products:[]}));
  render(<App/>);
- expect(await screen.findByRole("heading",{name:"Notebook 0"})).toBeInTheDocument();
- expect(screen.queryByRole("heading",{name:"Notebook 12"})).not.toBeInTheDocument();
+ await screen.findByRole("heading",{name:"Notebook 0"});
+ expect(within(document.querySelector(".computer-grid")).getByRole("heading",{name:"Notebook 0"})).toBeInTheDocument();
+ expect(within(document.querySelector(".computer-grid")).queryByRole("heading",{name:"Notebook 12"})).not.toBeInTheDocument();
  fireEvent.click(screen.getByRole("button",{name:"Página siguiente"}));
- expect(screen.getByRole("heading",{name:"Notebook 12"})).toBeInTheDocument();
- expect(screen.queryByRole("heading",{name:"Notebook 0"})).not.toBeInTheDocument();
+ expect(within(document.querySelector(".computer-grid")).getByRole("heading",{name:"Notebook 12"})).toBeInTheDocument();
+ expect(within(document.querySelector(".computer-grid")).queryByRole("heading",{name:"Notebook 0"})).not.toBeInTheDocument();
  expect(screen.getByText(/Página 2 de 3/)).toBeInTheDocument();
 });
