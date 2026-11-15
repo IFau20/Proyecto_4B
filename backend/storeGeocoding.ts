@@ -22,7 +22,7 @@ export async function geocodeStoreAddress(address:string, fetcher:typeof fetch=f
       const point=Array.isArray(data)?data[0]:null;
       const lat=Number(point?.lat),lon=Number(point?.lon);
       if(!point||!Number.isFinite(lat)||!Number.isFinite(lon)||
-         lat> -17||lat< -57||lon< -66||lon> -76)return null;
+         lat> -17||lat< -57||lon> -66||lon< -76)return null;
       const found={lat,lon};
       pointCache.set(address,found);
       return found;

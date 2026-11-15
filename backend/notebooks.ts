@@ -134,7 +134,7 @@ export function parseStorePage(html:string,sku:string,sourceId:string) {
     // Only accept page prices when model appears in the same published product document.
     // Ignore the bank-card figure and capture the following unrestricted
     // retailer price + normal price. Never present the card-only price as a deal.
-    const cardThenRegular=/Precio exclusivo pagando con Tarjeta[^$]*\$\s*[\d.]+\s*\d{1,2}%\s*\$\s*([\d.]+)\s*\$\s*([\d.]+)/i.exec(text);
+    const cardThenRegular=/Precio exclusivo pagando con Tarjeta[^0-9]*\d{1,2}%\s*\$\s*([\d.]+)\s*\$\s*([\d.]+)/i.exec(text);
     if(cardThenRegular){
       priceClp=parsedMoney(cardThenRegular[1]);
       listPriceClp=parsedMoney(cardThenRegular[2]);
