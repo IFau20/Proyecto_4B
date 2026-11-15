@@ -124,3 +124,13 @@ Se añadieron pruebas automáticas en GitHub Actions; el scraping en vivo debe r
 ## Precios publicados de referencia (respaldo para la DEMO)
 
 Cuando una tienda bloquea el scraper, PC Tracker conserva la distinción entre precios **verificados automáticamente** y valores **referenciales provenientes de fichas públicas**. Para el HP 250R G10 se incluyen tres precios publicados observados durante la investigación de noviembre de 2026: PC Express $539.900, Winpy $559.968 y SP Digital $877.530 CLP. No se afirma que continúen vigentes. Se muestran en un bloque aparte, enlazados con su origen, **sin** incorporarlos al historial de observaciones automáticas y **sin** convertir el estado de stock en verificado.
+
+## Versión integral de los requisitos de 4B
+
+La plataforma incluye búsqueda y filtros RAM/GPU/procesador, comparación de tres o más fuentes, historia persistente de observaciones reales, consulta de horarios y stock, localizador de tiendas, SSO Microsoft Entra configurable, cambio Español/English y diseño adaptable. La comparación del HP incorpora precios de referencia obtenidos de fichas públicas, **diferenciados** de consultas en vivo bloqueadas.
+
+**Arranque local en Windows:** desde el repositorio actualizado, ejecuta `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1`.
+
+**Preparar una DEMO de cinco minutos:** [docs/DEMO_5_MIN.md](docs/DEMO_5_MIN.md). **Activar SSO:** [docs/SSO.md](docs/SSO.md). **Historial:** [docs/HISTORY.md](docs/HISTORY.md). **Recolección periódica:** [docs/SCHEDULER.md](docs/SCHEDULER.md).
+
+La demo no garantiza que las tiendas entreguen precios/stock en todas las conexiones. SSO real requiere registrar la aplicación en Microsoft Entra ID y aportar credenciales desde variables de entorno.
