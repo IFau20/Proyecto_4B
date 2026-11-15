@@ -63,3 +63,21 @@ Las carpetas `docs/AVANCE_*` conservan el registro histórico de entregas anteri
 ## Atribución
 
 Implementación, pruebas y documentación asistidas por ChatGPT (OpenAI). Referencias de productos y enlaces provienen de las fichas públicas de SoloTodo y comercios mencionados; no se copian los datos históricos propietarios ni se eluden medidas antibot.
+
+## Historial público y mejoras visuales (15 de noviembre de 2026)
+
+El historial intenta recuperar los últimos 365 días desde el endpoint público de SoloTodo,
+validando la identidad del notebook por el código de fabricante. Si la API no responde,
+no contiene observaciones válidas o identifica otro producto, usa el historial persistente
+que PC Tracker ha recopilado por sus propios medios. Se distingue el origen y no se
+inventan precios anteriores.
+
+Los descuentos condicionados a tarjetas, convenios, cupones o membresías se excluyen
+de las ofertas destacadas y del precio principal de las tarjetas. Los valores
+publicados de referencia se muestran con la etiqueta pequeña **Precio referencial**
+si aún no existe un precio obtenido por el scraper. Las fotografías se entregan
+preferentemente desde un proxy restringido del propio backend, con fallback al
+enlace de origen y un estado vacío cuando ambas fuentes fallan.
+
+Pruebas específicas: `cd backend; deno task audit:public-history`.
+La fuente pública no tiene SLA y no se eluden controles ni sesiones de SoloTodo.
