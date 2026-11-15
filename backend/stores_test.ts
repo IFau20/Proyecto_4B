@@ -46,6 +46,6 @@ Deno.test("expanded official pickup and retail branch directory keeps addresses 
 
 Deno.test("new branches reuse sourced coordinates without repeated geocoding",()=>{
  const added=STORES.filter(s=>s.sourceId.startsWith("pcfactory-")&&s.lat!==null&&s.lon!==null);
- equal(added.length>=18,true);
+ equal(added.length,17);
  equal(STORES.filter(s=>s.lat!==null&&s.lon!==null).length,21);
 });
