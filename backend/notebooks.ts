@@ -75,6 +75,18 @@ export const NOTEBOOKS = [
   { sku:"3THK3LA893PD",name:"Gigabyte Gaming A16 3TH",ramGb:16,gpu:"NVIDIA GeForce RTX 5050",processor:"AMD Ryzen 7 260",sources:[],profileUrl:"https://www.solotodo.cl/products/378949-gigabyte-gaming-a16-3th-3thk3la893pd" },
   { sku:"5VHP3LA893SH",name:"Gigabyte Gaming A16 5VH",ramGb:16,gpu:"NVIDIA GeForce RTX 5060",processor:"AMD Ryzen 7 170",sources:[],profileUrl:"https://www.solotodo.cl/products/412829-gigabyte-gaming-a16-5vh-5vhp3la893sh" },
   { sku:"C2DA0LA",name:"HP Omen 16-ap0007la",ramGb:24,gpu:"NVIDIA GeForce RTX 5070",processor:"AMD Ryzen 9 8940HX",sources:[],profileUrl:"https://www.solotodo.cl/products/378901-hp-omen-16-ap0007la-c2da0la" },
+  { sku:"12VE-068US",name:"MSI GF63 Thin 12VE",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-12450H",sources:[],profileUrl:"https://www.solotodo.cl/products/210618-msi-gf63-thin-12ve-12ve-068us" },
+  { sku:"12VE-066US",name:"MSI GF63 Thin 12VE i7",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i7-12650H",sources:[],profileUrl:"https://www.solotodo.cl/products/206182-msi-gf63-thin-12ve-12ve-066us" },
+  { sku:"B6ML4LA",name:"HP Victus 15-fb3004la",ramGb:16,gpu:"NVIDIA GeForce RTX 4060",processor:"AMD Ryzen 9 8945HS",sources:[],profileUrl:"https://www.solotodo.cl/products/357336-hp-victus-15-fb3004la-b6ml4la" },
+  { sku:"NKWWG",name:"Dell Inspiron 16 5640",ramGb:16,gpu:"NVIDIA GeForce MX570",processor:"Intel Core 7 150U",sources:[],profileUrl:"https://www.solotodo.cl/products/268486-dell-inspiron-16-5640-nkwwg" },
+  { sku:"NX.KHFAA.002",name:"Acer Aspire 5 A515-58M-54LG",ramGb:16,gpu:"Intel Iris Xe Graphics",processor:"Intel Core i5-1335U",sources:[],profileUrl:"https://www.solotodo.cl/products/213040-acer-aspire-5-a515-58m-54lg-nxkhfaa002" },
+  { sku:"NP750XGJ-KS2CL",name:"Samsung Galaxy Book4 Core i7",ramGb:16,gpu:"Intel Iris Xe Graphics",processor:"Intel Core i7-1355U",sources:[],profileUrl:"https://www.solotodo.cl/products/255555-samsung-galaxy-book4-silver-np750xgj-ks2cl" },
+  { sku:"CYBORG15AIA1VE",name:"MSI Cyborg 15 AI A1VE",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core Ultra 7 155H",sources:[],profileUrl:"https://www.solotodo.cl/products/252356-msi-cyborg-15-ai-a1ve-ultra-7-155h-16-gb-512-gb-ssd-rtx-4050-6-gb-w11h-cyborg15aia1ve" },
+  { sku:"NX.KN3AL.00Q.1",name:"Acer Aspire 5 A515-57",ramGb:16,gpu:"Intel UHD Graphics",processor:"Intel Core i5-12450H",sources:[],profileUrl:"https://www.solotodo.cl/products/241301-acer-aspire-5-a515-57-58f6-1-nxkn3al00q1" },
+  { sku:"A1UD0LA",name:"HP Pavilion 15-eh3002la",ramGb:16,gpu:"AMD Radeon Vega 8",processor:"AMD Ryzen 7 7730U",sources:[],profileUrl:"https://www.solotodo.cl/products/246421-hp-pavilion-15-eh3002la-a1ud0la" },
+  { sku:"CYBORG1513218",name:"MSI Cyborg 15 A13VE",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i7-13620H",sources:[],profileUrl:"https://www.solotodo.cl/products/245785-msi-cyborg-15-a13ve-218us-cyborg1513218" },
+  { sku:"A32VHUA",name:"HP Pavilion 16-ag0010ca",ramGb:16,gpu:"AMD Radeon 780M",processor:"AMD Ryzen 7 PRO 8840U",sources:[],profileUrl:"https://www.solotodo.cl/products/269756-hp-pavilion-16-ag0010ca-a32vhua" },
+  { sku:"THIN15131451",name:"MSI Thin 15 B13VE",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"Intel Core i5-13420H",sources:[],profileUrl:"https://www.solotodo.cl/products/257395-msi-thin-15-b13ve-1451us-thin15131451" },
 ] as const;
 
 

@@ -59,10 +59,19 @@ Deno.test("TIShop and KDTEC read SKU-matched ordinary prices and stock",()=>{
 
 Deno.test("expanded catalog has uniquely identified ASUS Lenovo HP Acer and Gigabyte models",()=>{
  const names=NOTEBOOKS.map(n=>n.name);
- equal(NOTEBOOKS.length,36);
- equal(new Set(NOTEBOOKS.map(n=>n.sku)).size,36);
+ equal(NOTEBOOKS.length,48);
+ equal(new Set(NOTEBOOKS.map(n=>n.sku)).size,48);
  for(const brand of ["ASUS","Lenovo","HP","Acer","Gigabyte"]){
    equal(names.some(n=>n.startsWith(brand)),true);
  }
  equal(NOTEBOOKS.slice(-23).every(n=>n.profileUrl.includes("solotodo.cl/products/")),true);
+});
+
+Deno.test("new MSI Dell Samsung Acer and HP configurations are unique real model profiles",()=>{
+ equal(NOTEBOOKS.length,48);
+ for(const prefix of ["MSI","Dell","Samsung","Acer","HP"]){
+   equal(NOTEBOOKS.some(n=>n.name.startsWith(prefix)),true);
+ }
+ equal(new Set(NOTEBOOKS.map(n=>n.sku)).size,48);
+ equal(NOTEBOOKS.slice(-12).every(n=>n.profileUrl.includes("/products/")&&n.sources.length===0),true);
 });
