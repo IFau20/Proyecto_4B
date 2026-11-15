@@ -1,5 +1,5 @@
 import { strictEqual as equal } from "node:assert/strict";
-import { NOTEBOOKS,calcDiscount,parseStorePage } from "./notebooks.ts";
+import { NOTEBOOKS,calcDiscount,parseStorePage,getNotebookPreview } from "./notebooks.ts";
 Deno.test("all catalog entries are real notebooks with unique manufacturer SKUs",()=>{
   equal(NOTEBOOKS.length>=30,true);
   equal(new Set(NOTEBOOKS.map(x=>x.sku)).size,NOTEBOOKS.length);
@@ -74,4 +74,13 @@ Deno.test("new MSI Dell Samsung Acer and HP configurations are unique real model
  }
  equal(new Set(NOTEBOOKS.map(n=>n.sku)).size,48);
  equal(NOTEBOOKS.slice(-12).every(n=>n.profileUrl.includes("/products/")&&n.sources.length===0),true);
+});
+
+Deno.test("instant preview has all real models without claiming any live price",()=>{
+ const preview=getNotebookPreview();
+ equal(preview.length,NOTEBOOKS.length);
+ equal(preview.every(p=>p.sku&&p.isLive&&p.verification.verifiedPrices===0),true);
+ equal(preview.every(p=>p.offers.every(o=>o.priceClp===null&&o.availability==="unknown")),true);
+ const published=preview.find(p=>p.sku==="NP750XGJ-KS5CL");
+ equal(published?.offers.some(o=>o.referencePriceClp===629990),true);
 });

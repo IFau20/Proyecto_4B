@@ -307,6 +307,43 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
   }
   return base;
 }
+// This is an immediate catalog response with real specifications and
+// only the retailer's previously published reference values. No calls to
+// stores, historical APIs or image hosts occur on the critical path.
+const PREVIEW=NOTEBOOKS.map((model,index)=>{
+  const offers=model.sources.map(source=>{
+    const published=PUBLIC_REFERENCES[model.sku]?.[source.sourceId];
+    return {
+      ...source,
+      priceClp:null as number|null,
+      listPriceClp:null as number|null,
+      discountPercent:null as number|null,
+      availability:"unknown",
+      imageUrl:null as string|null,
+      checkedAt:null as string|null,
+      queryStatus:"pending",
+      referencePriceClp:published?.priceClp??null,
+      referenceNormalPriceClp:published?.normalPriceClp??null,
+      referenceDiscountPercent:published?.normalPriceClp
+        ?calcDiscount(published.priceClp,published.normalPriceClp):null,
+      referenceObservedOn:published?.observedOn??null,
+      paymentCondition:published?.condition??null
+    };
+  });
+  return {
+    id:"notebook-"+index,sku:model.sku,name:model.name,
+    ramGb:model.ramGb,gpu:model.gpu,processor:model.processor,
+    isLive:true,profileUrl:model.profileUrl,
+    imageUrl:null as string|null,historicalPriceClp:null as number|null,
+    historicalObservedAt:null as string|null,
+    offers,verification:{totalSources:offers.length,verifiedPrices:0,verifiedStocks:0}
+  };
+});
+export function getNotebookPreview() {
+  // The most recent full snapshot is always preferable to the static preview.
+  return catalogCache ?? PREVIEW;
+}
+
 const CACHE_TTL=15*60*1000;
 function refreshCatalog() {
   if(pending)return pending;
@@ -322,6 +359,13 @@ export async function getNotebooks() {
     if(Date.now()-cacheAt>=CACHE_TTL)void refreshCatalog();
     return catalogCache;
   }
+  return refreshCatalog();
+}
+// The second, optional request waits for a completed refresh, but never
+// blocks the fast preview endpoint. In-flight work is reused across visitors.
+export async function getFreshNotebooks() {
+  if(pending)return pending;
+  if(catalogCache&&Date.now()-cacheAt<CACHE_TTL)return catalogCache;
   return refreshCatalog();
 }
 export async function collectNotebookHistory() {

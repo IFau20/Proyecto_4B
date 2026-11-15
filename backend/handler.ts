@@ -1,4 +1,4 @@
-import { getNotebooks } from "./notebooks.ts";
+import { getNotebooks, getFreshNotebooks, getNotebookPreview } from "./notebooks.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -55,7 +55,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (pathname === "/api/notebook-image") {
     const sku=new URL(request.url).searchParams.get("sku")??"";
     if(!/^[A-Za-z0-9_.#-]{1,100}$/.test(sku))return new Response("Invalid SKU",{status:400});
-    return proxyNotebookImage(sku,await getNotebooks());
+    return proxyNotebookImage(sku,getNotebookPreview());
   }
 
   if (pathname === "/api/stores") {
@@ -80,8 +80,17 @@ export async function handleRequest(request: Request): Promise<Response> {
 
   if (pathname === "/api/notebooks") {
     try {
-      const notebooks = await getNotebooks();
-      return Response.json(notebooks, {headers:{...corsHeaders,"Cache-Control":"public, max-age=60"}});
+      const mode=new URL(request.url).searchParams;
+      const notebooks=mode.get("preview")==="1"
+        ?getNotebookPreview()
+        :mode.get("fresh")==="1"
+          ?await getFreshNotebooks()
+          :await getNotebooks();
+      return Response.json(notebooks,{headers:{
+        ...corsHeaders,
+        "Cache-Control":mode.has("fresh")?"no-store":"private, max-age=30",
+        "X-Catalog-Mode":mode.get("preview")==="1"?"preview":"full"
+      }});
     } catch (error) {
       console.error("Notebook catalog unavailable", error);
       return Response.json({error:"Catalog unavailable"},{status:503,headers:corsHeaders});

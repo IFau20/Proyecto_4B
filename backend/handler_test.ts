@@ -23,3 +23,12 @@ Deno.test("an unsupported method is rejected", async () => {
   assertEquals(response.status, 405);
   assertEquals(response.headers.get("allow"), "GET, OPTIONS");
 });
+
+Deno.test("preview endpoint responds with a real catalog without external price requests",async()=>{
+ const result=await handleRequest(new Request("http://localhost:8000/api/notebooks?preview=1"));
+ assertEquals(result.status,200);
+ assertEquals(result.headers.get("X-Catalog-Mode"),"preview");
+ const payload=await result.json();
+ assertEquals(payload.length,48);
+ assertEquals(payload.every((p:{sku:string;isLive:boolean})=>p.sku&&p.isLive),true);
+});
