@@ -25,7 +25,7 @@ Deno.test("PC Express split schedule requires a verified weekday and both openin
 });
 
 Deno.test("PC Factory stores are grounded in official published branch addresses",()=>{
- equal(STORES.filter(s=>s.sourceId.startsWith("pcfactory-")).length,10);
+ equal(STORES.filter(s=>s.sourceId.startsWith("pcfactory-")).length,18);
  equal(STORES.every(s=>s.address.endsWith("Chile")),true);
  equal(verifyHours("Manuel Montt 170 Lunes 09:00",STORES.find(s=>s.sourceId==="pcfactory-montt")!),false);
 });
