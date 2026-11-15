@@ -5,7 +5,7 @@ Proyecto académico de Diseño de Software. **Solo notebooks reales**, identific
 ## Funcionalidades
 
 - React + Vite, Deno 2 REST y CSS responsive.
-- Catálogo de **36 modelos reales** y 18 fichas comerciales asociadas, con fotografías leídas de metadatos de páginas de producto.
+- Catálogo de **48 modelos reales** y publicaciones comerciales asociadas, con fotografías leídas de metadatos de páginas de producto.
 - Búsqueda y filtros combinables: **RAM, GPU y procesador**.
 - Comparación por tiendas: precios obtenidos por scraper y, cuando bloquean la consulta, **referencias publicadas** separadas explícitamente de precios verificados.
 - Carrusel: solo rebajas **iguales o superiores a 20% respecto del precio normal de la misma tienda**. No considera diferencias entre tiendas como descuento. Las referencias deben ser recientes y se etiquetan como no verificadas en vivo.
@@ -89,3 +89,15 @@ La fuente pública no tiene SLA y no se eluden controles ni sesiones de SoloTodo
 - El historial de precios **oculta tiendas sin observaciones** dentro del período seleccionado, tanto en la leyenda como en las tarjetas de resumen. Si no hay registros, se muestra un mensaje en lugar de tarjetas vacías.
 - Auditoría de referencia: 36 modelos, 115 publicaciones de tiendas, 102 referencias de precios, 27 modelos con precios publicados por comercios, 7 con solo precio histórico y 2 sin precio recuperable en esa consulta. Esta cobertura puede variar según las fuentes; no equivale a 102 cotizaciones vivas.
 - Ver los 23 modelos añadidos en [docs/CATALOG_EXPANSION.md](docs/CATALOG_EXPANSION.md).
+
+## Mejoras de rendimiento y paginación (noviembre 2026)
+
+- **12 notebooks por página**, con navegación numérica, siguiente/anterior, filtros preservados y vuelta a la página 1 al modificar filtros.
+- Catálogo de **48 configuraciones reales** y directorio físico de **23 sucursales/puntos de atención**. Solo se muestran seis resultados cercanos cuando el usuario concede ubicación.
+- Scraping concurrente limitado (6 solicitudes comerciales, 8 imágenes, 3 historiales) para reducir bloqueos y picos de carga.
+- Actualización del catálogo y de horarios sin bloquear las peticiones cuando existe una versión en memoria; la versión caducada se actualiza de forma independiente.
+- Nombres de comercios guardados durante una hora, reutilizados entre consultas del historial.
+- Las 21 coordenadas de sucursales ya verificadas se guardan localmente para evitar geocodificar cada vez.
+- Caché de fotografías limitada a 40 archivos; el frontend carga fotos en segundo plano solo para las tarjetas visibles.
+- El guardado del historial se hace mediante **una escritura atómica por ciclo**, en vez de reabrir el archivo por cada SKU, evitando reescrituras y consultas duplicadas de modelos Lenovo/HP.
+- El catálogo utiliza caché HTTP de 60 segundos; los datos de tiendas no son garantía de stock físico.

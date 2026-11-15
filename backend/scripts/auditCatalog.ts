@@ -1,5 +1,6 @@
 import { getNotebooks } from "../notebooks.ts";
 const notebooks=await getNotebooks();
+const startedAt=performance.now();
 const offers=notebooks.flatMap(n=>n.offers.map(offer=>({...offer,sku:n.sku,name:n.name})));
 const discounts=offers.filter(o=>Number.isInteger(o.priceClp)&&Number.isInteger(o.listPriceClp)&&
   o.listPriceClp>o.priceClp&&(o.listPriceClp-o.priceClp)/o.listPriceClp>=0.20);
@@ -12,7 +13,9 @@ const recentReferenceDeals=references.filter(o=>{
     age>=0 && age<=7*86400000 && o.availability!=="out_of_stock";
 });
 const result={
-  modelCount:notebooks.length,modelsWithPhotos:notebooks.filter(n=>!!n.imageUrl).length,
+  modelCount:notebooks.length,retailerNames:[...new Set(offers.map(o=>o.sourceName))].sort(),
+  distinctRetailers:new Set(offers.map(o=>o.sourceName)).size,
+  modelsWithPhotos:notebooks.filter(n=>!!n.imageUrl).length,
   storePagesConfigured:offers.length,pricesVerified:offers.filter(o=>o.priceClp!==null).length,
   stockStatesVerified:offers.filter(o=>o.availability!=="unknown").length,
   publishedReferences:references.length,

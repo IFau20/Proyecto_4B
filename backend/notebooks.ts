@@ -4,7 +4,7 @@ import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { parseAvailability } from "./liveSources.ts";
-import { saveObservations } from "./history.ts";
+import { savePricePoints } from "./history.ts";
 
 // All laptop identities and specifications are sourced from public manufacturer/retailer
 // listings or SoloTodo product pages. Prices are NOT imported from SoloTodo.
@@ -326,8 +326,11 @@ export async function getNotebooks() {
 }
 export async function collectNotebookHistory() {
   const products=await getNotebooks();
-  for(const product of products){
-    try{ await saveObservations(product.sku,product.offers); }
-    catch(e){console.error("History storage unavailable",product.sku,e);}
-  }
+  const points=products.flatMap(product=>product.offers
+    .filter(offer=>Number.isSafeInteger(offer.priceClp)&&offer.priceClp>0&&
+      offer.availability!=="out_of_stock"&&typeof offer.checkedAt==="string")
+    .map(offer=>({sku:product.sku,sourceId:offer.sourceId,
+      priceClp:offer.priceClp,checkedAt:offer.checkedAt})));
+  try{await savePricePoints(points);}
+  catch(error){console.error("Unable to persist notebook price observations",error);}
 }

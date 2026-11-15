@@ -1,4 +1,4 @@
-import { getNotebooks, collectNotebookHistory } from "./notebooks.ts";
+import { getNotebooks } from "./notebooks.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { handleAuth } from "./auth.ts";
 import { getLiveProduct } from "./liveSources.ts";
@@ -81,7 +81,7 @@ export async function handleRequest(request: Request): Promise<Response> {
   if (pathname === "/api/notebooks") {
     try {
       const notebooks = await getNotebooks();
-      return Response.json(notebooks, {headers:corsHeaders});
+      return Response.json(notebooks, {headers:{...corsHeaders,"Cache-Control":"public, max-age=60"}});
     } catch (error) {
       console.error("Notebook catalog unavailable", error);
       return Response.json({error:"Catalog unavailable"},{status:503,headers:corsHeaders});

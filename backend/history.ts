@@ -50,22 +50,27 @@ export async function readHistory(path: string | URL = DEFAULT_PATH): Promise<Pr
   }
 }
 
+export async function savePricePoints(
+  points: PricePoint[],path:string|URL=DEFAULT_PATH,
+):Promise<void> {
+  if(!points.length)return;
+  const work=writeQueue.catch(()=>{}).then(async()=>{
+    const next=mergePricePoints(await readHistory(path),points);
+    const fullPath=path instanceof URL?path:new URL("file://"+path);
+    const temporary=new URL(fullPath.href+".tmp");
+    await Deno.writeTextFile(temporary,JSON.stringify(next,null,2)+"\n");
+    await Deno.rename(temporary,fullPath);
+  });
+  writeQueue=work;
+  await work;
+}
 export async function saveObservations(
   sku: string,
   offers: Array<{ sourceId: string; priceClp: number | null; checkedAt: string; availability: string }>,
   path: string | URL = DEFAULT_PATH,
 ): Promise<void> {
-  const points = offers.filter((offer) =>
-    Number.isSafeInteger(offer.priceClp) && offer.priceClp! > 0 && offer.availability !== "out_of_stock")
-    .map((offer) => ({ sku, sourceId: offer.sourceId, priceClp: offer.priceClp!, checkedAt: offer.checkedAt }));
-  if (points.length === 0) return;
-  const work = writeQueue.catch(() => {}).then(async () => {
-    const next = mergePricePoints(await readHistory(path), points);
-    const fullPath = path instanceof URL ? path : new URL("file://" + path);
-    const temporary = new URL(fullPath.href + ".tmp");
-    await Deno.writeTextFile(temporary, JSON.stringify(next, null, 2) + "\n");
-    await Deno.rename(temporary, fullPath);
-  });
-  writeQueue = work;
-  await work;
+  const points=offers.filter(offer=>
+    Number.isSafeInteger(offer.priceClp)&&offer.priceClp!>0&&offer.availability!=="out_of_stock")
+    .map(offer=>({sku,sourceId:offer.sourceId,priceClp:offer.priceClp!,checkedAt:offer.checkedAt}));
+  await savePricePoints(points,path);
 }
