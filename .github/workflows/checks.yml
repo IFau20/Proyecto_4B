@@ -92,3 +92,15 @@ jobs:
         working-directory: backend
         run: deno task audit:geocode
         continue-on-error: true
+
+  rubric_probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Audit retailer comparisons, stock, holidays and nearby branch inventory
+        working-directory: backend
+        run: deno task audit:rubric
+        continue-on-error: true

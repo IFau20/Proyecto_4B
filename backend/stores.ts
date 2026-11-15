@@ -12,7 +12,7 @@ export const STORES = [
     sourceId: "spdigital", name: "SP Digital", kind: "pickup",
     address: "Padre Mariano 356, Providencia, Santiago, Chile",
     lat: -33.42419, lon: -70.61829,
-    contactUrl: "https://www.spdigital.cl/myaccount/directions/",
+    contactUrl: "https://www.spdigital.cl/tracking/",
     weekly: {1:["09:00","18:30"],2:["09:00","18:30"],3:["09:00","18:30"],4:["09:00","18:30"],5:["09:00","18:00"]},
     addressPhrase: "padre mariano", hourPhrases:["09:00","18:30","18:00"],
   },
