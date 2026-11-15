@@ -1,3 +1,4 @@
+import {enrichPublishedNotebookOffers} from "./solotodoCatalog.ts";
 import { getLiveProduct } from "./liveSources.ts";
 import { getHpProduct } from "./hpSources.ts";
 import { parseAvailability } from "./liveSources.ts";
@@ -204,6 +205,9 @@ export async function buildNotebooks(fetcher:typeof fetch=fetch,now=new Date()) 
         paymentCondition:published.condition??null};
     });
   }
+  // Fill genuine models lacking store links from public current listings.
+  // Prices are references only and do not enter the local verified-price history.
+  await enrichPublishedNotebookOffers(base,fetcher);
   // Image metadata never constitutes evidence of a price or product discount.
   const photos=base.map(async (p)=>{
     p.imageUrl=p.offers.find(o=>o.imageUrl)?.imageUrl??null;
