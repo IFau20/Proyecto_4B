@@ -11,20 +11,36 @@ function escapeRegex(value:string){return value.replace(/[^a-z0-9 ]/gi,"\\$&");}
 export function parseBranchInventory(html:string,sku:string,sourceUrl:string,checkedAt:string):BranchStock[] {
  if(!/^[A-Za-z0-9_.#-]{1,100}$/.test(sku)||!clean(html).includes(clean(sku)))return [];
  const text=clean(visible(html));
+ const title="disponibilidad de retiro en tienda";
+ const sectionStart=text.indexOf(title);
+ // Without an exact product and its branch stock section, do not claim
+ // that a unit is available in any store.
+ const section=sectionStart>=0?text.slice(sectionStart+title.length):"";
  const found:BranchStock[]=[];
+ const aliases:Record<string,string[]>={
+   "pcfactory-costanera":["mall costanera center","mall cenco costanera"],
+   "pcfactory-maipu":["mall arauco maipu"],
+   "pcfactory-florida":["mall florida center","mall cenco florida"],
+   "pcfactory-norte":["mall plaza norte"],
+   "pcfactory-egana":["mall plaza egana"],
+   "pcfactory-oeste":["mall plaza oeste"],
+   "pcfactory-vespucio":["mall plaza vespucio"],
+   "pcfactory-kennedy":["open kennedy"],
+ };
  for(const store of STORES){
    if(!store.sourceId.startsWith("pcfactory-"))continue;
-   const branch=escapeRegex(clean(store.name).replace(/^pc factory\s*[—–-]\s*/,""));
-   const match=new RegExp("(?:sucursal|tienda)\\s*:?\\s*"+branch+"\\b(.{0,105})","i").exec(text);
-   if(!match)continue;
-   const segment=match[1].split(/\b(?:sucursal|tienda)\s*:?/)[0];
-   let status:BranchStock["status"]|null=null;
-   let quantity:number|null=null;
-   const qty=/(?:stock|disponibles?|unidades?)\s*:?\s*(\d{1,5})\b/.exec(segment);
-   if(qty){quantity=Number(qty[1]);status=quantity>0?"in_stock":"out_of_stock";}
-   else if(/(?:sin stock|agotad[oa]|no disponible)\b/.test(segment)){quantity=0;status="out_of_stock";}
-   if(status)found.push({sourceId:store.sourceId,sku,status,quantity,checkedAt,sourceUrl});
+   const labels=aliases[store.sourceId]??[clean(store.name).replace(/^pc factory\s*[—–-]\s*/,"")];
+   for(const name of labels){
+     const pattern=new RegExp("\\b"+escapeRegex(clean(name))+"\\b\\s*(?:\\+?\\s*(\\d{1,5})\\s*unidades?|sin stock|agotad[oa]|no disponible)\\b","i");
+     const match=pattern.exec(section);
+     if(!match)continue;
+     const quantity=match[1]!==undefined?Number(match[1]):0;
+     found.push({sourceId:store.sourceId,sku,status:quantity>0?"in_stock":"out_of_stock",
+       quantity,checkedAt,sourceUrl});
+     break;
+   }
  }
+
  return found;
 }
 export async function branchStockForSku(sku:string,fetcher:typeof fetch=fetch):Promise<BranchStock[]>{
