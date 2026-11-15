@@ -16,6 +16,12 @@ const result={
   storePagesConfigured:offers.length,pricesVerified:offers.filter(o=>o.priceClp!==null).length,
   stockStatesVerified:offers.filter(o=>o.availability!=="unknown").length,
   publishedReferences:references.length,
+  notebooksWithStorePrices:notebooks.filter(n=>n.offers.some(o=>
+    Number.isSafeInteger(o.priceClp)||Number.isSafeInteger(o.referencePriceClp))).length,
+  notebooksWithHistoricalOnly:notebooks.filter(n=>Number.isSafeInteger(n.historicalPriceClp)&&
+    !n.offers.some(o=>Number.isSafeInteger(o.priceClp)||Number.isSafeInteger(o.referencePriceClp))).length,
+  notebooksWithoutAnyPrice:notebooks.filter(n=>!Number.isSafeInteger(n.historicalPriceClp)&&
+    !n.offers.some(o=>Number.isSafeInteger(o.priceClp)||Number.isSafeInteger(o.referencePriceClp))).length,
   recentPublishedDiscountsAtOrAbove20Percent:recentReferenceDeals.map(o=>({
     sku:o.sku,source:o.sourceName,priceClp:o.referencePriceClp,
     normalPriceClp:o.referenceNormalPriceClp,publishedOn:o.referenceObservedOn,
@@ -26,6 +32,7 @@ const result={
   })),
   details:notebooks.map(n=>({
     sku:n.sku,name:n.name,image:!!n.imageUrl,verifiedPrices:n.verification?.verifiedPrices,
+    historicalPrice:n.historicalPriceClp,historicalDate:n.historicalObservedAt,
     offers:n.offers.map(o=>({store:o.sourceName,price:o.priceClp,referencePrice:o.referencePriceClp??null,stock:o.availability,status:o.queryStatus}))
   }))
 };

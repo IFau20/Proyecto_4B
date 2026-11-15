@@ -91,3 +91,13 @@ it("keeps a store's regular 20-percent discount even when a separate card-only r
  expect(validDeals([deal])).toHaveLength(1);
  expect(validDeals([deal])[0].priceClp).toBe(629990);
 });
+
+it("labels a historical last price with its date, without presenting it as a current offer",async()=>{
+ const legacy={...sample[0],offers:[],imageUrl:null,historicalPriceClp:699990,
+  historicalObservedAt:"2026-10-20T12:00:00Z"};
+ fetch.mockImplementation(async url=>({ok:true,json:async()=>url==="/api/notebooks"?[legacy]:[]}));
+ render(<App/>);
+ expect(await screen.findByText("Último precio registrado",{exact:false})).toBeInTheDocument();
+ expect(screen.getByText("$699.990")).toBeInTheDocument();
+ expect(screen.queryByText("Precio referencial")).not.toBeInTheDocument();
+});
