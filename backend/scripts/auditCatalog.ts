@@ -6,7 +6,7 @@ const discounts=offers.filter(o=>Number.isInteger(o.priceClp)&&Number.isInteger(
 const references=offers.filter(o=>Number.isSafeInteger(o.referencePriceClp)&&o.referencePriceClp>0);
 const recentReferenceDeals=references.filter(o=>{
   const normal=o.referenceNormalPriceClp;
-  const age=Date.now()-Date.parse((o.referenceObservedOn||"1900-01-01")+"T12:00:00Z");
+  const age=Date.now()-Date.parse((o.referenceObservedOn||"1900-01-01")+"T00:00:00Z");
   return Number.isSafeInteger(normal)&&normal>o.referencePriceClp &&
     (normal-o.referencePriceClp)/normal>=0.20 &&
     age>=0 && age<=7*86400000 && o.availability!=="out_of_stock";
