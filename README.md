@@ -1,136 +1,65 @@
-# PC Tracker — Proyecto 4B
+# PC Tracker — Comparador de notebooks (Proyecto 4B)
 
-Prototipo desarrollado por avances semanales para el ramo **Diseño de Software**. Permite buscar computadores y comparar los precios de un mismo modelo entre **tres fuentes ficticias**, utilizando los criterios seleccionados: **RAM, GPU y procesador**.
+Proyecto académico de Diseño de Software. **Solo notebooks reales**, identificados por modelo y SKU de fabricante; no se cargan productos ni precios ficticios en la interfaz.
 
-## Tecnologías utilizadas
+## Funcionalidades
 
-- **React + Vite:** interfaz web responsive (carpeta `frontend/`).
-- **Deno + Handler:** servidor y API REST (carpeta `backend/`).
-- **JSON:** datos de ejemplo (`backend/data/computers.json`), con tres ofertas por computador.
+- React + Vite, Deno 2 REST y CSS responsive.
+- Catálogo de **13 modelos reales** y 18 fichas comerciales asociadas, con fotografías leídas de metadatos de páginas de producto.
+- Búsqueda y filtros combinables: **RAM, GPU y procesador**.
+- Comparación por tiendas: precios obtenidos por scraper y, cuando bloquean la consulta, **referencias publicadas** separadas explícitamente de precios verificados.
+- Carrusel: solo rebajas **iguales o superiores a 20% respecto del precio normal de la misma tienda**. No considera diferencias entre tiendas como descuento. Las referencias deben ser recientes y se etiquetan como no verificadas en vivo.
+- Historial por notebook/SKU y tienda, fechas, rangos 7/30/90 días, un año, todo, y gráfico. Se guardan únicamente **observaciones realmente capturadas**, sin inventar historia previa. Enlace al historial externo de SoloTodo cuando existe ficha.
+- Scrapers de stock y horarios: estado desconocido cuando no hay datos, etiquetas de cada tienda y fechas de consulta. La ubicación de tiendas no demuestra stock físico por sucursal.
+- Localizador de tiendas con permisos de geolocalización del navegador. El cálculo de distancia es local.
+- Modo oscuro y traducciones propias español/inglés.
+- SSO Microsoft Entra OIDC condicionado a configuración real. **No se muestra mensaje ni botón de SSO si está deshabilitado**.
 
-La interfaz **no almacena los computadores de forma fija**: solicita los datos al backend mediante `GET /api/computers`. Cada equipo contiene un listado de ofertas; React calcula el menor precio y la diferencia entre fuentes.
+## Limitaciones que deben entenderse antes de la entrega
 
-## Cómo ejecutar el proyecto
+Las páginas comerciales pueden bloquear consultas automatizadas. La auditoría de GitHub Actions del 15 de noviembre detectó 13 imágenes de 13 modelos, **0 precios en vivo** y 3 estados de stock entre 18 fichas. Los valores de referencia de fichas web no se convierten silenciosamente en precios en vivo. Si la tienda bloquea la consulta, la diferencia de precios en vivo y el estado de stock se mantienen como no verificados.
 
-Requisitos: [Node.js](https://nodejs.org/) compatible con Vite 7 (versión 20.19 o superior, o 22.12+) y [Deno 2](https://deno.com/).
+El historial empieza a construirse cuando el servicio observa precios en vivo; no puede representar años anteriores sin datos auténticos. Los archivos de historial residen en `backend/data/price-history.json` y requieren un volumen persistente si la app se despliega. El SSO debe registrarse en Microsoft Entra antes de poder comprobar un ingreso institucional.
 
-Abre dos terminales en la carpeta del repositorio:
+## Iniciar desde una apertura nueva de PowerShell
 
-**Terminal 1 — API:**
-
-```bash
-cd backend
-deno task dev
+```powershell
+$project = Join-Path $HOME "PCTracker"
+if (-not (Test-Path "$project\.git")) {
+  git clone --branch develop https://github.com/IFau20/Proyecto_4B.git "$project"
+}
+Set-Location $project
+git switch develop
+git pull --ff-only origin develop
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\start.ps1"
 ```
 
-La API responderá en `http://localhost:8000/api/computers`.
+Requiere Git, Node.js LTS y Deno 2. URL: http://127.0.0.1:5173.
 
-**Terminal 2 — Interfaz:**
+## Pruebas y auditoría
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Abre `http://localhost:5173` en el navegador. Debes mantener ambas terminales abiertas. Vite envía las solicitudes a `/api` hacia Deno automáticamente.
-
-## Pruebas
-
-```bash
-cd backend
+```powershell
+Set-Location "$HOME\PCTracker\backend"
 deno task test
+deno task audit:catalog
+Set-Location "$HOME\PCTracker\frontend"
+npm.cmd ci
+npm.cmd test
+npm.cmd run build
 ```
 
-```bash
-cd frontend
-npm test
-npm run build
-```
+GitHub Actions ejecuta los tests y la compilación. Los diagnósticos que acceden a tiendas son informativos y no causan fallos cuando un comercio los bloquea.
 
-## Avance de la semana 1
+## Documentación adicional
 
-- [x] Estructura básica frontend/backend.
-- [x] API Deno que lee datos JSON.
-- [x] Interfaz responsive que consulta la API.
-- [x] Tarjetas con nombre, precio de ejemplo, RAM, GPU y procesador.
-- [x] Estados de carga, error y catálogo vacío.
-- [x] Pruebas básicas de la API y la interfaz.
+- [Arquitectura y catálogo real](docs/REAL_NOTEBOOK_CATALOG.md)
+- [Historial de precios](docs/HISTORY.md)
+- [Horarios y ubicaciones](docs/STORE_LOCATIONS.md)
+- [SSO institucional](docs/SSO.md)
+- [DEMO de 5 minutos](docs/DEMO_5_MIN.md)
 
-**Importante:** los nombres, configuraciones y precios utilizados son *ficticios*, creados exclusivamente para demostrar el funcionamiento del proyecto. No son cotizaciones ni precios actualizados de tiendas.
+Las carpetas `docs/AVANCE_*` conservan el registro histórico de entregas anteriores; algunos archivos antiguos describen el prototipo ficticio original y no representan el estado actual.
 
-## Avance de la semana 2 — 2026-11-02
+## Atribución
 
-- [x] Búsqueda instantánea por nombre, GPU o procesador (sin distinguir mayúsculas).
-- [x] Filtros combinables: RAM mínima, GPU y procesador.
-- [x] Opciones de filtros generadas a partir de los datos recibidos de la API.
-- [x] Contador de resultados, aviso cuando no hay coincidencias y botón para limpiar filtros.
-- [x] Pruebas de filtros y de interacción en la interfaz.
-
-No se incorporaron tiendas reales ni cambios al backend esta semana: el propósito es mostrar un avance incremental pequeño, verificable y fácil de explicar. Véase [docs/SEMANA_2.md](docs/SEMANA_2.md).
-
-### Próximas semanas (pendiente)
-
-## Avance de la semana 3 — 2026-11-02
-
-- [x] Cambio de nombre de la aplicación a **PC Tracker**.
-- [x] Tres ofertas de prueba por computador en el JSON del servidor.
-- [x] Menor precio calculado a partir de las ofertas.
-- [x] Comparación desplegable de precios del mismo computador entre tres fuentes, ordenadas de menor a mayor.
-- [x] Diferencias de precio y pruebas del nuevo formato.
-- [x] Documento de avance en [docs/SEMANA_3.md](docs/SEMANA_3.md).
-
-**Importante:** las tres fuentes son simuladas. Esto demuestra la comparación, pero **todavía no satisface la integración real de tres tiendas ni los scrapers** exigidos por la pauta.
-
-### Próximas semanas (pendiente)
-
-Integración de al menos tres fuentes reales, historial de precios, scrapers de stock y horarios, geolocalización, SSO y multilenguaje.
-
-### Atribución
-
-Este prototipo se desarrolló con asistencia de **ChatGPT (OpenAI)** para planificación, programación y pruebas. El código debe revisarse, estudiarse y verificarse antes de cada demostración.
-
-## Apariencia: modo claro y oscuro (mejora solicitada)
-
-El encabezado incluye un interruptor accesible para activar el modo oscuro o regresar al modo claro. La preferencia se guarda localmente en el navegador mediante `localStorage` (clave `pc-tracker-theme`). Si todavía no existe una preferencia guardada, se toma la configuración de color del sistema operativo. El modo oscuro cubre filtros, tarjetas, comparaciones de precios y mensajes de estado; no modifica el backend ni los datos.
-
-Este cambio es una mejora independiente del avance semanal 3, no una semana adicional retroactiva.
-
-### Verificación del tema
-1. Ejecuta Deno y React siguiendo las instrucciones anteriores.
-2. En la cabecera pulsa **Modo oscuro** y revisa los filtros y las ofertas.
-3. Recarga la página: se conserva el tema elegido.
-4. Pulsa **Modo claro** para volver a la apariencia original.
-5. Ejecuta `npm test` y `npm run build` desde `frontend/`.
-
-## Avance 4 — Tres tiendas reales (implementado el 9 de noviembre de 2026)
-
-Se agregó un modelo Lenovo LOQ 83JC0080CL presente en Centrale, SP Digital y Winpy, con precios consultados por `GET /api/live-comparisons` a partir de `schema.org/Product` cuando están disponibles. Los enlaces apuntan a productos reales, pero no se muestra ningún precio si no pudo verificarse. Los cuatro equipos originales siguen siendo ficticios.
-
-Consulta [docs/AVANCE_4.md](docs/AVANCE_4.md) para fuentes, limitaciones y pruebas.
-
-## Avance 5 — Stock por fuente
-
-Se incorporó extracción de disponibilidad estructurada del mismo SKU y estados de stock por tienda con fecha de consulta. No se inventan datos si las tiendas no responden. Ver [docs/AVANCE_5.md](docs/AVANCE_5.md).
-
-## Auditoría de tres fuentes y stock (noviembre de 2026)
-
-El extractor ahora revisa datos estructurados de `schema.org/Product` asociados al SKU exacto; para las tres tiendas piloto tiene, además, reglas limitadas al precio de transferencia visible en SP Digital y avisos explícitos de agotado en Centrale y Winpy. El frontend informa cuántos precios fueron realmente obtenidos y distingue errores HTTP/bloqueos de valores verificados.
-
-**Cómo comprobarlo en vivo:** desde `backend/`, ejecuta `deno task check:live`. Consulta las páginas públicas e imprime `verifiedPrices`, `verifiedStocks`, `comparable` y `stockComplete`. El comando finaliza con error cuando no se verifican los tres precios y los tres estados de stock. No afirma que un producto agotado tenga precio de venta disponible.
-
-Se añadieron pruebas automáticas en GitHub Actions; el scraping en vivo debe revisarse por separado, porque las tiendas pueden cambiar, bloquear bots o dejar de vender el SKU.
-
-## Precios publicados de referencia (respaldo para la DEMO)
-
-Cuando una tienda bloquea el scraper, PC Tracker conserva la distinción entre precios **verificados automáticamente** y valores **referenciales provenientes de fichas públicas**. Para el HP 250R G10 se incluyen tres precios publicados observados durante la investigación de noviembre de 2026: PC Express $539.900, Winpy $559.968 y SP Digital $877.530 CLP. No se afirma que continúen vigentes. Se muestran en un bloque aparte, enlazados con su origen, **sin** incorporarlos al historial de observaciones automáticas y **sin** convertir el estado de stock en verificado.
-
-## Versión integral de los requisitos de 4B
-
-La plataforma incluye búsqueda y filtros RAM/GPU/procesador, comparación de tres o más fuentes, historia persistente de observaciones reales, consulta de horarios y stock, localizador de tiendas, SSO Microsoft Entra configurable, cambio Español/English y diseño adaptable. La comparación del HP incorpora precios de referencia obtenidos de fichas públicas, **diferenciados** de consultas en vivo bloqueadas.
-
-**Arranque local en Windows:** desde el repositorio actualizado, ejecuta `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\start.ps1`.
-
-**Preparar una DEMO de cinco minutos:** [docs/DEMO_5_MIN.md](docs/DEMO_5_MIN.md). **Activar SSO:** [docs/SSO.md](docs/SSO.md). **Historial:** [docs/HISTORY.md](docs/HISTORY.md). **Recolección periódica:** [docs/SCHEDULER.md](docs/SCHEDULER.md).
-
-La demo no garantiza que las tiendas entreguen precios/stock en todas las conexiones. SSO real requiere registrar la aplicación en Microsoft Entra ID y aportar credenciales desde variables de entorno.
+Implementación, pruebas y documentación asistidas por ChatGPT (OpenAI). Referencias de productos y enlaces provienen de las fichas públicas de SoloTodo y comercios mencionados; no se copian los datos históricos propietarios ni se eluden medidas antibot.

@@ -1,4 +1,10 @@
 export const english = {
+  "Precio publicado de referencia · confirmar vigencia": "Published reference price · verify current offer",
+  "referencia": "reference",
+  "descuento publicado de referencia": "published reference markdown",
+  "Los valores de referencia provienen de publicaciones comerciales; pueden estar desactualizados y nunca se cuentan como precios verificados.": "Reference prices are from published retailer listings, may be outdated and are never counted as verified live prices.",
+  "Oferta publicada · vigencia por confirmar": "Published deal · current validity not confirmed",
+
   "Período": "Period",
   "Todo": "All",
   "Desde": "From",
