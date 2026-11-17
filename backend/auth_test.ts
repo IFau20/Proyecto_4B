@@ -1,5 +1,6 @@
 import { strictEqual as equal } from "node:assert/strict";
 import { handleAuth } from "./auth.ts";
+import { MemoryJsonStore } from "./jsonStore.ts";
 Deno.test("unauthenticated user endpoint does not require Entra credentials", async () => {
  const res = await handleAuth(new Request("http://localhost:8000/api/auth/me"));
  equal(res?.status, 200);
@@ -76,7 +77,10 @@ Deno.test("Google SSO verifies signed tokens, PKCE, rejected claims, session and
  const b64=(s:Uint8Array)=>btoa(String.fromCharCode(...s)).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
  const encode=(obj:unknown)=>b64(new TextEncoder().encode(JSON.stringify(obj)));
  let nonce="",challenge="",invalidClaim="",tokenCalls=0;
- const auth=createAuthHandler(()=>config,(async(url,init)=>{
+ // A fresh handler models a separate serverless instance. Only durable JSON
+ // records are shared; instance memory must not carry OAuth state or sessions.
+ const sharedStore=new MemoryJsonStore();
+ const fetcher=(async(url,init)=>{
   if(String(url)==="https://oauth2.googleapis.com/token"){
    tokenCalls++;
    const body=init?.body as URLSearchParams;
@@ -96,7 +100,9 @@ Deno.test("Google SSO verifies signed tokens, PKCE, rejected claims, session and
   }
   if(String(url)==="https://www.googleapis.com/oauth2/v3/certs")return Response.json({keys:[{...jwk,kid:"google-key"}]});
   throw Error("Unexpected Google endpoint: "+url);
- }) as typeof fetch);
+ }) as typeof fetch;
+ const fresh=()=>createAuthHandler(()=>config,fetcher,sharedStore);
+ const auth=(request:Request)=>fresh()(request);
  const status=await (await auth(new Request("http://localhost:8000/api/auth/me")))!.json();
  equal(status.enabled,true);equal(status.provider,"google");
  const start=async()=>{

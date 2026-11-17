@@ -1,6 +1,23 @@
-import { strictEqual as equal, deepStrictEqual as same } from "node:assert/strict";
-import { mergePricePoints, summarizePriceHistory } from "./history.ts";
+import { strictEqual as equal, deepStrictEqual as same, rejects } from "node:assert/strict";
+import { mergePricePoints, summarizePriceHistory, readHistory, savePricePoints } from "./history.ts";
+import { MemoryJsonStore } from "./jsonStore.ts";
 const a = { sku: "83JC0080CL", sourceId: "spdigital", priceClp: 1000000, checkedAt: "2026-11-15T10:00:00.000Z" };
+Deno.test("durable JSON history survives separate readers and concurrent collection writes",async()=>{
+ const store=new MemoryJsonStore();
+ same(await readHistory(store),{version:1,points:[]});
+ await Promise.all([
+  savePricePoints([a],store),
+  savePricePoints([{...a,sku:"OTHER",priceClp:750000}],store),
+ ]);
+ same((await readHistory(store)).points.map(point=>point.sku).sort(),["83JC0080CL","OTHER"]);
+});
+Deno.test("unavailable durable history fails instead of silently replacing observations",async()=>{
+ const store=new MemoryJsonStore();
+ await store.put("history/price-history.json",{version:999,points:[]},null);
+ await rejects(()=>savePricePoints([a],store),/Invalid history/);
+ const value=await store.get<{version:number}>("history/price-history.json");
+ equal(value?.value.version,999);
+});
 Deno.test("price history accepts real observations and deduplicates six hour windows", () => {
   const history = mergePricePoints({version:1,points:[]},[
     a, {...a,checkedAt:"2026-11-15T11:00:00.000Z"}, {...a,priceClp:950000,checkedAt:"2026-11-15T17:00:00.000Z"}

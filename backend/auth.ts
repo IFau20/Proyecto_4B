@@ -1,6 +1,8 @@
 // Configurable Google or Microsoft OpenID Connect authorization-code login with PKCE.
+import { readEnv } from "./runtime.ts";
+import { JsonConflictError, MemoryJsonStore, type JsonStore } from "./jsonStore.ts";
+import { runtimeJsonStore } from "./runtimeStore.ts";
 const enc = new TextEncoder();
-const readEnv = (name: string) => { try { return Deno.env.get(name) ?? ""; } catch { return ""; } };
 type AuthSettings = {provider?:string;tenant:string;client:string;secret:string;origin:string;redirect:string};
 export const settings = ():AuthSettings => {
  const provider=readEnv("AUTH_PROVIDER") || (readEnv("GOOGLE_CLIENT_ID") ? "google" : "microsoft");
@@ -69,15 +71,22 @@ export async function verifyIdToken(jwt: string, s: ReturnType<typeof settings>,
   return claims;
 }
 
-export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=settings,fetcher:typeof fetch=fetch){
- const pending = new Map<string, { verifier: string; nonce: string; expires: number }>();
- const sessions = new Map<string, { name: string; email: string | null; expires: number }>();
+type Pending = { verifier: string; nonce: string; expires: number };
+type Session = { name: string; email: string | null; expires: number };
+const recordKey=(kind:"state"|"session",token:string)=>
+ /^[A-Za-z0-9_-]{43}$/.test(token)?"auth/"+kind+"/"+token+".json":null;
+
+export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=settings,fetcher:typeof fetch=fetch,storage?:JsonStore){
+ const localStore = new MemoryJsonStore();
+ const getStore=async()=>storage ?? await runtimeJsonStore() ?? localStore;
  return async function handleAuth(request: Request): Promise<Response | null> {
   const pathname = new URL(request.url).pathname;
   if (!pathname.startsWith("/api/auth/")) return null;
   const s = configuration();
+  const store=await getStore();
   if (pathname === "/api/auth/me" && request.method === "GET") {
-    const session = sessions.get(cookie(request, "pct_session"));
+    const key=recordKey("session",cookie(request,"pct_session"));
+    const session=key?(await store.get<Session>(key))?.value:null;
     return json({ enabled: enabled(s), provider:providerOf(s), loginUrl: new URL("/api/auth/login", s.redirect).href, user: session && session.expires > seconds()
       ? { name: session.name, email: session.email } : null });
   }
@@ -85,7 +94,7 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
     if (!enabled(s)) return json({ error: "Configure the selected SSO provider first" }, 503);
     const state = random(), nonce = random(), verifier = random();
     const hash = await crypto.subtle.digest("SHA-256", enc.encode(verifier));
-    pending.set(state, { verifier, nonce, expires: seconds() + 600 });
+    await store.put(recordKey("state",state)!, { verifier, nonce, expires: seconds() + 600 },null);
     const authUrl = new URL(endpoints(s).authorization);
     const values = {
       client_id: s.client, response_type: "code", redirect_uri: s.redirect,
@@ -101,10 +110,15 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
   if (pathname === "/api/auth/callback" && request.method === "GET") {
     const url = new URL(request.url);
     const state = url.searchParams.get("state") || "", code = url.searchParams.get("code") || "";
-    const challenge = pending.get(state);
-    pending.delete(state);
-    if (!enabled(s) || !state || !code || state !== cookie(request, "pct_state") ||
-        !challenge || challenge.expires < seconds()) return json({ error: "Invalid login state" }, 400);
+    const key=recordKey("state",state);
+    if (!enabled(s) || !key || !code || state !== cookie(request, "pct_state"))
+      return json({ error: "Invalid login state" }, 400);
+    const pending=await store.get<Pending>(key);
+    if(!pending)return json({ error: "Invalid login state" }, 400);
+    try{await store.remove(key,pending.etag);}
+    catch(error){if(error instanceof JsonConflictError)return json({ error: "Invalid login state" },400);throw error;}
+    const challenge=pending.value;
+    if(challenge.expires<=seconds())return json({ error: "Invalid login state" },400);
     try {
       const body = new URLSearchParams({
         client_id: s.client, client_secret: s.secret, grant_type: "authorization_code",
@@ -118,13 +132,13 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
       const tokens = await response.json();
       const claims = await verifyIdToken(tokens.id_token, s, challenge.nonce,fetcher);
       const token = random();
-      sessions.set(token, {
+      await store.put(recordKey("session",token)!, {
         name: String(claims.name || claims.preferred_username || "User"),
         email: providerOf(s)==="google"
           ? (claims.email_verified===true && typeof claims.email==="string" ? claims.email : null)
           : (typeof claims.preferred_username === "string" ? claims.preferred_username : null),
         expires: seconds() + 28800,
-      });
+      },null);
       return new Response(null, { status: 302, headers: {
         Location: s.origin, "Set-Cookie": cookieHeader("pct_session", token, request, 28800),
         "Cache-Control": "no-store",
@@ -134,7 +148,12 @@ export function createAuthHandler(configuration:()=>ReturnType<typeof settings>=
   if (pathname === "/api/auth/logout" && request.method === "POST") {
     const origin = request.headers.get("Origin");
     if (origin && origin !== s.origin) return json({ error: "Invalid origin" }, 403);
-    sessions.delete(cookie(request, "pct_session"));
+    const key=recordKey("session",cookie(request,"pct_session"));
+    if(key){
+      const session=await store.get<Session>(key);
+      if(session)try{await store.remove(key,session.etag);}
+      catch(error){if(!(error instanceof JsonConflictError))throw error;}
+    }
     return json({ ok: true }, 200, {
       "Set-Cookie": cookieHeader("pct_session", "", request, 0),
     });

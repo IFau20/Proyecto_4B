@@ -1,11 +1,11 @@
+import { formatMoney, formatNumber } from "./i18n.js";
 import {useMemo,useState} from "react";
 
 const COLORS=["#337ac2","#d1664e","#2e9970","#9a70ca","#db9e2d","#3d99b8","#d2548c"];
 const WIDTH=800,HEIGHT=250,PAD_X=74,PAD_Y=35;
-const money=(value)=>"$"+Number(value).toLocaleString("es-CL");
 const dateText=(value,locale)=>new Date(value).toLocaleDateString(locale==="en"?"en-US":"es-CL");
-export function formatPriceAxis(price) {
-  if(price>=1000000) return (price/1000000).toFixed(3).replace(/\.?0+$/,"")+"M";
+export function formatPriceAxis(price, locale = "en") {
+  if(price>=1000000) return formatNumber(price/1000000,locale,{maximumFractionDigits:3})+"M";
   if(price>=1000) return Math.round(price/1000)+"k";
   return String(Math.round(price));
 }
@@ -31,6 +31,7 @@ export function inDateRange(point,from,to) {
   return Number.isFinite(value)&&value>=start&&value<=end;
 }
 export default function PriceHistoryChart({history,t,locale}) {
+  const money = value => formatMoney(value,locale);
   const [days,setDays]=useState("all");
   const [from,setFrom]=useState("");
   const [to,setTo]=useState("");
@@ -80,26 +81,26 @@ export default function PriceHistoryChart({history,t,locale}) {
   };
   return <div className="history-explorer">
     <div className="history-options">
-      <div className="history-presets" role="group" aria-label={t("Período")}>
-        {[["7","7d"],["30","30d"],["90","90d"],["365","1a"],["all",t("Todo")]].map(([value,label])=>
+      <div className="history-presets" role="group" aria-label={t("labels.period")}>
+        {[["7",t("history.periodWeek")],["30",t("history.periodMonth")],["90",t("history.periodQuarter")],["365",t("history.periodYear")],["all",t("labels.all")]].map(([value,label])=>
           <button type="button" key={value} className={days===value?"active":""}
             onClick={()=>{setDays(value);setHover(null);}}>{label}</button>)}
       </div>
       <div className="history-date-inputs">
-        <label>{t("Desde")} <input type="date" value={from} onChange={e=>{setFrom(e.target.value);setDays("all");setHover(null);}}/></label>
-        <label>{t("Hasta")} <input type="date" value={to} onChange={e=>{setTo(e.target.value);setDays("all");setHover(null);}}/></label>
+        <label>{t("labels.from")} <input type="date" value={from} onChange={e=>{setFrom(e.target.value);setDays("all");setHover(null);}}/></label>
+        <label>{t("labels.to")} <input type="date" value={to} onChange={e=>{setTo(e.target.value);setDays("all");setHover(null);}}/></label>
       </div>
     </div>
-    {!all.length?<p className="feature-note">{t("No hay observaciones reales para este período.")}</p>:
+    {!all.length?<p className="feature-note">{t("labels.noRealObservationsInThisPeriod")}</p>:
       <div className="history-chart-frame">
         <svg className="full-history-chart" viewBox={"0 0 "+WIDTH+" "+HEIGHT} role="img"
-          aria-label={t("Evolución de precios por tienda")} onMouseLeave={()=>setHover(null)}>
+          aria-label={t("labels.priceChangesByRetailer")} onMouseLeave={()=>setHover(null)}>
           {[0,.25,.5,.75,1].map(fraction=>{
             const y=HEIGHT-PAD_Y-fraction*(HEIGHT-PAD_Y*2);
             const value=minPrice+fraction*(maxPrice-minPrice);
             return <g key={fraction}>
               <line x1={PAD_X} x2={WIDTH-PAD_X} y1={y} y2={y} className="history-grid-line"/>
-              <text x={PAD_X-9} y={y+4} textAnchor="end" className="history-axis-text">{formatPriceAxis(value)}</text>
+              <text x={PAD_X-9} y={y+4} textAnchor="end" className="history-axis-text">{formatPriceAxis(value,locale)}</text>
             </g>;
           })}
           {drawn.map(source=>{
@@ -109,7 +110,7 @@ export default function PriceHistoryChart({history,t,locale}) {
               <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinejoin="round"/>
               <path d={path} fill="none" stroke="transparent" strokeWidth="16"
                 pointerEvents="stroke" onMouseMove={e=>setTooltip(e,source)} onMouseLeave={()=>setHover(null)}
-                tabIndex={0} aria-label={(source.sourceName||source.sourceId)+" - "+t("Evolución de precios por tienda")}
+                tabIndex={0} aria-label={(source.sourceName||source.sourceId)+" - "+t("labels.priceChangesByRetailer")}
                 onFocus={()=>{const point=source.visible.at(-1);if(point)setHover({
                   sourceId:source.sourceId,source:source.sourceName||source.sourceId,x:xAt(Date.parse(point.checkedAt)),
                   y:yAt(point.priceClp),price:point.priceClp,date:point.checkedAt});}}
@@ -142,16 +143,16 @@ export default function PriceHistoryChart({history,t,locale}) {
       {storesWithData.map(source=><article className="trend-card" key={source.sourceId}>
         <h3>{source.sourceName||source.sourceId}</h3>
         {source.visible.length?<>
-          <p>{t("Último precio observado")}: <strong>{money(source.visible.at(-1).priceClp)}</strong></p>
-          <p>{t("Mínimo registrado")}: {money(Math.min(...source.visible.map(p=>p.priceClp)))}</p>
-          <p>{t("Variación observada")}: {source.visible.length>1?
-            money(source.visible.at(-1).priceClp-source.visible[0].priceClp):t("Se necesitan dos observaciones")}</p>
-          <table className="trend-table"><thead><tr><th>{t("Fecha")}</th><th>{t("Precio CLP")}</th></tr></thead>
+          <p>{t("labels.latestObservedPrice")}: <strong>{money(source.visible.at(-1).priceClp)}</strong></p>
+          <p>{t("labels.lowestRecordedPrice")}: {money(Math.min(...source.visible.map(p=>p.priceClp)))}</p>
+          <p>{t("labels.recordedPriceChange")}: {source.visible.length>1?
+            money(source.visible.at(-1).priceClp-source.visible[0].priceClp):t("labels.twoObservationsRequired")}</p>
+          <table className="trend-table"><thead><tr><th>{t("labels.date")}</th><th>{t("labels.priceClp")}</th></tr></thead>
             <tbody>{source.visible.slice(-8).map((point,i)=><tr key={i}>
               <td>{dateText(point.checkedAt,locale)}</td><td>{money(point.priceClp)}</td>
             </tr>)}</tbody>
           </table>
-        </>:<p>{t("Sin datos en este período.")}</p>}
+        </>:<p>{t("labels.noDataInThisPeriod")}</p>}
       </article>)}
     </div>}
   </div>;

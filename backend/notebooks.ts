@@ -448,8 +448,7 @@ export async function collectNotebookHistory() {
       offer.availability!=="out_of_stock"&&typeof offer.checkedAt==="string")
     .map(offer=>({sku:product.sku,sourceId:offer.sourceId,
       priceClp:offer.priceClp,checkedAt:offer.checkedAt})));
-  try{await savePricePoints(points);}
-  catch(error){console.error("Unable to persist notebook price observations",error);}
+  await savePricePoints(points);
 }
 
 // Recheck public product links on demand; unknown hosts never become server-side requests.

@@ -54,7 +54,7 @@ Se implementa OpenID Connect con código de autorización, PKCE S256, state de u
 
 La prueba integrada utiliza tokens firmados con claves de prueba y sustituye solo las respuestas HTTP del proveedor. Rechaza firma, nonce, audience, issuer, expiración y authorized party incorrectos. Esto no sustituye ingresar con una cuenta Google real después de crear el cliente OAuth.
 
-Las sesiones residen en memoria y se pierden al reiniciar. En despliegue se deben registrar las URLs HTTPS reales y utilizar sesiones compartidas si existen varias instancias. Cerrar sesión en PC Tracker no cierra la cuenta Google en otros sitios.
+En Deno local, las sesiones residen en memoria y se pierden al reiniciar. En Vercel, las sesiones y el estado OAuth se comparten mediante el almacén privado persistente. Cerrar sesión en PC Tracker no cierra la cuenta Google en otros sitios.
 
 Implementación propia basada en la documentación oficial: https://developers.google.com/identity/openid-connect/openid-connect . No se copió código de los repositorios de compañeros.
 
@@ -105,4 +105,20 @@ Un código de salida 0 confirma únicamente que los campos están configurados; 
 
 ## Límites
 
-Las sesiones residen en memoria y se pierden al reiniciar el servidor. Para un despliegue público se deben registrar las URLs HTTPS reales, cambiar origen/callback y utilizar un almacén compartido de sesiones si existen varias instancias. Los errores de Microsoft por permisos o credenciales del tenant requieren corregir el registro real; no se sustituyen por una autenticación simulada.
+Las sesiones locales se pierden al reiniciar Deno; el adaptador de Vercel utiliza sesiones compartidas persistentes. En producción se deben registrar las URLs HTTPS reales y configurar origen/callback. Los errores de Microsoft por permisos o credenciales del tenant requieren corregir el registro real; no se sustituyen por una autenticación simulada.
+
+## Activación en Vercel
+
+La configuración de tu PC no se publica en Git. En el proyecto **pc-tracker-4b**, abrir **Settings → Environment Variables** y definir para producción:
+
+```dotenv
+AUTH_PROVIDER=google
+GOOGLE_CLIENT_ID=TU_CLIENTE.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=TU_SECRETO
+APP_PUBLIC_ORIGIN=https://pc-tracker-4b-turbinalred-3964.vercel.app
+AUTH_REDIRECT_URI=https://pc-tracker-4b-turbinalred-3964.vercel.app/api/auth/callback
+```
+
+Usar el dominio público definitivo del despliegue, sin barra final en el origen. Registrar el mismo callback HTTPS en el cliente Web de Google, conservando el callback localhost si se seguirá usando localmente. Marcar el secreto como sensible y realizar un nuevo despliegue después de guardar las variables. No utilizar variables `VITE_` para secretos.
+
+El almacén Blob privado conectado proporciona las variables de almacenamiento del backend. `CRON_SECRET` protege la captura diaria: tampoco debe exponerse al navegador. Sin configuración OAuth válida, el catálogo público sigue disponible y el ingreso no se presenta como operativo. Para comprobarlo de verdad: entrar desde el dominio público, completar Google, verificar el nombre de usuario y cerrar sesión.

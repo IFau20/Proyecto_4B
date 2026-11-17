@@ -1,3 +1,4 @@
+import { translate } from "./i18n.js";
 import { expect, it } from "vitest";
 import { kilometersBetween,nearestSixStores,branchStatus,hoursOnDate } from "./FeaturesPanel.jsx";
 it("returns zero distance for the same location", () => {
@@ -47,7 +48,7 @@ it("shows only confirmed nearby branches and lets users include unknown stores",
  vi.stubGlobal("fetch",vi.fn(async url=>({ok:true,json:async()=>String(url).startsWith("/api/stores")?stores:
   String(url).startsWith("/api/branch-stock")?{sku:"83JE0184CL",records:[{sourceId:"s7",sku:"83JE0184CL",status:"in_stock",quantity:2,checkedAt:"2026-11-15T08:00:00Z"}]}:
   String(url).startsWith("/api/holidays")?{holiday:null,status:"calendar_unavailable"}:{sources:[],points:[],observations:0}})));
- const {container}=render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={s=>s} locale="es"/>);
+ const {container}=render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={translate} locale="es"/>);
  fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
  expect(await screen.findByRole("heading",{name:"1. Branch 7"})).toBeInTheDocument();
  expect(container.querySelectorAll(".store-card")).toHaveLength(1);
@@ -65,8 +66,33 @@ it.each(["http","network"])("reports %s inventory outages separately from a succ
   }
   return {ok:true,json:async()=>String(url).startsWith("/api/stores")?[]:String(url).startsWith("/api/holidays")?{holiday:null}:{sources:[],points:[],observations:0}};
  }));
- render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={s=>s} locale="es"/>);
+ render(<FeaturesPanel liveComputer={{sku:"83JE0184CL",offers:[]}} t={translate} locale="es"/>);
  fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
  expect(await screen.findByRole("alert")).toHaveTextContent("No se pudo verificar el stock por sucursal.");
  expect(screen.getByRole("button",{name:"Reintentar stock"})).toBeInTheDocument();
+});
+it("updates weekday, distance and error labels with the active language",async()=>{
+ vi.stubGlobal("navigator",{geolocation:{getCurrentPosition:success=>success({coords:{latitude:-33.4,longitude:-70.6}})}});
+ const store={sourceId:"shop",name:"Branch",address:"Santiago",lat:-33.4,lon:-70.6,scheduleVerified:true,weekly:{1:["09:00","18:00"]},contactUrl:"https://shop.cl"};
+ vi.stubGlobal("fetch",vi.fn(async url=>({ok:true,json:async()=>String(url).startsWith("/api/stores")?[store]:String(url).startsWith("/api/branch-stock")?{sku:"sku",records:[{sourceId:"shop",status:"in_stock"}]}:String(url).startsWith("/api/holidays")?{holiday:null}:{sources:[]}})));
+ const computer={sku:"sku",offers:[]};
+ const {rerender}=render(<FeaturesPanel liveComputer={computer} locale="es" t={(key,values)=>translate(key,"es",values)}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
+ await screen.findByRole("heading",{name:"1. Branch"});
+ fireEvent.change(screen.getByLabelText("Fecha de consulta"),{target:{value:"2026-11-16"}});
+ expect(screen.getByText("Lun 09:00–18:00 · Horario habitual comprobado")).toBeInTheDocument();
+ expect(screen.getByText("0,0 km")).toBeInTheDocument();
+ rerender(<FeaturesPanel liveComputer={computer} locale="en" t={(key,values)=>translate(key,"en",values)}/>);
+ expect(screen.getByText("Mon 09:00–18:00 · Regular opening hours checked")).toBeInTheDocument();
+ expect(screen.getByText("0.0 km")).toBeInTheDocument();
+});
+it("retranslates an existing location failure after changing language",()=>{
+ vi.stubGlobal("navigator",{});
+ vi.stubGlobal("fetch",vi.fn(()=>new Promise(()=>{})));
+ const computer={sku:"sku",offers:[]};
+ const {rerender}=render(<FeaturesPanel liveComputer={computer} locale="es" t={(key,values)=>translate(key,"es",values)}/>);
+ fireEvent.click(screen.getByRole("button",{name:"Buscar cerca de mí"}));
+ expect(screen.getByRole("alert")).toHaveTextContent("Geolocalización no disponible.");
+ rerender(<FeaturesPanel liveComputer={computer} locale="en" t={(key,values)=>translate(key,"en",values)}/>);
+ expect(screen.getByRole("alert")).toHaveTextContent("Geolocation unavailable.");
 });

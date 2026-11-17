@@ -3,16 +3,15 @@ import CatalogFilters from "./CatalogFilters.jsx";
 import FeaturesPanel from "./FeaturesPanel.jsx";
 import DealsCarousel from "./DealsCarousel.jsx";
 import NotebookImage from "./NotebookImage.jsx";
-import { translate } from "./i18n.js";
+import { translate, initialLocale, formatMoney } from "./i18n.js";
 import { filterComputers, getFilterOptions } from "./catalogFilters.js";
 import { getPriceComparison } from "./priceComparison.js";
 
-const money = (value) => "$" + Number(value).toLocaleString("es-CL");
 const THEME_KEY = "pc-tracker-theme";
 const CATALOG_SESSION_KEY="pc-tracker-catalog-v2";
 const SESSION_TTL_MS=5*60*1000;
 function isValidCatalog(data) {
- return Array.isArray(data)&&data.length>0&&
+ return Array.isArray(data)&&
    data.every(product=>product&&typeof product.sku==="string"&&
      typeof product.name==="string"&&product.isLive===true);
 }
@@ -68,6 +67,7 @@ export function validDeals(products, now=new Date("2026-11-15T12:00:00Z")) {
     .sort((a,b)=>b.discount-a.discount);
 }
 function ProductCard({ product, t, onHistory, locale }) {
+  const money = value => formatMoney(value, locale);
   const [expanded, setExpanded] = useState(false);
   const [verification,setVerification]=useState(null);
   const [checking,setChecking]=useState(false);
@@ -111,60 +111,60 @@ function ProductCard({ product, t, onHistory, locale }) {
       </div>
       <div className="computer-details">
         <h3>{product.name.replace(/\s*\([^)]*\)/g,"")}</h3>
-        <p className="price">{shownPrice===null ? t("Precio no verificado") : money(shownPrice)}
+        <p className="price">{shownPrice===null ? t("labels.priceUnverified") : money(shownPrice)}
           {comparison.lowestPrice===null && referenceMin!==null &&
-            <small className="reference-label">{t("Precio referencial")}</small>}
+            <small className="reference-label">{t("labels.referencePrice")}</small>}
           {comparison.lowestPrice===null && referenceMin===null &&
             Number.isSafeInteger(product.historicalPriceClp) &&
-            <small className="reference-label">{t("Último precio registrado")}
+            <small className="reference-label">{t("labels.lastRecordedPrice")}
               {product.historicalObservedAt ? " · "+
                 new Date(product.historicalObservedAt).toLocaleDateString(locale==="en"?"en-US":"es-CL") : ""}
             </small>}
         </p>
         <dl className="specification-list">
-          <div><dt>RAM</dt><dd>{product.ramGb} GB</dd></div>
-          <div><dt>GPU</dt><dd>{product.gpu}</dd></div>
-          <div><dt>{t("Procesador")}</dt><dd>{product.processor}</dd></div>
+          <div><dt>{t("common.ram")}</dt><dd>{t("common.memory",{value:product.ramGb})}</dd></div>
+          <div><dt>{t("common.gpu")}</dt><dd>{product.gpu}</dd></div>
+          <div><dt>{t("labels.processorAlternative")}</dt><dd>{product.processor}</dd></div>
         </dl>
         <div className="price-comparison">
           <button type="button" className="compare-button" aria-expanded={expanded}
             aria-controls={"offers-"+product.id} onClick={() => setExpanded(!expanded)}>
-            {expanded?t("Ocultar comparación"):t("Comparar tiendas")+" ("+comparison.offers.length+")"}
+            {expanded?t("labels.hideComparison"):t("catalog.compareCount",{count:comparison.offers.length})}
           </button>
           {expanded && <div id={"offers-"+product.id} className="comparison-content">
-            {checking&&<p role="status" className="feature-note">{t("Verificando precios y stock en las tiendas…")}</p>}
-            {checkFailed&&<p role="status" className="feature-note">{t("No se pudo completar la verificación. Se conserva la última información disponible.")}</p>}
-            {verified>=2 && <p className="comparison-summary">{t("Diferencia entre precios verificados")}: <strong>{money(comparison.potentialSavings)}</strong></p>}
+            {checking&&<p role="status" className="feature-note">{t("labels.checkingPricesAndStockWithRetailers")}</p>}
+            {checkFailed&&<p role="status" className="feature-note">{t("labels.verificationCouldNotBeCompletedTheLastAvailable")}</p>}
+            {verified>=2 && <p className="comparison-summary">{t("labels.verifiedPriceDifference")}: <strong>{money(comparison.potentialSavings)}</strong></p>}
             {verified<2 && publishedSavings!==null &&
-              <p className="comparison-summary">{t("Comparación de precios publicados de al menos tres comercios (referencial)")}: <strong>{money(publishedSavings)}</strong></p>}
+              <p className="comparison-summary">{t("labels.comparisonOfPublishedPricesFromThreeOrMore")}: <strong>{money(publishedSavings)}</strong></p>}
             {verified<2 && publishedSavings===null &&
-              <p className="comparison-summary">{t("No hay suficientes precios verificables para calcular la diferencia.")}</p>}
-            {comparison.offers.length===0 && <p className="feature-note">{t("Todavía no se detectaron tiendas para este modelo.")} {product.profileUrl &&
-              <a href={product.profileUrl} target="_blank" rel="noopener noreferrer">{t("Consultar ficha del modelo")}</a>}</p>}
+              <p className="comparison-summary">{t("labels.notEnoughVerifiedPricesToCalculateADifference")}</p>}
+            {comparison.offers.length===0 && <p className="feature-note">{t("labels.noRetailerListingsFoundYetForThisModel")} {product.profileUrl &&
+              <a href={product.profileUrl} target="_blank" rel="noopener noreferrer">{t("labels.viewModelSpecifications")}</a>}</p>}
             <ul className="offer-list">{comparison.offers.map((offer) => <li key={offer.sourceId} className="offer-row">
               <span className="offer-source"><a className="retailer-link" href={offer.url} target="_blank" rel="noopener noreferrer">{offer.sourceName}</a></span>
               <strong className="offer-price">{offer.priceClp!==null?money(offer.priceClp):offer.referencePriceClp!=null
-                ? money(offer.referencePriceClp)+" ("+t("referencia")+")":t("No verificado")}</strong>
-              <span className="offer-extra">{offer.paymentMethod==="transfer"&&<>{t("Precio por transferencia")}{" · "}</>}{offer.availability==="in_stock" ? t("Stock publicado: disponible") :
-                offer.availability==="out_of_stock" ? t("Stock publicado: agotado") :
-                offer.availability==="preorder" ? t("Stock publicado: reserva") :
-                offer.reportedAvailability==="in_stock" ? t("Disponibilidad online informada por fuente pública; sin verificación directa") :
-                t("Stock sin verificar")}</span>
+                ? money(offer.referencePriceClp)+" ("+t("labels.reference")+")":t("labels.unverified")}</strong>
+              <span className="offer-extra">{offer.paymentMethod==="transfer"&&<>{t("labels.bankTransferPrice")}{" · "}</>}{offer.availability==="in_stock" ? t("labels.publishedAvailabilityInStock") :
+                offer.availability==="out_of_stock" ? t("labels.publishedAvailabilitySoldOut") :
+                offer.availability==="preorder" ? t("labels.publishedAvailabilityPreorder") :
+                offer.reportedAvailability==="in_stock" ? t("labels.onlineAvailabilityPublishedByPublicSourceNotDirectly") :
+                t("labels.stockUnverified")}</span>
               {offer.discountPercent>=20 && offer.listPriceClp>offer.priceClp &&
                 <span className="retailer-discount">-{offer.discountPercent}% · <s>{money(offer.listPriceClp)}</s></span>}
               {offer.referenceDiscountPercent>=20 && offer.priceClp===null && !hasSpecialCondition(offer) &&
-                <span className="retailer-discount">-{offer.referenceDiscountPercent}% · {t("descuento publicado de referencia")}</span>}
+                <span className="retailer-discount">-{offer.referenceDiscountPercent}% · {t("labels.publishedReferenceMarkdown")}</span>}
               {offer.paymentCondition && offer.priceClp===null &&
                 <span className="offer-extra">{offer.paymentCondition}</span>}
               {offer.checkedAt && <time className="checked-at" dateTime={offer.checkedAt}>
-                {t("Consulta:")} {new Date(offer.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}
+                {t("labels.checkedAlternative")} {new Date(offer.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}
               </time>}
             </li>)}</ul>
-            <p className="demo-sources-note">{t("Los valores de referencia provienen de publicaciones comerciales; pueden estar desactualizados y nunca se cuentan como precios verificados.")}</p>
+            <p className="demo-sources-note">{t("labels.referencePricesAreFromPublishedRetailerListingsMay")}</p>
           </div>}
         </div>
         <button type="button" className="history-button" onClick={() => onHistory(product.sku)}>
-          {t("Ver historial de este notebook")}
+          {t("labels.seeThisLaptopSPriceHistory")}
         </button>
       </div>
     </article>
@@ -172,10 +172,8 @@ function ProductCard({ product, t, onHistory, locale }) {
 }
 export default function App() {
   const [theme,setTheme]=useState(initialTheme);
-  const [locale,setLocale]=useState(() => {
-    try { return localStorage.getItem("pc-tracker-locale")==="en"?"en":"es"; }catch{return "es";}
-  });
-  const t = (key) => translate(key,locale);
+  const [locale,setLocale]=useState(initialLocale);
+  const t = (key, values) => translate(key,locale,values);
   const [auth,setAuth]=useState(null);
   const [notebooks,setNotebooks]=useState(fromSession);
   const [status,setStatus]=useState(()=>fromSession().length?"ready":"loading");
@@ -208,13 +206,14 @@ export default function App() {
   },[]);
   useEffect(() => {
     const controller=new AbortController();
+    let fullCatalogLoaded=false;
     // Fast: obtain real notebook identities immediately, without waiting for
     // retailer scrapers. Session cache already displays previous verified data.
     void fetch("/api/notebooks?preview=1",{signal:controller.signal})
       .then(r=>r.ok?r.json():null)
       .then(data=>{
-        if(controller.signal.aborted||!isValidCatalog(data))return;
-        setNotebooks(current=>current.length===data.length?current:data);
+        if(controller.signal.aborted||fullCatalogLoaded||!isValidCatalog(data))return;
+        setNotebooks(current=>(current.length>0&&data.length===0)||current.length===data.length?current:data);
         setStatus("ready");
       }).catch(()=>{});
     // Fresh: refresh prices and discounts independently, without blocking
@@ -224,6 +223,7 @@ export default function App() {
       .then(data=>{
         if(!isValidCatalog(data))throw Error("Invalid catalog");
         if(controller.signal.aborted)return;
+        fullCatalogLoaded=true;
         setNotebooks(data);setStatus("ready");saveSession(data);
       })
       .catch(()=>{
@@ -251,32 +251,32 @@ export default function App() {
   };
   return <div className="app-shell">
     <header className="site-header"><div className="container header-inner">
-      <a href="#inicio" className="brand" aria-label="PC Tracker, ir al inicio">
+      <a href="#inicio" className="brand" aria-label={t("navigation.home")}>
         <span className="brand-icon" aria-hidden="true"><span/><span/></span>
-        PC <span>Tracker</span><span className="brand-dot">.</span>
+        {t("brand.first")} <span>{t("brand.second")}</span><span className="brand-dot">.</span>
       </a>
       <div className="header-actions">
-        <button type="button" className="locale-toggle" aria-label={locale==="es"?"Switch to English":"Cambiar a español"}
-          onClick={()=>setLocale((v)=>v==="es"?"en":"es")}>{locale==="es"?"EN":"ES"}</button>
+        <button type="button" className="locale-toggle" aria-label={t("navigation.switchLanguage")}
+          onClick={()=>setLocale((v)=>v==="es"?"en":"es")}>{t("navigation.languageCode")}</button>
         {auth?.enabled && (auth.user
-          ? <button className="auth-button" type="button" onClick={logout}>{t("Cerrar sesión")}</button>
-          : <a className="auth-button" href={auth.loginUrl||"/api/auth/login"}>{t(auth.provider==="google"?"Continuar con Google":"Iniciar sesión")}</a>)}
-        <button type="button" className="theme-toggle" aria-label={theme==="dark"?t("Activar modo claro"):t("Activar modo oscuro")}
+          ? <button className="auth-button" type="button" onClick={logout}>{t("labels.signOut")}</button>
+          : <a className="auth-button" href={auth.loginUrl||"/api/auth/login"}>{t(auth.provider==="google"?"labels.continueWithGoogle":"labels.signIn")}</a>)}
+        <button type="button" className="theme-toggle" aria-label={theme==="dark"?t("labels.enableLightMode"):t("labels.enableDarkMode")}
           aria-pressed={theme==="dark"} onClick={()=>setTheme((v)=>v==="dark"?"light":"dark")}>
           <span className="theme-toggle-icon" aria-hidden="true">{theme==="dark"?"☀":"☾"}</span>
-          <span className="theme-toggle-label">{theme==="dark"?t("Modo claro"):t("Modo oscuro")}</span>
+          <span className="theme-toggle-label">{theme==="dark"?t("labels.lightMode"):t("labels.darkMode")}</span>
         </button>
       </div>
     </div></header>
     <main id="inicio">
       <section className="hero container" aria-labelledby="hero-title">
         <div className="hero-content">
-          <div className="hero-label"><span className="live-dot"/>{t("ELIGE CON MÁS INFORMACIÓN")}</div>
-          <h1 id="hero-title">{t("Tu próximo computador,")} <em>{t("más claro.")}</em></h1>
-          <p className="hero-description">{t("Filtra computadores por RAM, GPU y procesador y compara precios y stock cuando cada tienda publique esos datos.")}</p>
-          <div className="hero-chips" aria-label={t("Criterios de comparación")}>
-            <span><b>01</b><small>RAM</small></span><span><b>02</b><small>GPU</small></span>
-            <span><b>03</b><small>{t("PROCESADOR")}</small></span>
+          <div className="hero-label"><span className="live-dot"/>{t("labels.makeInformedChoices")}</div>
+          <h1 id="hero-title">{t("labels.yourNextComputer")} <em>{t("labels.clearlyCompared")}</em></h1>
+          <p className="hero-description">{t("labels.filterComputersByRamGpuAndProcessorCompare")}</p>
+          <div className="hero-chips" aria-label={t("labels.comparisonCriteria")}>
+            <span><b>01</b><small>{t("common.ram")}</small></span><span><b>02</b><small>{t("common.gpu")}</small></span>
+            <span><b>03</b><small>{t("labels.processor")}</small></span>
           </div>
         </div>
         <DealsCarousel deals={deals} loading={refreshing} t={t} locale={locale}/>
@@ -284,45 +284,45 @@ export default function App() {
       <section className="catalog-section" aria-labelledby="catalog-title">
         <div className="container">
           <div className="section-heading"><div>
-            <p className="section-kicker">{t("EXPLORA / CATÁLOGO")}</p>
-            <h2 id="catalog-title">{t("Notebooks disponibles para comparar")}</h2>
-            <p className="section-subtitle">{t("Compara especificaciones y ofertas publicadas. Los precios y el stock se verifican por tienda.")}</p>
+            <p className="section-kicker">{t("labels.exploreCatalog")}</p>
+            <h2 id="catalog-title">{t("labels.laptopsAvailableToCompare")}</h2>
+            <p className="section-subtitle">{t("labels.compareSpecsAndPublishedOffersPricesAndStock")}</p>
           </div>{status==="ready" && <span className="result-count" aria-live="polite">{visible.length} / {notebooks.length}</span>}</div>
           {status==="ready" && refreshing &&
-            <p className="catalog-refreshing" role="status">{t("Actualizando precios y descuentos…")}</p>}
+            <p className="catalog-refreshing" role="status">{t("labels.updatingPricesAndDiscounts")}</p>}
           {status==="ready" && notebooks.length>0 && <CatalogFilters filters={filters} options={options}
             t={t} onChange={changeFilter}
             onClear={clearFilters}/>}
-          {status==="loading" && <div className="state-panel" role="status">{t("Cargando notebooks reales…")}</div>}
-          {status==="error" && <div className="state-panel error-panel" role="alert">{t("No se pudo conectar con el catálogo de notebooks.")}</div>}
-          {status==="ready" && notebooks.length===0 && <div className="state-panel">{t("No hay notebooks verificados disponibles.")}</div>}
+          {status==="loading" && <div className="state-panel" role="status">{t("labels.loadingRealLaptops")}</div>}
+          {status==="error" && <div className="state-panel error-panel" role="alert">{t("labels.unableToLoadTheLaptopCatalog")}</div>}
+          {status==="ready" && notebooks.length===0 && <div className="state-panel">{t("labels.noValidatedLaptopsAvailable")}</div>}
           {status==="ready" && notebooks.length>0 && visible.length===0 &&
-            <div className="state-panel no-results"><p>{t("No encontramos computadores con esos filtros.")}</p>
+            <div className="state-panel no-results"><p>{t("labels.noComputersMatchTheseFilters")}</p>
               <button type="button" className="clear-filters"
-                onClick={clearFilters}>{t("Limpiar filtros")}</button>
+                onClick={clearFilters}>{t("labels.clearFilters")}</button>
             </div>}
           {status==="ready" && visible.length>0 && <div className="computer-grid">
             {currentPage.map((product)=><ProductCard key={product.sku} product={product}
               t={t} locale={locale} onHistory={chooseHistory}/>)}
           </div>}
           {status==="ready" && visible.length>PAGE_SIZE && <nav className="catalog-pagination"
-            aria-label={t("Páginas del catálogo")}>
-            <p className="pagination-info" aria-live="polite">{first}–{last} {t("de")} {visible.length} · {t("Página")} {validPage} {t("de")} {totalPages}</p>
+            aria-label={t("labels.catalogPages")}>
+            <p className="pagination-info" aria-live="polite">{t("catalog.pagination",{first,last,count:visible.length,page:validPage,pages:totalPages})}</p>
             <div className="pagination-controls">
               <button type="button" onClick={()=>changePage(validPage-1)} disabled={validPage===1}
-                aria-label={t("Página anterior")}>‹</button>
+                aria-label={t("labels.previousPage")}>‹</button>
               {Array.from({length:totalPages},(_,i)=>i+1).map(n=><button type="button"
                 key={n} aria-current={n===validPage?"page":undefined}
                 onClick={()=>changePage(n)}>{n}</button>)}
               <button type="button" onClick={()=>changePage(validPage+1)} disabled={validPage===totalPages}
-                aria-label={t("Página siguiente")}>›</button>
+                aria-label={t("labels.nextPage")}>›</button>
             </div>
           </nav>}
         </div>
       </section>
       {selected && <div id="price-history-section">
         <div className="container feature-product-picker">
-          <label htmlFor="feature-product">{t("Historial y tiendas para")}:</label>
+          <label htmlFor="feature-product">{t("labels.historyAndStoresFor")}:</label>
           <select id="feature-product" value={selected.sku} onChange={(e)=>setSelectedSku(e.target.value)}>
             {notebooks.map((n)=><option key={n.sku} value={n.sku}>{n.name}</option>)}
           </select>
@@ -330,6 +330,6 @@ export default function App() {
         <FeaturesPanel liveComputer={selected} t={t} locale={locale}/>
       </div>}
     </main>
-    <footer className="site-footer"><div className="container footer-inner"><span>PC Tracker © 2026</span><span>{t("Diseño de Software · Proyecto 4B")}</span></div></footer>
+    <footer className="site-footer"><div className="container footer-inner"><span>{t("brand.copyright")}</span><span>{t("labels.softwareDesignProject4b")}</span></div></footer>
   </div>;
 }

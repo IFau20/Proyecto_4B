@@ -1,3 +1,4 @@
+import { formatNumber } from "./i18n.js";
 import { useEffect, useMemo, useState } from "react";
 import PriceHistoryChart from "./PriceHistoryChart.jsx";
 
@@ -10,15 +11,10 @@ export function kilometersBetween(a, b) {
     Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(deltaLon / 2) ** 2;
   return EARTH_RADIUS_KM * 2 * Math.asin(Math.min(1, Math.sqrt(x)));
 }
-const money = (price) => "$" + Number(price).toLocaleString("es-CL");
 const dateTime = (iso, locale) => new Date(iso).toLocaleString(locale === "en" ? "en-US" : "es-CL");
-const DAY_NAMES = {
-  es: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
-  en: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
-};
 const labelStatus = (status, t) => ({
-  in_stock: t("Disponible online"), out_of_stock: t("Agotado"),
-  preorder: t("Reserva"), unknown: t("Sin verificar"),
+  in_stock: t("labels.inStockOnline"), out_of_stock: t("labels.soldOut"),
+  preorder: t("labels.preorder"), unknown: t("labels.unverifiedAlternative"),
 })[status || "unknown"];
 
 function PriceHistory({sku,t,locale}) {
@@ -36,16 +32,16 @@ function PriceHistory({sku,t,locale}) {
   },[sku]);
   return <section className="feature-panel" aria-labelledby="history-heading">
     <div className="feature-heading"><div>
-      <p className="feature-eyebrow">{t("SEGUIMIENTO DE PRECIOS")}</p>
-      <h2 id="history-heading">{t("Historial de precios")}</h2>
+      <p className="feature-eyebrow">{t("labels.priceTracking")}</p>
+      <h2 id="history-heading">{t("labels.priceHistory")}</h2>
     </div></div>
-    {error&&<p role="alert" className="feature-note">{t("No se pudo consultar el historial.")}</p>}
-    {!error&&!history&&<p className="feature-note">{t("Cargando historial…")}</p>}
+    {error&&<p role="alert" className="feature-note">{t("labels.couldNotLoadPriceHistory")}</p>}
+    {!error&&!history&&<p className="feature-note">{t("labels.loadingPriceHistory")}</p>}
     {history&&<PriceHistoryChart key={sku} history={history} t={t} locale={locale}/>}
-    {history?.archived&&<p className="feature-note">{t("Última observación histórica disponible; no es una cotización actual.")}</p>}
+    {history?.archived&&<p className="feature-note">{t("labels.lastAvailableHistoricalObservationThisIsNotA")}</p>}
     {history && <p className="feature-footnote">{history.source==="solotodo_public"
-      ? t("Historial público de SoloTodo: precios y fechas atribuidos a su fuente.")
-      : t("Historial propio de PC Tracker; se construye con precios reales registrados.")}</p>}
+      ? t("labels.publicSolotodoHistoryPricesAndDatesAttributedTo")
+      : t("labels.pcTrackerHistoryIsBuiltFromActualRecorded")}</p>}
   </section>;
 }
 
@@ -105,7 +101,7 @@ function StoreLocator({offers,sku,t,locale}) {
     return()=>controller.abort();
   },[userPosition,date]);
   const locate=()=>{
-    if(!navigator.geolocation){setError(t("Geolocalización no disponible."));return;}
+    if(!navigator.geolocation){setError("labels.geolocationUnavailable");return;}
     setError("");setLoading(true);
     navigator.geolocation.getCurrentPosition(async position=>{
       const coordinates={lat:position.coords.latitude,lon:position.coords.longitude};
@@ -119,26 +115,24 @@ function StoreLocator({offers,sku,t,locale}) {
         setStores(Array.isArray(stores)?stores:[]);
         setError("");
       }catch{
-        setError(t("No se pudo consultar la ubicación de las tiendas."));
+        setError("labels.couldNotLoadStoreLocations");
         setStores([]);
       }finally{setLoading(false);}
     },()=>{
       setLoading(false);
       setUserPosition(null);
       setStores([]);
-      setError(t("No se pudo obtener tu ubicación. Revisa el permiso del navegador."));
+      setError("labels.couldNotGetYourLocationCheckYourBrowser");
     },{enableHighAccuracy:false,timeout:12000,maximumAge:60000});
   };
-  const days={es:["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
-    en:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]};
   const openingText=store=>{
-    if(store.closedUntilNotice)return t("Cerrada hasta nuevo aviso según la tienda.");
-    if(!store.scheduleVerified)return t("Horario habitual no verificado.");
+    if(store.closedUntilNotice)return t("labels.closedUntilFurtherNoticeAccordingToTheRetailer");
+    if(!store.scheduleVerified)return t("labels.regularOpeningHoursUnverified");
     const slots=hoursOnDate(store,date);
-    if(!slots?.length)return t("No hay horario confirmado para este día.");
+    if(!slots?.length)return t("labels.noVerifiedHoursForThisDate");
     const day=new Date(date+"T12:00:00").getDay();
     const ranges=slots.length===4?slots[0]+"–"+slots[1]+" / "+slots[2]+"–"+slots[3]:slots.join("–");
-    return days[locale][day]+" "+ranges+" · "+t("Horario habitual comprobado");
+    return t("stores.opening",{day:t("weekdays."+["sun","mon","tue","wed","thu","fri","sat"][day]),ranges});
   };
   const pcFactoryProduct=(offers||[]).find(offer=>
     /pc\s*factory/i.test(offer.sourceName||"") &&
@@ -149,66 +143,66 @@ function StoreLocator({offers,sku,t,locale}) {
     aria-labelledby="stores-heading">
     <div className="feature-heading">
       <div>
-        <p className="feature-eyebrow">{t("UBICACIÓN Y HORARIOS")}</p>
-        <h2 id="stores-heading">{t("Tiendas y puntos de retiro")}</h2>
+        <p className="feature-eyebrow">{t("labels.locationsAndOpeningHours")}</p>
+        <h2 id="stores-heading">{t("labels.storesAndPickupPoints")}</h2>
       </div>
       <button type="button" className="feature-button" onClick={locate} disabled={loading}
         aria-expanded={Boolean(userPosition&&!loading)}>
-        {loading?t("Buscando las tiendas más cercanas…"):t("Buscar cerca de mí")}
+        {loading?t("labels.findingTheClosestStores"):t("labels.findNearby")}
       </button>
     </div>
-    {error&&<p role="alert" className="feature-note">{error}</p>}
-    {loading&&<p role="status" className="feature-note">{t("Consultando ubicaciones verificables…")}</p>}
+    {error&&<p role="alert" className="feature-note">{t(error)}</p>}
+    {loading&&<p role="status" className="feature-note">{t("labels.checkingGeocodableStoreAddresses")}</p>}
     {userPosition&&!loading&&<div className="nearby-results">
-      <label className="nearby-date-label">{t("Fecha de consulta")}
+      <label className="nearby-date-label">{t("labels.dateToCheck")}
         <input type="date" value={date} min="2025-01-01" max="2030-12-31"
           onChange={e=>setDate(e.target.value)}/>
       </label>
       {holiday&&<p className="feature-note holiday-warning" role="status">
-        {t("Feriado en Chile")}: {holiday.name}{holiday.irrenunciable?" · "+t("Irrenunciable"):""}.
-        {" "+t("Confirma el horario especial directamente con la tienda.")}
+        {t("labels.chileanHoliday")}: {holiday.name}{holiday.irrenunciable?" · "+t("labels.mandatoryHoliday"):""}.
+        {" "+t("labels.confirmSpecialHolidayHoursWithTheStore")}
       </p>}
-      {holidayUnknown&&<p className="feature-note">{t("No se pudo verificar el calendario de feriados.")}</p>}
-      <p className="feature-footnote">{t("El stock corresponde a la consulta actual; la fecha seleccionada se aplica a los horarios.")}</p>
+      {holidayUnknown&&<p className="feature-note">{t("labels.couldNotVerifyTheHolidayCalendar")}</p>}
+      <p className="feature-footnote">{t("labels.stockReflectsTheCurrentCheckTheSelectedDate")}</p>
       <label className="nearby-stock-filter"><input type="checkbox" checked={confirmedOnly}
-        onChange={e=>setConfirmedOnly(e.target.checked)}/> {t("Solo sucursales con stock confirmado")}</label>
-      <p className="feature-note">{t("Las sucursales se ordenan por distancia después de filtrar el stock del notebook seleccionado.")}</p>
-      {stockLoading?<p role="status" className="feature-note">{t("Verificando stock por sucursal…")}</p>:stockError?
-        <div><p role="alert" className="feature-note">{t("No se pudo verificar el stock por sucursal.")}</p>
-          <button type="button" className="feature-button" onClick={()=>setStockAttempt(v=>v+1)}>{t("Reintentar stock")}</button></div>:
+        onChange={e=>setConfirmedOnly(e.target.checked)}/> {t("labels.onlyBranchesWithConfirmedStock")}</label>
+      <p className="feature-note">{t("labels.branchesAreSortedByDistanceAfterFilteringStock")}</p>
+      {stockLoading?<p role="status" className="feature-note">{t("labels.checkingBranchInventory")}</p>:stockError?
+        <div><p role="alert" className="feature-note">{t("labels.branchInventoryCouldNotBeChecked")}</p>
+          <button type="button" className="feature-button" onClick={()=>setStockAttempt(v=>v+1)}>{t("labels.retryInventory")}</button></div>:
         <p className="feature-note" aria-live="polite">
-          {t("Sucursales cercanas con stock confirmado")}: {nearby.filter(store=>branchStatus(store,stock)==="in_stock").length} / {nearby.length}.
-          {" "+t("Sin confirmación no significa agotado.")}
+          {t("stores.confirmedCount",{confirmed:nearby.filter(store=>branchStatus(store,stock)==="in_stock").length,total:nearby.length})}
+          {" "+t("labels.unverifiedDoesNotMeanSoldOut")}
         </p>}
       <div className="store-grid">
         {nearby.map((store,i)=>{
           const record=stock.find(x=>x.sourceId===store.sourceId);
           const state=branchStatus(store,stock);
           return <article className="store-card" key={store.sourceId}>
-            <div className="store-title"><h3>{i+1}. {store.name}</h3><strong>{store.distance.toFixed(1)} km</strong></div>
+            <div className="store-title"><h3>{i+1}. {store.name}</h3><strong>{t("stores.distance",{distance:formatNumber(store.distance,locale,{minimumFractionDigits:1,maximumFractionDigits:1})})}</strong></div>
             <p>{store.address}</p>
             <p className="store-stock-status" data-stock={state}>
-              {state==="in_stock"?t("Stock en sucursal confirmado")+(record?.quantity!=null?" · "+record.quantity+" "+t("unidades")+(record.approximate?" ("+t("aproximado")+")":""):""):
-                state==="out_of_stock"?t("Sin stock en sucursal"):t("Stock de sucursal sin verificar")}
+              {state==="in_stock"?t("labels.inStoreInventoryConfirmed")+(record?.quantity!=null?" · "+record.quantity+" "+t("labels.units")+(record.approximate?" ("+t("labels.approximate")+")":""):""):
+                state==="out_of_stock"?t("labels.outOfStockAtThisBranch"):t("labels.branchInventoryUnverified")}
             </p>
             <p className="store-times">{openingText(store)}</p>
-            {store.scheduleNotice&&<p className="feature-footnote">{t("Aviso publicado por la tienda")}: {store.scheduleNotice}</p>}
-            {record?.closedAtCheck&&<p className="feature-footnote">{t("La tienda informa cierre al momento de consultar; confirma el retiro antes de viajar.")}</p>}
-            {holiday&&<p className="feature-footnote">{t("Horario de feriado no confirmado.")}</p>}
-            {record&&<p className="feature-footnote">{t("Comprobado")}: {new Date(record.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}</p>}
+            {store.scheduleNotice&&<p className="feature-footnote">{t("labels.noticePublishedByTheRetailer")}: {store.scheduleNotice}</p>}
+            {record?.closedAtCheck&&<p className="feature-footnote">{t("labels.theStoreReportsItIsClosedAtThe")}</p>}
+            {holiday&&<p className="feature-footnote">{t("labels.holidayHoursUnverified")}</p>}
+            {record&&<p className="feature-footnote">{t("labels.checked")}: {new Date(record.checkedAt).toLocaleString(locale==="en"?"en-US":"es-CL")}</p>}
             <div className="store-links">
-              <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("Información oficial")}</a>
+              <a href={store.contactUrl} target="_blank" rel="noopener noreferrer">{t("labels.officialInformation")}</a>
               {store.sourceId.startsWith("pcfactory-")&&pcFactoryProduct &&
                 <a href={pcFactoryProduct.url} target="_blank" rel="noopener noreferrer">
-                  {t("Consultar stock del notebook en PC Factory")}
+                  {t("labels.checkNotebookStockOnPcFactory")}
                 </a>}
               <a href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(store.address)}
-                target="_blank" rel="noopener noreferrer">{t("Ver en mapa")}</a>
+                target="_blank" rel="noopener noreferrer">{t("labels.viewMap")}</a>
             </div>
           </article>;
         })}
       </div>
-      {!stockLoading&&!stockError&&confirmedOnly&&nearby.length===0&&<p className="feature-note" role="status">{t("No se encontraron sucursales con stock confirmado para este notebook. Puedes desmarcar el filtro para consultar otras tiendas.")}</p>}
+      {!stockLoading&&!stockError&&confirmedOnly&&nearby.length===0&&<p className="feature-note" role="status">{t("labels.noBranchesWithConfirmedStockWereFoundFor")}</p>}
     </div>}
   </section>;
 }

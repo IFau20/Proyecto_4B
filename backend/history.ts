@@ -1,7 +1,16 @@
 // Durable snapshots of prices actually observed by the Deno retailer collector.
+import { JsonConflictError, type JsonStore } from "./jsonStore.ts";
+import { runtimeJsonStore } from "./runtimeStore.ts";
+import { readFile, writeFile, rename } from "node:fs/promises";
 export type PricePoint = { sku: string; sourceId: string; priceClp: number; checkedAt: string };
 export type PriceHistory = { version: 1; points: PricePoint[] };
 const DEFAULT_PATH = new URL("./data/price-history.json", import.meta.url);
+const HISTORY_KEY="history/price-history.json";
+type HistoryLocation=string|URL|JsonStore;
+async function historyStore(path:HistoryLocation):Promise<JsonStore|null>{
+  if(typeof path==="object"&&!(path instanceof URL))return path;
+  return path===DEFAULT_PATH?await runtimeJsonStore():null;
+}
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 let writeQueue: Promise<void> = Promise.resolve();
 
@@ -41,30 +50,45 @@ export function summarizePriceHistory(history: PriceHistory, sku: string) {
   return { sku, points, sources: sourceSummaries, observations: points.length };
 }
 
-export async function readHistory(path: string | URL = DEFAULT_PATH): Promise<PriceHistory> {
-  try {
-    const parsed = JSON.parse(await Deno.readTextFile(path));
-    if (parsed?.version !== 1 || !Array.isArray(parsed.points)) throw Error("Invalid history");
-    return { version: 1, points: parsed.points.filter((p: PricePoint) => p &&
+function parseHistory(parsed:unknown):PriceHistory {
+    const data=parsed as PriceHistory;
+    if (data?.version !== 1 || !Array.isArray(data.points)) throw Error("Invalid history");
+    return { version: 1, points: data.points.filter((p: PricePoint) => p &&
       typeof p.sku === "string" && typeof p.sourceId === "string" &&
       Number.isSafeInteger(p.priceClp) && p.priceClp > 0 &&
       typeof p.checkedAt === "string" && Number.isFinite(Date.parse(p.checkedAt))) };
+}
+export async function readHistory(path: HistoryLocation = DEFAULT_PATH): Promise<PriceHistory> {
+  const store=await historyStore(path);
+  if(store){const record=await store.get(HISTORY_KEY);return record?parseHistory(record.value):{version:1,points:[]};}
+  try {
+    return parseHistory(JSON.parse(await readFile(path as string|URL,"utf8")));
   } catch (error) {
-    if (error instanceof Deno.errors.NotFound) return { version: 1, points: [] };
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return { version: 1, points: [] };
     throw error;
   }
 }
 
 export async function savePricePoints(
-  points: PricePoint[],path:string|URL=DEFAULT_PATH,
+  points: PricePoint[],path:HistoryLocation=DEFAULT_PATH,
 ):Promise<void> {
   if(!points.length)return;
+  const store=await historyStore(path);
+  if(store){
+    for(let attempt=0;attempt<8;attempt++){
+      const record=await store.get(HISTORY_KEY);
+      const next=mergePricePoints(record?parseHistory(record.value):{version:1,points:[]},points);
+      try{await store.put(HISTORY_KEY,next,record?.etag??null);return;}
+      catch(error){if(!(error instanceof JsonConflictError)||attempt===7)throw error;}
+    }
+    return;
+  }
   const work=writeQueue.catch(()=>{}).then(async()=>{
     const next=mergePricePoints(await readHistory(path),points);
     const fullPath=path instanceof URL?path:new URL("file://"+path);
     const temporary=new URL(fullPath.href+".tmp");
-    await Deno.writeTextFile(temporary,JSON.stringify(next,null,2)+"\n");
-    await Deno.rename(temporary,fullPath);
+    await writeFile(temporary,JSON.stringify(next,null,2)+"\n");
+    await rename(temporary,fullPath);
   });
   writeQueue=work;
   await work;
@@ -72,7 +96,7 @@ export async function savePricePoints(
 export async function saveObservations(
   sku: string,
   offers: Array<{ sourceId: string; priceClp: number | null; checkedAt: string; availability: string }>,
-  path: string | URL = DEFAULT_PATH,
+  path: HistoryLocation = DEFAULT_PATH,
 ): Promise<void> {
   const points=offers.filter(offer=>
     Number.isSafeInteger(offer.priceClp)&&offer.priceClp!>0&&offer.availability!=="out_of_stock")

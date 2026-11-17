@@ -13,6 +13,7 @@ beforeEach(()=>{
  vi.stubGlobal("fetch",vi.fn(async (url)=>({ok:true,json:async()=>url==="/api/notebooks"?sample:
    url==="/api/auth/me"?{enabled:false,user:null}:[]})));
  window.localStorage.clear();
+ window.localStorage.setItem("pc-tracker-locale","es");
  window.sessionStorage.clear();
  document.documentElement.removeAttribute("data-theme");
 });
@@ -190,4 +191,26 @@ it("offers Google login and translates the provider button",async()=>{
  expect(await screen.findByRole("link",{name:"Continuar con Google"})).toHaveAttribute("href","http://localhost:8000/api/auth/login");
  fireEvent.click(screen.getByRole("button",{name:"Switch to English"}));
  expect(screen.getByRole("link",{name:"Continue with Google"})).toBeInTheDocument();
+});
+
+it("detects the browser language and translates accessible labels, filters and currency", async()=>{
+ localStorage.removeItem("pc-tracker-locale");
+ vi.spyOn(window.navigator,"languages","get").mockReturnValue(["en-US"]);
+ render(<App/>);
+ await screen.findByRole("heading",{name:"HP Victus"});
+ expect(document.documentElement.lang).toBe("en");
+ expect(screen.getByRole("link",{name:"PC Tracker, go to home"})).toBeInTheDocument();
+ expect(screen.getByLabelText("Minimum RAM")).toBeInTheDocument();
+ expect(screen.getAllByText("$500,000").length).toBeGreaterThan(0);
+ fireEvent.click(screen.getByRole("button",{name:"Cambiar a español"}));
+ expect(screen.getByLabelText("RAM mínima")).toBeInTheDocument();
+ expect(screen.getAllByText("$500.000").length).toBeGreaterThan(0);
+ expect(localStorage.getItem("pc-tracker-locale")).toBe("es");
+});
+it("preserves a saved Spanish preference in an English browser", async()=>{
+ vi.spyOn(window.navigator,"languages","get").mockReturnValue(["en-US"]);
+ render(<App/>);
+ await screen.findByRole("heading",{name:"HP Victus"});
+ expect(document.documentElement.lang).toBe("es");
+ expect(screen.getByLabelText("RAM mínima")).toBeInTheDocument();
 });
