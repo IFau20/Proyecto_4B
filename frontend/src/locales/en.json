@@ -225,5 +225,6 @@
   "stores.opening": "{day} {ranges} · Regular opening hours checked",
   "stores.confirmedCount": "Nearby branches with confirmed inventory: {confirmed} / {total}.",
   "brand.first": "PC",
-  "brand.second": "Tracker"
+  "brand.second": "Tracker",
+  "retailers.alternateListing": "another listing"
 }

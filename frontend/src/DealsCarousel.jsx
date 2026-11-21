@@ -17,7 +17,7 @@ export default function DealsCarousel({deals,loading,t,locale}) {
         <span>{deal.isReference?t("labels.publishedDealCurrentValidityNotConfirmed"):t("labels.publishedOffer")}</span></div>
       <NotebookImage product={deal.product} className="deal-product-image" loading="eager"/>
       <h2>{deal.product.name}</h2>
-      <p className="deal-source">{deal.offer.sourceName}</p>
+      <p className="deal-source">{deal.offer.sourceName}{deal.offer.sourceId==="paris2" && " — "+t("retailers.alternateListing")}</p>
       <div className="deal-prices"><strong>{money(deal.priceClp)}</strong><s>{money(deal.listPriceClp)}</s></div>
       <a href={deal.offer.url} target="_blank" rel="noopener noreferrer" className="deal-link">
         {t("labels.viewStoreOffer")}

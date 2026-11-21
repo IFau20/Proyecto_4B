@@ -45,7 +45,7 @@ export const NOTEBOOKS = [
   { sku:"NP750XGJ-KS5CL", name:"Samsung Galaxy Book4", ramGb:16, gpu:"Intel Iris Xe Graphics", processor:"Intel Core i5-1335U", sources:[
     retailer("pcfactory","PC Factory","https://www.pcfactory.cl/producto/53661"),
     retailer("paris","Paris","https://www.paris.cl/samsung-galaxy-book4-i5-156-512gb-16gb-ram-MKRISZTQKN.html"),
-    retailer("paris2","Paris — otra publicación","https://www.paris.cl/notebook-galaxy-book4-intel-core-i5-13va-gen-16gb-ram-512gb-ssd-156-windows-silver-151337999.html")
+    retailer("paris2","Paris","https://www.paris.cl/notebook-galaxy-book4-intel-core-i5-13va-gen-16gb-ram-512gb-ssd-156-windows-silver-151337999.html")
   ], profileUrl:"https://www.solotodo.cl/products/255552-samsung-galaxy-book4-silver-np750xgj-ks5cl" },
   { sku:"83GSX029CL", name:"Lenovo LOQ 15IAX9", ramGb:16, gpu:"NVIDIA GeForce RTX 3050", processor:"Intel Core i5-12450HX", sources:[],
     profileUrl:"https://www.solotodo.cl/products/280318-lenovo-loq-15iax9-83gsx029cl" },

@@ -225,5 +225,6 @@
   "stores.opening": "{day} {ranges} · Horario habitual comprobado",
   "stores.confirmedCount": "Sucursales cercanas con stock confirmado: {confirmed} / {total}.",
   "brand.first": "PC",
-  "brand.second": "Tracker"
+  "brand.second": "Tracker",
+  "retailers.alternateListing": "otra publicación"
 }

@@ -81,6 +81,11 @@ Validation on November 17, 2026: 117 backend tests and 59 frontend tests passed;
 
 Translation resources are `frontend/src/locales/es.json` and `en.json`. Components use semantic keys; tests check key parity, missing static keys, interpolation and language changes, including error/accessibility labels.
 
+## Latest maintenance
+
+- Allow mobile header controls to wrap when Google sign-in is enabled, keeping language, sign-in and theme controls visible.
+- Translate the alternate Paris listing label through Spanish/English resources while preserving the retailer name.
+
 ## Verified development record
 
 This is a reconstruction from actual Git history, using Chile dates and Monday–Sunday ranges. These ranges are **not** an invented mapping to the professor's 16 official semester weeks; that mapping requires the official semester start date. Empty periods remain declared. Current corrections cannot repair past continuity or missing historical README updates.
