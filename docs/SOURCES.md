@@ -31,6 +31,7 @@ Product images returned by SoloTodo and retail `og:image` sometimes fail HTTP 40
 
 | Notebook SKU | External fallback | Identification |
 |---|---|---|
+| 83LY003NCL | media.solotodo.com, res.cloudinary.com | Exact Lenovo Legion 5 15IRX10 SKU; [SoloTodo product](https://www.solotodo.cl/products/279220-lenovo-legion-5-15irx10-83ly003ncl), [Tecnomas product](https://www.tecnomas.cl/producto/lenovo-legion-5-15irx10-83ly003ncl) |
 | 82XM00M4CL | media-cdn.bnn.in.th, microless.com | Lenovo IdeaPad Slim 3 15ABR8 family |
 | BA1U9LA | cdn.panacompu.com | HP Victus 15-fb3009la exact model |
 | CH8Z6LA | cdn.panacompu.com | HP Victus 15-fb30xx family; appearance only |

@@ -59,7 +59,7 @@ export const NOTEBOOKS = [
     retailer("spdigital","SP Digital","https://www.spdigital.cl/lenovo-legion-5-gen-10-intel-core-i9-14900hx-32gb-1tb-ssd-nvidia-rtx-5070-oled-165hz-151-w11/"),
     retailer("winpy","Winpy","https://www.winpy.cl/venta/notebook-gamer-lenovo-legion-5i-de-15-1-i9-14900hx-rtx-5070-32gb-ddr5-1tb-ssd-win11/"),
     retailer("falabella","Falabella","https://www.falabella.com/falabella-cl/product/17500183/Notebook-Gamer-Legion-5%2520i9-14900HX-32GB-RAM-1TB-SSD-RTX-5070-8GB-15.1%2522%2520WQXGA-OLED-165Hz-Lenovo/17500183")
-  ], profileUrl:"https://www.solotodo.cl/notebooks" },
+  ], profileUrl:"https://www.solotodo.cl/products/279220-lenovo-legion-5-15irx10-83ly003ncl" },
   { sku:"D62W3LA", name:"HP Omen HyperX 15-ga0001la", ramGb:16, gpu:"NVIDIA GeForce RTX 5060", processor:"Intel Core i7-14650HX", sources:[],
     profileUrl:"https://www.solotodo.cl/products/391295-hp-omen-hyperx-15-ga0001la-d62w3la" },
   { sku:"90NR0QF3-M003Y0",name:"ASUS TUF Gaming A16 FA607NUQ-RL060W",ramGb:16,gpu:"NVIDIA GeForce RTX 4050",processor:"AMD Ryzen 7 170",sources:[],profileUrl:"https://www.solotodo.cl/products/400059-asus-tuf-gaming-a16-fa607nuq-rl060w-90nr0qf3-m003y0" },

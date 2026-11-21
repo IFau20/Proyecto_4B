@@ -20,6 +20,10 @@ const verifiedModelImages: Record<string,string> = {
 // Source CDN restrictions are respected: a failed request falls through to another
 // public source without credentials, fake referrers, or anti-bot bypasses.
 export const additionalNotebookImages: Record<string, string[]> = {
+  "83LY003NCL": [
+    "https://media.solotodo.com/media/cache/39/68/3968140f8eecd9f5959e95eb41d54251.png",
+    "https://res.cloudinary.com/djx6viedj/image/upload/t_open_graph_product_image/zk98xygpgce9e8a13s94vepep0ee?_a=BACMTiEv"
+  ],
   "82XM00M4CL": [
     "https://media-cdn.bnn.in.th/310124/lenovo-ideapad-slim-3-1515abr8-artic-gray-1.jpg",
     "https://microless.com/cdn/products/5c86bbccc5832797c338837ff97bd8b9-hi.jpg",

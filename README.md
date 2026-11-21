@@ -83,6 +83,8 @@ Translation resources are `frontend/src/locales/es.json` and `en.json`. Componen
 
 ## Latest maintenance
 
+- Correct the Legion 5 83LY003NCL product profile and add two exact-model image sources, so its photo does not depend on retailer scraping completing first.
+
 - Allow mobile header controls to wrap when Google sign-in is enabled, keeping language, sign-in and theme controls visible.
 - Translate the alternate Paris listing label through Spanish/English resources while preserving the retailer name.
 
